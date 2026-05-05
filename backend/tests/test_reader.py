@@ -1,0 +1,103 @@
+"""Tests für ``waage.reader.Waage``.
+
+Hardware-frei — `pyserial` wird durch `serial.serial_for_url('loop://')`
+oder einen einfachen Stub ersetzt.
+"""
+
+from __future__ import annotations
+
+from unittest.mock import patch
+
+import pytest
+
+from waage.reader import Waage
+
+
+class _FakeSerial:
+    """Minimaler pyserial-Ersatz mit korrektem Partial-Read-Verhalten."""
+
+    def __init__(self, chunks: list[bytes]) -> None:
+        self._buf = bytearray(b"".join(chunks))
+        self.is_open = True
+        self.in_waiting = 0
+
+    def read(self, size: int = 1) -> bytes:
+        if not self._buf:
+            return b""
+        n = min(size, len(self._buf))
+        out = bytes(self._buf[:n])
+        del self._buf[:n]
+        return out
+
+    def close(self) -> None:
+        self.is_open = False
+
+
+def _patch_serial(chunks: list[bytes]):
+    fake = _FakeSerial(chunks)
+    return patch("waage.reader.serial.Serial", return_value=fake), fake
+
+
+def test_read_one_extracts_complete_frame() -> None:
+    patcher, _ = _patch_serial([b"ST,+  100.0 g\r\n"])
+    with patcher, Waage("/dev/ttyUSB0") as w:
+        r = w.read_one()
+    assert r is not None
+    assert r.weight == pytest.approx(100.0)
+    assert r.stable is True
+
+
+def test_read_one_handles_split_frames() -> None:
+    """Frame über mehrere ``read()``-Aufrufe verteilt -> korrekt zusammengesetzt."""
+    patcher, _ = _patch_serial([b"ST,+  ", b"50.0 g", b"\r\n"])
+    with patcher, Waage("/dev/ttyUSB0") as w:
+        r = None
+        for _ in range(5):
+            r = w.read_one()
+            if r is not None:
+                break
+    assert r is not None
+    assert r.weight == pytest.approx(50.0)
+
+
+def test_read_one_returns_none_on_timeout() -> None:
+    patcher, _ = _patch_serial([])
+    with patcher, Waage("/dev/ttyUSB0") as w:
+        assert w.read_one() is None
+
+
+def test_stream_skips_garbage_yields_valid() -> None:
+    patcher, _ = _patch_serial([
+        b"junk-without-newline-in-middle\r\n",
+        b"ST,+  1.0 g\r\n",
+    ])
+    with patcher, Waage("/dev/ttyUSB0") as w:
+        gen = w.stream()
+        first = next(gen)
+    assert first.weight == pytest.approx(1.0)
+
+
+def test_buffer_overflow_clears_safely() -> None:
+    """Wenn nie ein Newline kommt, soll der Puffer geflusht werden."""
+    from waage.reader import MAX_BUFFER_BYTES
+    huge = b"X" * (MAX_BUFFER_BYTES + 500)
+    patcher, _ = _patch_serial([huge])
+    with patcher, Waage("/dev/ttyUSB0") as w:
+        # Mehrfach lesen, bis der Puffer überläuft und geflusht wird
+        for _ in range(50):
+            w.read_one()
+        assert len(w._buf) <= MAX_BUFFER_BYTES
+
+
+def test_context_manager_closes_serial() -> None:
+    patcher, fake = _patch_serial([b"ST,+ 10.0 g\r\n"])
+    with patcher:
+        with Waage("/dev/ttyUSB0") as w:
+            w.read_one()
+    assert fake.is_open is False
+
+
+def test_read_one_without_open_raises() -> None:
+    w = Waage("/dev/ttyUSB0")
+    with pytest.raises(RuntimeError):
+        w.read_one()
