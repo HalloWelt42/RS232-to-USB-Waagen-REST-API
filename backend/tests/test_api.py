@@ -36,7 +36,7 @@ def stubbed_app():
         _r(200.0, True),
     ]
 
-    async def fake_reader_loop(port, baudrate, state, sinks):
+    async def fake_reader_loop(reader_factory, state, sinks):
         state.reader_alive = True
         for reading in pumped:
             await state.publish(reading)
@@ -116,7 +116,7 @@ def test_websocket_streams_readings(stubbed_app: TestClient) -> None:
 def test_weight_503_when_no_data() -> None:
     """Ohne Reader-Stub und ohne Daten -> 503."""
 
-    async def silent_reader(port, baudrate, state, sinks):
+    async def silent_reader(reader_factory, state, sinks):
         await asyncio.sleep(3600)  # nichts publishen
 
     with patch.object(api_module, "_reader_loop", silent_reader):
@@ -134,6 +134,24 @@ def test_openapi_schema_available(stubbed_app: TestClient) -> None:
     assert "/weight" in schema["paths"]
     assert "/health" in schema["paths"]
     assert "/history" in schema["paths"]
+
+
+def test_simulate_flag_uses_simulator() -> None:
+    """Mit simulate=True läuft die App vollständig ohne Hardware."""
+    import time as _time
+    app = api_module.create_app(simulate=True)
+    with TestClient(app) as client:
+        # Simulator liefert sofort Readings (Default 4 Hz, also alle 250 ms)
+        for _ in range(20):
+            r = client.get("/weight")
+            if r.status_code == 200:
+                break
+            _time.sleep(0.1)
+        assert r.status_code == 200
+        body = r.json()
+        assert "weight_g" in body
+        assert "unit" in body
+        assert body["unit"] == "g"
 
 
 def test_docs_page_renders(stubbed_app: TestClient) -> None:

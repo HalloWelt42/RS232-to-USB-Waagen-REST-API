@@ -19,6 +19,9 @@ Konfiguration über Umgebungsvariablen:
 - ``WAAGE_SQLITE``   (optional: Pfad zur SQLite-DB)
 - ``WAAGE_HISTORY``  (default: 1000 — Größe des Ringpuffers)
 - ``WAAGE_CORS``     (default: ``*`` — Allowed-Origins, kommagetrennt)
+- ``WAAGE_SIMULATE`` (default: aus; Werte ``1``/``true``/``yes`` aktivieren
+                     den Software-Simulator anstelle der echten Waage —
+                     praktisch für UI-Demos und Tests ohne Hardware)
 """
 
 from __future__ import annotations
@@ -40,6 +43,7 @@ from pydantic import BaseModel, Field
 from .logger import CsvSink, MultiSink, SqliteSink
 from .parser import Reading
 from .reader import DEFAULT_BAUD, DEFAULT_PORT, Waage
+from .simulator import SimulatedWaage
 
 log = logging.getLogger(__name__)
 
@@ -130,23 +134,23 @@ def _build_sinks() -> Optional[MultiSink]:
 
 
 async def _reader_loop(
-    port: str,
-    baudrate: int,
+    reader_factory,
     state: _State,
     sinks: Optional[MultiSink],
 ) -> None:
     """Liest die Waage in einem Hintergrund-Task und veröffentlicht Readings.
 
-    Der Task ist tolerant gegenüber Verbindungsabbrüchen — bei Fehler
-    Reconnect mit exponentiellem Backoff.
+    ``reader_factory`` ist ein Callable ohne Argumente, das einen frisch
+    geöffneten Reader-Kontextmanager liefert (echte Waage oder Simulator).
+    Bei Verbindungsabbrüchen wird mit exponentiellem Backoff neu verbunden.
     """
     backoff = 1.0
     while True:
         try:
-            with Waage(port, baudrate) as w:
+            with reader_factory() as w:
                 state.reader_alive = True
                 backoff = 1.0
-                log.info("Waage geöffnet: %s @ %d", port, baudrate)
+                log.info("Reader geöffnet: %s", type(w).__name__)
                 # Generator in Thread laufen lassen (pyserial ist blocking)
                 while True:
                     reading = await asyncio.to_thread(w.read_one)
@@ -178,18 +182,28 @@ def _origins() -> list[str]:
     return [o.strip() for o in raw.split(",") if o.strip()]
 
 
+def _make_reader_factory(port: str, baudrate: int, simulate: bool):
+    """Liefert einen Callable, der den passenden Reader öffnet."""
+    if simulate:
+        log.info("Simulationsmodus aktiv — keine echte Waage am Port")
+        return lambda: SimulatedWaage()
+    return lambda: Waage(port, baudrate)
+
+
 def create_app(
     port: str = DEFAULT_PORT,
     baudrate: int = DEFAULT_BAUD,
     history_size: int = 1000,
+    simulate: bool = False,
 ) -> FastAPI:
 
     state = _State(history=history_size)
+    reader_factory = _make_reader_factory(port, baudrate, simulate)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         sinks = _build_sinks()
-        task = asyncio.create_task(_reader_loop(port, baudrate, state, sinks),
+        task = asyncio.create_task(_reader_loop(reader_factory, state, sinks),
                                    name="waage-reader")
         log.info("API gestartet, Reader-Task läuft")
         try:
@@ -324,11 +338,16 @@ def create_app(
     return app
 
 
+def _env_flag(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in ("1", "true", "yes", "on")
+
+
 # Default-App-Instanz (für `uvicorn waage.api:app`)
 app = create_app(
     port=os.getenv("WAAGE_PORT", DEFAULT_PORT),
     baudrate=int(os.getenv("WAAGE_BAUD", DEFAULT_BAUD)),
     history_size=int(os.getenv("WAAGE_HISTORY", 1000)),
+    simulate=_env_flag("WAAGE_SIMULATE"),
 )
 
 
