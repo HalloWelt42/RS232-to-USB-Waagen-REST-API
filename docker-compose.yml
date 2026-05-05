@@ -1,0 +1,50 @@
+# RS232-to-USB-Waagen-REST-API — Top-Level Compose
+#
+# Ein-Befehl-Start auf dem Pi:
+#   docker compose up -d
+#
+# Frontend: http://<pi-ip>:8201/         (Svelte UI + nginx Proxy)
+# Backend:  http://<pi-ip>:8200/         (FastAPI direkt)
+# Backend Docs: http://<pi-ip>:8200/docs
+# Daten:    ./data                       (CSV + SQLite Logs)
+#
+# Voraussetzung: FTDI-Adapter auf /dev/ttyUSB0 (siehe README).
+
+services:
+  waage-backend:
+    build: ./backend
+    container_name: waage-backend
+    restart: unless-stopped
+    ports:
+      - "8200:8200"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    volumes:
+      - ./data:/data
+    environment:
+      - WAAGE_PORT=/dev/ttyUSB0
+      - WAAGE_BAUD=9600
+      - WAAGE_HOST=0.0.0.0
+      - WAAGE_API_PORT=8200
+      - WAAGE_CSV=/data/waage.csv
+      - WAAGE_SQLITE=/data/waage.db
+      - WAAGE_HISTORY=2000
+      - WAAGE_CORS=*
+      - TZ=Europe/Berlin
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8200/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  waage-frontend:
+    build: ./frontend
+    container_name: waage-frontend
+    restart: unless-stopped
+    ports:
+      - "8201:80"
+    environment:
+      - TZ=Europe/Berlin
+    depends_on:
+      - waage-backend
