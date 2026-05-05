@@ -1,18 +1,27 @@
-"""Frame-Parser für G&G PLC Waagen-Frames.
+"""Frame-Parser für G&G-Waagen-Frames.
 
 Reine Funktion: rohe Bytes rein, ``Reading`` raus (oder ``None``, wenn das
 Frame nicht passt). Hardware-frei und vollständig testbar mit Fixtures.
 
-Frame-Format-Annahme (G&G typisch, tolerant umgesetzt):
+Primäres Format (offizielle G&G-Anleitung, Kapitel 5.1):
 
-    ST,+  123.4 g\\r\\n   – stable, positiv
-    US,-   12.3 g\\r\\n   – unstable, negativ
-       +123.4 g\\r\\n     – einfaches Format ohne Status-Flag
-        12.34 kg\\r\\n    – Kilogramm wird intern in g umgerechnet
-    OL\\r\\n              – overload -> None
+    [Sign 2B] [Data 7B] [Unit 3B] [CR] [LF]
+    Beispiel:  b' -12.345 kg\\r\\n'
 
-Der Parser akzeptiert sowohl ``\\r\\n`` als auch ``\\n`` als Terminator und
-ist großzügig mit Whitespace zwischen Vorzeichen, Zahl und Einheit.
+Bei G&G-Frames gibt es kein explizites Stable/Unstable-Flag im Frame —
+die Übertragung erfolgt einmalig auf den Print-Befehl ``ESC p`` (oder
+schlicht ``p``), das Ergebnis ist implizit der aktuelle Anzeigewert.
+Wir setzen ``stable=True`` für G&G-Frames, da die Waage bei einer
+schwankenden Anzeige typischerweise nicht antwortet.
+
+Zusätzlich akzeptiert der Parser tolerant ein verbreitetes Alternativ-
+Format mit ST/US-Status-Tag (z.B. bei A&D- oder Kern-Waagen):
+
+    b'ST,+  123.4 g\\r\\n'   stable, positiv
+    b'US,-   12.3 g\\r\\n'   unstable, negativ
+
+Beide Terminatoren ``\\r\\n`` und einzelnes ``\\n`` werden akzeptiert,
+führende und trailing Whitespaces toleriert.
 """
 
 from __future__ import annotations
