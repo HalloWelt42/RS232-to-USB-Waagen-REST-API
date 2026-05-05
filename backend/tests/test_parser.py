@@ -21,16 +21,26 @@ def _decode(literal: str) -> bytes:
 @pytest.mark.parametrize(
     ("frame_literal", "expected_weight", "expected_stable", "expected_unit"),
     [
-        (r"ST,+  123.4 g\r\n",     123.4,  True,  "g"),
-        (r"ST,+ 1234.5 g\r\n",    1234.5,  True,  "g"),
-        (r"US,+   12.3 g\r\n",      12.3, False,  "g"),
-        (r"ST,-    5.0 g\r\n",      -5.0,  True,  "g"),
-        (r"ST,+   0.0 g\r\n",        0.0,  True,  "g"),
-        (r"US,+ 5999.9 g\r\n",    5999.9, False,  "g"),
-        (r"ST,+    1.234 kg\r\n", 1234.0,  True,  "kg"),
-        (r"  +123.4 g\r\n",        123.4,  True,  "g"),
-        (r"+0.0 g\n",                0.0,  True,  "g"),
-        (r"ST,-1234.5g\r\n",     -1234.5,  True,  "g"),  # Whitespace fehlt
+        # Offizielles G&G-Format laut Anleitung Kap. 5.1:
+        # [Sign 2B][Data 7B][Unit 3B][CR][LF]
+        (r"    12.3 g  \r\n",           12.3,  True,  "g"),
+        (r"   123.4 g  \r\n",          123.4,  True,  "g"),
+        (r"  1234.5 g  \r\n",         1234.5,  True,  "g"),
+        (r"     0.0 g  \r\n",            0.0,  True,  "g"),
+        (r"   -50.0 g  \r\n",          -50.0,  True,  "g"),
+        (r" -12.345 kg \r\n",       -12345.0,  True,  "kg"),
+        # Variations ohne Padding (z.B. von Bluetooth-Bridge)
+        (r"-1234.5 g\r\n",           -1234.5,  True,  "g"),
+        (r"5999.9 g\n",               5999.9,  True,  "g"),
+        # Alternativ-Format mit ST/US-Tag (toleriert, z.B. A&D, Kern)
+        (r"ST,+  123.4 g\r\n",         123.4,  True,  "g"),
+        (r"ST,+ 1234.5 g\r\n",        1234.5,  True,  "g"),
+        (r"US,+   12.3 g\r\n",          12.3, False,  "g"),
+        (r"ST,-    5.0 g\r\n",          -5.0,  True,  "g"),
+        (r"ST,+   0.0 g\r\n",            0.0,  True,  "g"),
+        (r"US,+ 5999.9 g\r\n",        5999.9, False,  "g"),
+        (r"ST,+    1.234 kg\r\n",     1234.0,  True,  "kg"),
+        (r"ST,-1234.5g\r\n",         -1234.5,  True,  "g"),
     ],
 )
 def test_parse_valid_frames(
