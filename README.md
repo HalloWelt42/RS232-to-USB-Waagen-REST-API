@@ -141,13 +141,45 @@ Das Output (mit sichtbaren `\r\n` etc.) hilft, den Parser-Regex in
 | `WAAGE_HISTORY` | `1000` | Größe des In-Memory-Ringpuffers |
 | `WAAGE_CORS` | `*` | Allowed-Origins |
 
-## Hardware
+## Hardware und Treiber
 
-- **Waage:** G&G PLC 6000g/0,1g (DB9 RS232)
+- **Waage:** G&G PLC 6000g/0,1g (DB9 RS232, 9600 Baud, 8N1)
 - **Adapter:** FTDI FT232RL USB-RS232 (USB-VID:PID `0403:6001`)
-- **Host:** Raspberry Pi 5 / Pi Zero 2 W (Linux)
-- User muss in der `dialout`-Gruppe sein:
-  `sudo usermod -aG dialout $USER && newgrp dialout`
+- **Host:** Raspberry Pi 5 oder Pi Zero 2 W (Linux)
+
+Der Treiber `ftdi_sio` ist bei Raspberry Pi OS, Debian und Ubuntu fest
+im Kernel enthalten. **Kein manueller Treiber-Install nötig**, sobald
+der Adapter eingesteckt ist, taucht `/dev/ttyUSB0` automatisch auf:
+
+```bash
+lsmod | grep ftdi          # ftdi_sio und usbserial sollten geladen sein
+lsusb | grep -i ftdi       # FTDI-Adapter sichtbar?
+ls -l /dev/ttyUSB0         # Device-Knoten muss da sein
+```
+
+User-Zugriffsrechte einrichten (einmalig):
+
+```bash
+sudo usermod -aG dialout,plugdev $USER
+newgrp dialout
+```
+
+## Simulationsmodus (ohne Hardware)
+
+Für Frontend-Entwicklung oder Demos ohne angeschlossene Waage gibt es
+einen Software-Simulator, der über `WAAGE_SIMULATE=1` aktiviert wird:
+
+```bash
+# Compose mit Simulator
+WAAGE_SIMULATE=1 docker compose up -d --build
+
+# Bare metal
+cd backend && WAAGE_SIMULATE=1 .venv/bin/python -m waage.api
+```
+
+Der Simulator generiert realistische Frames mit Gewichtsänderungen,
+Stable/Unstable-Übergängen und Mess-Jitter. Frames durchlaufen denselben
+Parser wie echte Daten — die API ist von außen nicht zu unterscheiden.
 
 ## Lizenz
 

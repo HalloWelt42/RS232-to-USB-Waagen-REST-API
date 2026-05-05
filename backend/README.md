@@ -48,6 +48,59 @@ docker run --rm -p 8200:8200 \
 | `WAAGE_SQLITE` | — | Optional: SQLite-DB |
 | `WAAGE_CORS` | `*` | Allowed-Origins, kommagetrennt |
 | `WAAGE_LOGLEVEL` | `info` | uvicorn log level |
+| `WAAGE_SIMULATE` | aus | `1`/`true`/`yes` aktiviert den Software-Simulator anstelle der echten Waage |
+
+## Simulationsmodus
+
+Für UI-Demos, Frontend-Entwicklung und End-to-End-Tests ohne Hardware
+gibt es einen Software-Simulator. Aktivierung über die Umgebungsvariable
+`WAAGE_SIMULATE=1`:
+
+```bash
+WAAGE_SIMULATE=1 python -m waage.api
+```
+
+Der Simulator imitiert das Verhalten der echten Waage:
+
+- Standard-Frame-Rate von 4 Hz
+- Wechselnde Zielgewichte zwischen 0 g und 3000 g
+- Realistische Übergänge mit instabilen Frames während des Wägens
+- Mess-Jitter im Bereich der Geräteauflösung (0,1 g)
+- Frames im G&G-typischen Format `ST,+ 1234.5 g\r\n`
+
+Die im Simulationsmodus erzeugten Frames durchlaufen denselben Parser
+und dieselben Sinks wie echte Daten — die API ist von außen nicht zu
+unterscheiden.
+
+## Treiber
+
+Der FTDI-Adapter (Chip FT232R, USB-VID:PID `0403:6001`) wird unter
+Linux durch das Kernel-Modul `ftdi_sio` bedient. Das Modul ist bei
+Raspberry Pi OS, Debian und Ubuntu standardmäßig im Kernel enthalten —
+**kein zusätzlicher Treiber notwendig**.
+
+Statusprüfung:
+
+```bash
+lsmod | grep ftdi          # ftdi_sio + usbserial sollten gelistet sein
+lsusb | grep -i ftdi       # Future Technology Devices ... FT232 Serial
+ls -l /dev/ttyUSB0         # Device-Knoten muss da sein
+dmesg | grep -i ttyusb     # Verbindungs-Log
+```
+
+Falls `/dev/ttyUSB0` nicht erscheint, hilft meist:
+
+```bash
+sudo modprobe ftdi_sio
+sudo dmesg | tail
+```
+
+User in die Zugriffsgruppe aufnehmen (sonst Permission denied):
+
+```bash
+sudo usermod -aG dialout,plugdev $USER
+newgrp dialout
+```
 
 ## Sniffer
 
