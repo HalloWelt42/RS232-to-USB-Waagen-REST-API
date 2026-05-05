@@ -16,7 +16,7 @@
   const HISTORY_MAX = 200;
 
   onMount(() => {
-    loadHistory();
+    loadInitial();
     pollHealth();
     const healthTimer = setInterval(pollHealth, 5000);
 
@@ -36,12 +36,22 @@
     };
   });
 
-  async function loadHistory() {
+  async function loadInitial() {
+    // Beim Mount sofort den letzten Wert und die History via REST holen,
+    // damit das UI nicht erst auf den ersten WebSocket-Frame warten muss.
     try {
-      const data = await api.history(50);
-      history = data.items;
+      const [hist, current] = await Promise.allSettled([
+        api.history(50),
+        api.weight(),
+      ]);
+      if (hist.status === 'fulfilled') {
+        history = hist.value.items;
+      }
+      if (current.status === 'fulfilled') {
+        reading = current.value;
+      }
     } catch (e) {
-      console.warn('History laden gescheitert:', e);
+      console.warn('Initial-Laden gescheitert:', e);
     }
   }
 
