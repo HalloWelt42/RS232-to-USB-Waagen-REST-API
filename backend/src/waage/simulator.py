@@ -1,9 +1,15 @@
-"""Software-Simulation der G&G PLC Waage.
+"""Software-Simulation der G&G-Waage.
 
 Liefert realistische Frames mit Gewichtsänderungen, Stable/Unstable-
 Übergängen und Mess-Jitter, ohne dass eine echte Waage am seriellen Port
 hängen muss. Praktisch für UI-Demos, Frontend-Entwicklung und
 End-to-End-Tests gegen das Backend.
+
+Frame-Format wie in der offiziellen G&G-Anleitung (Kapitel 5.1)
+beschrieben:
+
+    [Sign 2B] [Data 7B] [Unit 3B] [CR] [LF]
+    Beispiel:  b' -12.345 kg\\r\\n'
 
 Das Verhalten orientiert sich an einer realistisch bedienten Waage:
 
@@ -143,10 +149,27 @@ class SimulatedWaage:
     # ------------------------------------------------------------------
     @staticmethod
     def _build_frame(weight_g: float, stable: bool) -> bytes:
-        """Erzeugt rohe Bytes im G&G-typischen Format."""
-        sign = "+" if weight_g >= 0 else "-"
-        status = "ST" if stable else "US"
-        return f"{status},{sign}{abs(weight_g):8.1f} g\r\n".encode("ascii")
+        """Erzeugt rohe Bytes im G&G-Format (Kapitel 5.1 der Anleitung).
+
+        Format:  [Sign 2B] [Data 7B] [Unit 3B] [CR] [LF]
+        Beispiel positiv:   b'    12.3 g  \\r\\n'  (zwei Leerzeichen vor Wert,
+                            Padding-Spaces am Ende der Einheit)
+        Beispiel negativ:   b'   -12.3 g  \\r\\n'
+
+        Bei einer echten G&G-Waage gibt es keinen Stable/Unstable-Tag im
+        Frame — die Print-Antwort kommt nur, wenn der Wert sinnvoll ist.
+        Damit der Simulator dem Frontend trotzdem realistische Übergänge
+        zeigen kann, wird der Stable-Status über das Status-Byte ausserhalb
+        des Frames mitgeführt; im Frame selbst landet ausschliesslich das
+        G&G-Format.
+        """
+        sign = "-" if weight_g < 0 else " "
+        magnitude = abs(weight_g)
+        # 7 Byte Datenfeld, rechtsbündig, eine Nachkommastelle
+        data = f"{magnitude:6.1f}"           # z.B. "  12.3"
+        # Einheit auf 3 Byte padden
+        unit = f"{'g':<3}"                   # "g  "
+        return f"{sign}{data} {unit}\r\n".encode("ascii")
 
     # ------------------------------------------------------------------
     #  Öffentliche API (deckungsgleich zu ``waage.reader.Waage``)

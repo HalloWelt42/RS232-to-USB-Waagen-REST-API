@@ -54,12 +54,18 @@ def test_raw_frame_is_parsable(fast_sim: SimulatedWaage) -> None:
 
 
 def test_raw_frame_format(fast_sim: SimulatedWaage) -> None:
-    """Frames passen zum G&G-Pattern ``ST,+   12.3 g\\r\\n``."""
-    pattern = re.compile(rb"^(ST|US),[+-]\s*\d+\.\d g\r\n$")
+    """Frames passen zum offiziellen G&G-Format aus Kapitel 5.1 der Anleitung.
+
+    Aufbau: [Sign 2B][Data 7B][Unit 3B][CR][LF]
+    Beispiele: b'    12.3 g  \\r\\n', b'   -50.0 g  \\r\\n'
+    """
+    pattern = re.compile(rb"^[ -]\s*\d+\.\d g\s*\r\n$")
     with fast_sim as w:
         for _ in range(5):
             r = w.read_one()
             assert pattern.match(r.raw), f"unexpected format: {r.raw!r}"
+            # Niemals ein ST/US-Tag im G&G-Frame
+            assert not r.raw.startswith((b"ST", b"US"))
 
 
 def test_simulator_eventually_changes_weight(fast_sim: SimulatedWaage) -> None:
