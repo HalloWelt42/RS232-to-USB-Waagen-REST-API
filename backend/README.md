@@ -102,9 +102,46 @@ sudo usermod -aG dialout,plugdev $USER
 newgrp dialout
 ```
 
+## Frame-Format
+
+Die G&G-Anleitung (Kapitel 5.1) beschreibt das offizielle Frame-Format:
+
+```
+[Sign 2B] [Data 7B] [Unit 3B] [CR] [LF]    = 14 Byte
+Beispiel positiv:   b'    12.3 g  \r\n'
+Beispiel negativ:   b' -12.345 kg \r\n'
+```
+
+Die Waage sendet **nur auf Befehl** (Print). Das Steuerzeichen ist ab Werk
+`ESC` (`0x1B`), in Verbindung mit `p` ergibt sich der Druckbefehl
+`b'\x1bp'`. Bei reiner RS232-Verkabelung wird in einigen G&G-Modellen
+auch das einzelne Zeichen `b'p'` akzeptiert.
+
+| Hex | ASCII | Wirkung |
+|-----|-------|---------|
+| `1B 70` | `ESC p` | Wert ausgeben (Print) |
+| `1B 71` | `ESC q` | Kalibrierung (Vorsicht!) |
+| `1B 72` | `ESC r` | Zählfunktion |
+| `1B 73` | `ESC s` | Einheit wechseln |
+| `1B 74` | `ESC t` | Tara |
+| `1B 75` | `ESC u` | Beleuchtung umschalten |
+
+Der Parser akzeptiert zusätzlich tolerant ein weit verbreitetes
+Alternativ-Format mit Status-Tag (z.B. von A&D- oder Kern-Waagen):
+`b'ST,+  123.4 g\r\n'`.
+
+## Verkabelung
+
+Die RS232-Schnittstelle der Waage **und** der USB-Adapter sind beide DTE
+und senden auf Pin 3, empfangen auf Pin 2. Direkte Verkabelung ohne
+Crossover liefert keine Daten in beide Richtungen — laut G&G-Anleitung
+Kapitel 6: *"Es ist zwingend erforderlich, dass ein überkreuztes
+NULLMODEMKABEL oder ein entsprechender Adapter verwendet wird."*
+
 ## Sniffer
 
-Wenn das Frame-Format der Waage noch nicht bekannt ist:
+Wenn unklar ist, ob die Waage überhaupt antwortet (z.B. nach Hardware-
+Tausch oder Kabelwechsel):
 
 ```bash
 python sniffer.py --port /dev/ttyUSB0          # 9600 Baud
