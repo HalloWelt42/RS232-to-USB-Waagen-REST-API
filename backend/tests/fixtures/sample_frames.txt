@@ -1,0 +1,15 @@
+# Beispielframes für Parser-Tests.
+# In Phase 1 (Sniffer-Lauf) wird diese Datei mit echten Frames angereichert.
+# Bis dahin: synthetische Frames nach G&G-typischem Format.
+#
+# Eine Zeile = ein Frame. Steuerzeichen werden als Python-Repr angegeben
+# (\r\n etc.) — die Tests konvertieren beim Laden.
+ST,+  123.4 g\r\n
+ST,+ 1234.5 g\r\n
+US,+   12.3 g\r\n
+ST,-    5.0 g\r\n
+ST,+   0.0 g\r\n
+US,+ 5999.9 g\r\n
+ST,+    1.234 kg\r\n
+  +123.4 g\r\n
++0.0 g\n
