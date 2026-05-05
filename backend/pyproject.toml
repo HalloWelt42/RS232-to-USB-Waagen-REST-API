@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "waage"
+version = "0.1.0"
+description = "G&G PLC 6000g/0,1g Präzisionswaage über RS232 (FTDI) auslesen"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "pi" }]
+dependencies = [
+    "pyserial>=3.5",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[project.scripts]
+waage = "waage.cli:main"
+waage-api = "waage.api:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
