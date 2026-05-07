@@ -1,8 +1,14 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
+// Single Source of Truth: VERSION-Datei im Repo-Wurzel.
+// Falls vorhanden, hat sie Vorrang gegenüber package.json.
+let APP_VERSION = pkg.version;
+if (existsSync('../VERSION')) {
+  APP_VERSION = readFileSync('../VERSION', 'utf-8').trim();
+}
 
 // Backend-Target — im Compose-Setup heißt der Service `waage-backend`,
 // im lokalen Dev-Modus läuft er auf localhost:8200.
@@ -11,7 +17,7 @@ const BACKEND = process.env.VITE_BACKEND || 'http://localhost:8200';
 export default defineConfig({
   plugins: [svelte()],
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
   },
   server: {
     host: '0.0.0.0',

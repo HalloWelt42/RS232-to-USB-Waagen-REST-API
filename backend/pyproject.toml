@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "waage"
-version = "0.1.0"
-description = "G&G PLC 6000g/0,1g Präzisionswaage über RS232 (FTDI) auslesen"
+dynamic = ["version"]
+description = "Präzisionswaagen über RS232 (FTDI) auslesen — REST + WebSocket"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "pi" }]
@@ -24,6 +24,9 @@ waage-api = "waage.api:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { file = ["VERSION"] }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -41,6 +41,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from pydantic import BaseModel, Field
 
+from . import __version__
+
 from .logger import CsvSink, MultiSink, SqliteSink
 from .parser import Reading
 from .reader import (
@@ -96,8 +98,8 @@ class HistoryOut(BaseModel):
 
 class ApiInfo(BaseModel):
     name: str = "waage-api"
-    version: str = "0.1.0"
-    description: str = "G&G PLC 6000g/0,1g Waage als REST/WS-Service"
+    version: str = __version__
+    description: str = "G&G und kompatible Präzisionswaagen als REST/WS-Service"
     endpoints: dict[str, str]
 
 
