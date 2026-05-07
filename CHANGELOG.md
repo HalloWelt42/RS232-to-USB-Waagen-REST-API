@@ -9,8 +9,38 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.4.0] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Neu
+- **Stabile Display-Anzeige mit Ghost-Ziffern:** der Wägewert wird
+  im Hauptdisplay (LiveWaage, Wiegen, Toleranz-Lampe) mit fester
+  Stellen-Zahl angezeigt — abgeleitet aus dem aktiven Modell.
+  Führende Nullen sind Ghost (10 % Opazität), echte Werte voll
+  sichtbar. Bei einer 6000g/0,1g-Waage steht immer „0.000,0 g" im
+  Display, bei value 12,3 → „0.012,3 g" mit „0.0" als Ghost. Das
+  Auge muss zwischen Frames nicht neu fokussieren.
+- **Live ↔ Simulator-Umschalter** im Settings-Tab. Backend wechselt
+  ohne Neustart; ein orangefarbenes Warn-Banner unter der Topbar
+  weist auf aktive Simulation hin.
+- **Auto-Erfassen-Modi** im SamplesPanel — Manuell (Default),
+  Halb-Auto (Klick wartet auf nächsten Stable und erfasst dann),
+  Voll-Auto (jeder neue Stable-Wert nach einer Unstable-Phase
+  landet automatisch in der Liste, ohne Klick).
+- **Locale-Number-Format:** DE „1.234,5", EN „1,234.5" — wirkt
+  sowohl auf `formatGrams` als auch auf die Display-Anzeige.
+- **i18n-Erweiterung dokumentiert** in `locales/README.md` mit
+  Schritt-für-Schritt-Anleitung für neue Sprachen.
+
+### Geändert
+- **Messprotokoll tabellarisch** mit drei festen Spalten und
+  links-bündigen Werten. Mehr Abstand zwischen den Spalten und
+  Padding zum Scrollbalken.
+- **Scrollbar global überarbeitet** — Daumen/Track mit transparentem
+  Border (8 px breit, sichtbarer 4 px), so klebt der Inhalt nicht
+  am Rand.
+
+### Tests
+- Backend: 4 neue Cases für `/scale/source` — 157 Tests gesamt grün.
+- Frontend: 14 neue Cases für `buildStableSegments` und
+  Locale-aware `formatGrams` — 54 Tests gesamt grün.
 
 ## [0.3.4] — 2026-05-07
 
