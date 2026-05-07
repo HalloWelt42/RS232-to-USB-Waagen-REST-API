@@ -10,7 +10,7 @@
    */
   import { modelStore } from '../lib/modelStore.svelte';
   import { live } from '../lib/liveStore.svelte';
-  import { formatGrams } from '../lib/format';
+  import { formatGramsCompact } from '../lib/format';
   import { t } from '../lib/i18n';
 
   let m = $derived(modelStore.active);
@@ -38,17 +38,17 @@
   <h4>{t('tolerances.title')}</h4>
   <ul class="kv">
     <li><span class="k">{t('tolerances.maxG')}</span>
-      <span class="num v">{formatGrams(m.max_g)}</span></li>
+      <span class="num v">{formatGramsCompact(m.max_g)}</span></li>
     <li><span class="k">{t('tolerances.resolution')}</span>
-      <span class="num v">{formatGrams(m.resolution_g)}</span></li>
+      <span class="num v">{formatGramsCompact(m.resolution_g)}</span></li>
     <li class:warn={underMin}>
       <span class="k">{t('tolerances.minLoad')}</span>
-      <span class="num v">{m.min_load_g > 0 ? formatGrams(m.min_load_g) : '—'}</span>
+      <span class="num v">{m.min_load_g > 0 ? formatGramsCompact(m.min_load_g) : '—'}</span>
     </li>
     <li><span class="k">{t('tolerances.linearity')}</span>
-      <span class="num v">{m.linearity_g > 0 ? '±' + formatGrams(m.linearity_g) : '—'}</span></li>
+      <span class="num v">{m.linearity_g > 0 ? '±' + formatGramsCompact(m.linearity_g) : '—'}</span></li>
     <li><span class="k">{t('tolerances.repeatability')}</span>
-      <span class="num v">{m.repeatability_g > 0 ? formatGrams(m.repeatability_g) : '—'}</span></li>
+      <span class="num v">{m.repeatability_g > 0 ? formatGramsCompact(m.repeatability_g) : '—'}</span></li>
     <li><span class="k">{t('tolerances.stabilization')}</span>
       <span class="num v">{fmtSec(m.stabilization_s)}</span></li>
     <li><span class="k">{t('tolerances.warmup')}</span>
@@ -60,7 +60,7 @@
   {#if underMin}
     <p class="warn-banner">
       <i class="fa-solid fa-triangle-exclamation"></i>
-      {t('tolerances.belowMinWarning').replace('%w', formatGrams(m.min_load_g))}
+      {t('tolerances.belowMinWarning').replace('%w', formatGramsCompact(m.min_load_g))}
     </p>
   {/if}
 </div>

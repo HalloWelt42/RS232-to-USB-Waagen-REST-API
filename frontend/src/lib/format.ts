@@ -68,6 +68,46 @@ export function formatDiff(g: number | null | undefined, resolutionG?: number): 
   return `${sign}${localizeNumber(abs.toFixed(decimalsForResolution(res)), true)} g`;
 }
 
+/**
+ * Modell-spezifische Gramm-Anzeige, eindeutig zwischen den Locales.
+ *
+ * Vermeidet Konstrukte wie „6,000 kg" (im DE-Kontext = 6 kg, wird aber
+ * von englischen Lesern als 6000 kg fehlinterpretiert):
+ *
+ *   - ganze kg                       → „6 kg",  „30 kg"
+ *   - krumme Werte ab 1 kg           → „6.500 g" (DE) / „6,500 g" (EN)
+ *   - Bruchteile von Gramm           → „0,1 g"  (DE) / „0.1 g"  (EN)
+ *   - sonst                          → „220 g"
+ *
+ * So bleibt die Aussage in jeder Sprache eindeutig: ganze Kilogramm
+ * werden ohne Dezimaltrenner geschrieben, krumme Werte komplett in
+ * Gramm mit Tausender-Trenner.
+ */
+export function formatGramsCompact(g: number | null | undefined): string {
+  if (g === null || g === undefined || Number.isNaN(g)) return '—';
+  const fmt = currentNumberFormat();
+  // Ganzzahlige Kilogramm: ohne Dezimaltrenner — eindeutig
+  if (g >= 1000 && g % 1000 === 0) {
+    return `${g / 1000} kg`;
+  }
+  // Sub-Gramm und kleine Werte: mit passender Auflösung in Gramm
+  const dec = g < 1 ? Math.min(6, decimalsForResolution(Math.abs(g))) : 0;
+  if (g < 1 && dec > 0) {
+    // 0,001 g, 0,0001 g …  — Locale-Dezimal anwenden
+    return `${g.toFixed(dec).replace('.', fmt.decimal)} g`;
+  }
+  // 1 g … 999 g sowie krumme kg → vollständig in g mit Tausender-Trenner
+  const intPart = Math.trunc(g);
+  const grouped = intPart >= 1000
+    ? String(intPart).replace(/\B(?=(\d{3})+(?!\d))/g, fmt.thousand)
+    : String(intPart);
+  const fracPart = g % 1;
+  if (fracPart === 0) return `${grouped} g`;
+  // krummer Wert mit Nachkommastelle (selten bei Modellen)
+  const fracStr = String(g).split('.')[1] ?? '';
+  return `${grouped}${fmt.decimal}${fracStr} g`;
+}
+
 export function formatTime(iso: string | null | undefined): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleTimeString('de-DE', {

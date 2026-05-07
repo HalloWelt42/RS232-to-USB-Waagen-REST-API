@@ -8,6 +8,7 @@
  */
 
 import { api } from './api';
+import { formatGramsCompact } from './format';
 import type { ScaleModel } from './types';
 
 /**
@@ -61,14 +62,13 @@ class ModelStore {
       .filter(Boolean).join(' ');
   }
 
-  /** Kompaktes Label mit Eckdaten — „G&G PLC-6000 · 6000 g / 0,1 g". */
+  /** Kompaktes Label mit Eckdaten — z.B. „G&G PLC-6000 · 6 kg / 0,1 g".
+   *
+   *  Nutzt `formatGramsCompact`, das ganze Kilogramm ohne Dezimaltrenner
+   *  schreibt — vermeidet die mehrdeutige Form „6,000 kg" zwischen DE
+   *  und EN. */
   get compactLabel(): string {
-    const m = this.active;
-    const max = m.max_g >= 1000 ? `${m.max_g / 1000} kg` : `${m.max_g} g`;
-    const res = m.resolution_g >= 1
-      ? `${m.resolution_g} g`
-      : `${m.resolution_g.toString().replace('.', ',')} g`;
-    return `${this.displayName} · ${max} / ${res}`;
+    return `${this.displayName} · ${formatGramsCompact(this.active.max_g)} / ${formatGramsCompact(this.active.resolution_g)}`;
   }
 }
 

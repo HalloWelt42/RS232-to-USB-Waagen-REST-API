@@ -24,7 +24,8 @@ describe('buildHelpVars', () => {
     expect(v.modelName).toBe('G&G PLC-PLC-6000');
   });
 
-  it('formats kg above 1 kg', () => {
+  it('formats whole kg without decimal separator (eindeutig)', () => {
+    // war früher „6 kg" mit Doppelpunkt-Logik — jetzt explizit ohne Dezimal
     expect(buildHelpVars(PLC).maxG).toBe('6 kg');
   });
 
@@ -32,7 +33,7 @@ describe('buildHelpVars', () => {
     expect(buildHelpVars(ANALYTICAL).maxG).toBe('220 g');
   });
 
-  it('uses comma as decimal separator', () => {
+  it('uses comma as decimal separator (DE-Hilfe-Default)', () => {
     expect(buildHelpVars(PLC).resolutionG).toBe('0,1 g');
     expect(buildHelpVars(ANALYTICAL).resolutionG).toBe('0,0001 g');
   });
