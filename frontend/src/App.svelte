@@ -25,6 +25,7 @@
   import { WaageStream } from './lib/stream';
   import { theme } from './lib/theme';
   import { helpStore } from './lib/helpStore.svelte';
+  import { healthStore } from './lib/healthStore.svelte';
   import { modelStore } from './lib/modelStore.svelte';
   import { setDefaultResolution } from './lib/format';
   import type { ConnectionState, HealthInfo, MesslogEntry } from './lib/types';
@@ -47,8 +48,12 @@
   let messlogTimer: number | null = null;
 
   async function refreshHealth(): Promise<void> {
-    try { health = await api.scale.health(); }
-    catch { /* offline tolerieren */ }
+    try {
+      health = await api.scale.health();
+      healthStore.set(health);
+    } catch {
+      // offline tolerieren — bestehender Status bleibt sichtbar
+    }
   }
 
   async function refreshMesslog(): Promise<void> {
