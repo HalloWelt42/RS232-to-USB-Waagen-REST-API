@@ -33,6 +33,9 @@ export const api = {
     }),
   countReset: () =>
     request('/count/reset', { method: 'POST' }),
+  cmdTare:  () => request('/command/tare',  { method: 'POST' }),
+  cmdUnit:  () => request('/command/unit',  { method: 'POST' }),
+  cmdLight: () => request('/command/light', { method: 'POST' }),
 };
 
 /**

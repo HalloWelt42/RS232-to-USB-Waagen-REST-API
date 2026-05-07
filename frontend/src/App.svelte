@@ -5,6 +5,7 @@
   import HistoryList from './components/HistoryList.svelte';
   import HealthPanel from './components/HealthPanel.svelte';
   import CountPanel from './components/CountPanel.svelte';
+  import ActionButtons from './components/ActionButtons.svelte';
 
   let reading       = $state(null);
   let history       = $state([]);
@@ -92,6 +93,8 @@
   <div class="grid">
     <div class="primary">
       <WeightDisplay {reading} {connection} />
+
+      <ActionButtons />
 
       <div class="actions">
         <button onclick={fetchStable} disabled={stableLoading}>
