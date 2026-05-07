@@ -9,8 +9,34 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.3.4] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Neu
+- **Stückzähl-Vorlagen voll verwaltbar:** Anlegen, Bearbeiten,
+  Löschen — wer regelmäßig dieselben Teile zählt (Schrauben-Sorten,
+  Tabletten-Chargen, Münzsortimente), hält Name, Icon, Stückgewicht
+  und Beschreibung als Vorlage fest.
+- **„Als Vorlage speichern"** nach Kalibrierung — das exakte
+  Stückgewicht aus der aktuellen Kalibrierung landet direkt mit
+  Zeitstempel-Hinweis in der Vorlagen-Liste.
+- REST-Endpoints unter `/app/count/templates` mit CRUD,
+  SQLite-persistent, alphabetisch sortiert. Beim ersten Aufruf
+  werden vier Default-Vorlagen geseedet (Schrauben, Tabletten,
+  Münzen, Briefe) — sind aber sofort frei änder- oder löschbar.
+
+### Geändert
+- CountPanel komplett neu — Vorlagen-Karussell aus dem Server-Store
+  statt hardcoded. Hover auf einer Vorlage blendet Edit/Delete
+  ein, Plus-Karte am Ende öffnet das Anlege-Form mit FA-Icon-
+  Auswahl.
+- Hilfe-Eintrag „Stückzählung" um die Vorlagen-Verwaltung
+  erweitert (DE+EN).
+
+### Entfernt
+- `lib/countTemplates.ts` (hardcoded Defaults) — Logik ist jetzt
+  serverseitig im CountTemplateStore.
+
+### Tests
+- Backend: 15 neue Cases (8 Store + 7 REST) — 153 Tests gesamt grün.
+- Frontend weiterhin 40 Tests grün.
 
 ## [0.3.3] — 2026-05-07
 
