@@ -136,14 +136,14 @@
         </label>
         <label>
           {t('containers.weight')}
-          <div class="row-flex">
+          <span class="row-flex">
             <input type="text" inputmode="decimal" bind:value={formWeight} />
             <button class="btn-primary small" onclick={takeCurrent}
                     disabled={!live.reading}
                     title={t('containers.takeCurrent')}>
               <i class="fa-solid fa-circle-down"></i>
             </button>
-          </div>
+          </span>
         </label>
         <label>
           {t('containers.note')}

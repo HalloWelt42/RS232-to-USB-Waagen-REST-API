@@ -88,14 +88,14 @@
     <div class="form">
       <label>
         {t('panels.targetGrams')}
-        <div class="row">
+        <span class="row">
           <input type="text" inputmode="decimal" placeholder={t('panels.targetPlaceholder')}
                  bind:value={sollText} />
           <button class="btn-primary" onclick={takeOver} disabled={weight === null}>
             <i class="fa-solid fa-circle-down"></i>
             {t('panels.takeOverCurrent')}
           </button>
-        </div>
+        </span>
       </label>
 
       {#if soll !== null && diff !== null}

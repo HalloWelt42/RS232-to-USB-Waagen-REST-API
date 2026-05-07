@@ -229,7 +229,7 @@
         </label>
         <label>
           {t('countTemplates.pieceWeight')}
-          <div class="row-flex">
+          <span class="row-flex">
             <input type="text" inputmode="decimal" bind:value={formWeight} />
             {#if info?.piece_weight_g}
               <button class="btn-primary small" onclick={takeCurrentPieceWeight}
@@ -237,7 +237,7 @@
                 <i class="fa-solid fa-circle-down"></i>
               </button>
             {/if}
-          </div>
+          </span>
         </label>
         <label>
           {t('countTemplates.description')}
@@ -283,13 +283,13 @@
     <div class="manual">
       <label>
         {t('count.referenceCount')}
-        <div class="row-flex">
+        <span class="row-flex">
           <input type="text" inputmode="numeric" bind:value={refText} />
           <button class="btn-primary" onclick={calibrate} disabled={busy || liveGross === null}>
             <i class="fa-solid fa-check"></i>
             {t('count.calibrate')}
           </button>
-        </div>
+        </span>
       </label>
     </div>
 

@@ -113,11 +113,11 @@
     <div class="manual">
       <label>
         {t('panels.manualTaraGrams')}
-        <div class="row-flex">
+        <span class="row-flex">
           <input type="text" inputmode="decimal" placeholder={t('panels.manualPlaceholder')}
                  bind:value={tareText} />
           <button class="btn-primary" onclick={tareValue} disabled={busy}>{t('panels.setBtn')}</button>
-        </div>
+        </span>
       </label>
     </div>
 

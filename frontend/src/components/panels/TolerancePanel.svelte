@@ -99,13 +99,13 @@
     <div class="grid">
       <label>
         {t('panels.targetG')}
-        <div class="row-flex">
+        <span class="row-flex">
           <input type="text" inputmode="decimal" bind:value={targetText} />
           <button class="btn-primary small" onclick={takeOver} disabled={liveGross === null}
                   title={t('panels.takeOverCurrentTitle')}>
             <i class="fa-solid fa-circle-down"></i>
           </button>
-        </div>
+        </span>
       </label>
       <label>
         {t('panels.tolMinusG')}
