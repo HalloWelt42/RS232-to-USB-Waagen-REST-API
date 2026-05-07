@@ -70,14 +70,18 @@
     flex: 1 1 auto; min-height: 0;
   }
   /* Tabellarische Ausrichtung mit drei festen Spalten:
-        | Zeit (links)  | Differenz (links)  | → Resultat (rechts) | */
+       | Zeit (links) | Differenz (rechts, mit fester Einheits-Spur) | → Resultat (rechts) |
+     Die Differenz-Spalte ist rechtsbündig, sodass die Einheiten („g", „kg",
+     „Tara", „Start") fluchten und das Ablesen ruhig wird, auch wenn Werte
+     zwischen g und kg wechseln. */
   .row {
     display: grid;
-    grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1.2fr);
+    grid-template-columns: 72px minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--sp-3);
     align-items: baseline;
     padding: 7px var(--sp-2) 7px 4px;
     border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums lining-nums slashed-zero;
   }
   .row:last-child { border-bottom: none; }
   .ts {
@@ -87,8 +91,9 @@
   }
   .diff {
     font-size: var(--fs-md);
-    text-align: left;
+    text-align: right;            /* rechtsbündig — Einheiten untereinander */
     letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums lining-nums slashed-zero;
   }
   .diff.plus { color: var(--green); }
   .diff.minus { color: var(--orange); }
@@ -98,6 +103,7 @@
     color: var(--fg-dim);
     text-align: right;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums lining-nums slashed-zero;
   }
   .empty {
     padding: var(--sp-4); text-align: center;
