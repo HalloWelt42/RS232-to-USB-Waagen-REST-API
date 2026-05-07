@@ -24,6 +24,9 @@ const de = {
     search: 'Suchen (Volltext in Hilfe und Werkzeugen)',
     openSettings: 'Modell und Einstellungen öffnen',
     toolNav: 'Werkzeug-Auswahl',
+    simulatedWarning: 'Achtung — nur Simulation, keine echte Waage angeschlossen',
+    sourceLive: 'Live-Modus',
+    sourceSimulate: 'Simulator-Modus',
   },
   tools: {
     wiegen: 'Wiegen',
@@ -170,6 +173,18 @@ const de = {
     description: 'Beschreibung',
     takeCalibrated: 'Kalibriertes Stückgewicht übernehmen',
     deleteConfirm: 'Vorlage „%s" wirklich löschen?',
+  },
+  samples: {
+    captured: 'Wert erfasst',
+    captureNow: 'Aktuellen Wert erfasst',
+    captureOnStable: 'Bei nächstem Stable erfassen',
+    modeLabel: 'Erfassungs-Modus',
+    modeManual: 'Manuell',
+    modeHalfAuto: 'Halb-Auto',
+    modeAuto: 'Voll-Auto',
+    liveValue: 'Aktueller Live-Wert',
+    autoHint: 'Auto-Erfassen aktiv — jeder neue Stable-Wert landet in der Liste',
+    waitingForStable: 'Warte auf Stable …',
   },
   count: {
     totalWeight: 'Gesamtgewicht',

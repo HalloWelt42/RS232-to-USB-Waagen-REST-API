@@ -1,14 +1,17 @@
 /**
- * Formatierungs-Hilfen.
+ * Formatierungs-Hilfen mit dynamischer Auflösung und Locale-bewusster
+ * Number-Darstellung.
  *
- * `formatGrams` zeigt so viele Nachkommastellen, wie das aktive
- * Waagen-Modell auflösen kann — bei einer Analysewaage mit 0,001 g
- * stehen drei Nachkommastellen, bei einer Plattform mit 1 g Auflösung
- * keine. Wert ab 1000 g wird auf Kilogramm umgerechnet.
+ *   formatGrams(g, resolutionG?)        Standard-Anzeige (kleinere Werte)
+ *   formatDiff(g, resolutionG?)         mit Vorzeichen
+ *   buildStableSegments(g, model)       Display-stabil mit Ghost-Ziffern
  *
- * Die globale Standard-Auflösung wird bei App-Start aus dem aktiven
- * Modell gesetzt (siehe App.svelte: setDefaultResolution).
+ * Tausender- und Dezimaltrenner kommen aus `i18n.numberFormat`:
+ *   DE: 1.234,5     EN: 1,234.5
  */
+
+import { currentNumberFormat } from './i18n.svelte';
+import type { ScaleModel } from './types';
 
 let defaultResolutionG = 0.1;
 
@@ -19,29 +22,39 @@ export function decimalsForResolution(resolutionG: number): number {
   return Math.min(6, Math.ceil(-Math.log10(resolutionG)));
 }
 
-/**
- * Setzt die Default-Auflösung für alle nachfolgenden Format-Aufrufe
- * ohne explizites Modell. Wird von App.svelte beim Start und nach
- * jedem Modell-Wechsel aufgerufen.
- */
 export function setDefaultResolution(resolutionG: number): void {
   if (Number.isFinite(resolutionG) && resolutionG > 0) {
     defaultResolutionG = resolutionG;
   }
 }
 
-/** kg-Anzeige immer mit 3 Nachkommastellen — für die UI ausreichend
- *  präzise, nicht überfrachtet. Bei feinen Auflösungen (mg-Bereich)
- *  ist der g-Pfad zuständig, weil solche Waagen nicht über 1 kg gehen. */
+/** Anzahl Stellen vor dem Komma für die Maximalkapazität. */
+export function intDigitsForMax(maxG: number): number {
+  if (!Number.isFinite(maxG) || maxG <= 0) return 1;
+  return Math.max(1, Math.floor(Math.log10(maxG)) + 1);
+}
+
+/** Lokal-bewusst: Punkt durch Locale-Dezimaltrenner ersetzen, optional
+ *  mit Tausender-Trenner versehen. */
+function localizeNumber(raw: string, withThousand: boolean): string {
+  const fmt = currentNumberFormat();
+  const [intPart, fracPart] = raw.split('.');
+  let int = intPart;
+  if (withThousand && int.length > 3) {
+    int = int.replace(/\B(?=(\d{3})+(?!\d))/g, fmt.thousand);
+  }
+  return fracPart !== undefined ? `${int}${fmt.decimal}${fracPart}` : int;
+}
+
 const KG_DECIMALS = 3;
 
 export function formatGrams(g: number | null | undefined, resolutionG?: number): string {
   if (g === null || g === undefined || Number.isNaN(g)) return '—';
   const res = resolutionG ?? defaultResolutionG;
   if (Math.abs(g) >= 1000) {
-    return `${(g / 1000).toFixed(KG_DECIMALS)} kg`;
+    return `${localizeNumber((g / 1000).toFixed(KG_DECIMALS), true)} kg`;
   }
-  return `${g.toFixed(decimalsForResolution(res))} g`;
+  return `${localizeNumber(g.toFixed(decimalsForResolution(res)), true)} g`;
 }
 
 export function formatDiff(g: number | null | undefined, resolutionG?: number): string {
@@ -50,9 +63,9 @@ export function formatDiff(g: number | null | undefined, resolutionG?: number): 
   const abs = Math.abs(g);
   const res = resolutionG ?? defaultResolutionG;
   if (abs >= 1000) {
-    return `${sign}${(abs / 1000).toFixed(KG_DECIMALS)} kg`;
+    return `${sign}${localizeNumber((abs / 1000).toFixed(KG_DECIMALS), true)} kg`;
   }
-  return `${sign}${abs.toFixed(decimalsForResolution(res))} g`;
+  return `${sign}${localizeNumber(abs.toFixed(decimalsForResolution(res)), true)} g`;
 }
 
 export function formatTime(iso: string | null | undefined): string {
@@ -77,4 +90,159 @@ export function formatDuration(seconds: number | null | undefined): string {
   if (h) return `${h}h ${m}m ${s}s`;
   if (m) return `${m}m ${s}s`;
   return `${s}s`;
+}
+
+// ===========================================================================
+//  Stable Display — Ghost-Ziffern für nicht belegte Stellen
+// ===========================================================================
+
+export interface DisplaySegment {
+  text: string;
+  /** wenn true: 90 % Transparenz — nicht belegte Vorlauf-Stellen. */
+  ghost: boolean;
+  /** Klassifizierung für CSS-Layout: digit, sep, decimal, sign, unit. */
+  kind: 'digit' | 'sep' | 'decimal' | 'sign' | 'unit';
+}
+
+/**
+ * Zerlegt einen Wägewert in eine stabile Segment-Liste, ohne die
+ * Stellen-Zahl zwischen Aufrufen zu verändern. Führende Nullen werden
+ * als `ghost` markiert — visuell schwach (10 % Opazität), damit die
+ * Anzeige nicht zappelt.
+ *
+ * Beispiel max=6000, res=0,1:
+ *   value=12,3   →  0  .  0  1  2  ,  3  ' g'    (Ghost: 0, ., 0)
+ *   value=0      →  0  .  0  0  0  ,  0  ' g'    (Ghost: 0, ., 0, 0)
+ *   value=1234,5 →  1  .  2  3  4  ,  5  ' g'    (kein Ghost)
+ */
+export function buildStableSegments(
+  g: number | null | undefined,
+  model: { max_g: number; resolution_g: number } | null,
+): DisplaySegment[] {
+  const fmt = currentNumberFormat();
+  const maxG = model?.max_g ?? 6000;
+  const resolutionG = model?.resolution_g ?? defaultResolutionG;
+  const decimals = decimalsForResolution(resolutionG);
+  const intDigits = intDigitsForMax(maxG);
+  const segs: DisplaySegment[] = [];
+
+  if (g === null || g === undefined || Number.isNaN(g)) {
+    // Komplett-Ghost: alle möglichen Stellen abschwächen
+    return buildGhostFrame(intDigits, decimals, fmt);
+  }
+
+  const sign = g < 0 ? '-' : '';
+  const abs = Math.abs(g);
+  // Begrenze auf Modell-Max — alles darüber ist „außerhalb des
+  // Anzeige-Bereichs", aber wir zeigen den Wert trotzdem (nicht abschneiden).
+  const fixed = abs.toFixed(decimals);              // "12.3"
+  const [whole, frac] = fixed.split('.');
+  // Wenn der Wert die Anzeige-Breite sprengt, dehnen wir aus.
+  const padded = whole.length >= intDigits
+    ? whole
+    : whole.padStart(intDigits, '0');
+
+  // Index der ersten signifikanten Ziffer (1-9). Bei value=0 ist es
+  // die letzte Ziffer vor dem Komma.
+  const firstReal = padded.search(/[1-9]/);
+  const ghostUntil = firstReal === -1 ? padded.length - 1 : firstReal;
+
+  if (sign) segs.push({ text: sign, ghost: false, kind: 'sign' });
+
+  // Tausender-Trenner alle 3 Stellen von rechts; ghost wenn vor erstem real.
+  let cursor = 0;
+  for (let i = 0; i < padded.length; i++) {
+    if (cursor > 0 && (padded.length - cursor) % 3 === 0 && i > 0) {
+      segs.push({
+        text: fmt.thousand,
+        ghost: cursor <= ghostUntil,
+        kind: 'sep',
+      });
+    }
+    segs.push({
+      text: padded[i],
+      ghost: cursor < ghostUntil,
+      kind: 'digit',
+    });
+    cursor++;
+  }
+
+  if (decimals > 0 && frac !== undefined) {
+    segs.push({ text: fmt.decimal, ghost: false, kind: 'decimal' });
+    for (const ch of frac) {
+      segs.push({ text: ch, ghost: false, kind: 'digit' });
+    }
+  }
+
+  segs.push({ text: ' g', ghost: false, kind: 'unit' });
+  return segs;
+}
+
+/** Wenn kein Wert vorliegt, zeigen wir die Display-Maske komplett ghost. */
+function buildGhostFrame(
+  intDigits: number,
+  decimals: number,
+  fmt: NumberFormatOpts,
+): DisplaySegment[] {
+  const segs: DisplaySegment[] = [];
+  for (let i = 0; i < intDigits; i++) {
+    if (i > 0 && (intDigits - i) % 3 === 0) {
+      segs.push({ text: fmt.thousand, ghost: true, kind: 'sep' });
+    }
+    segs.push({ text: '0', ghost: true, kind: 'digit' });
+  }
+  if (decimals > 0) {
+    segs.push({ text: fmt.decimal, ghost: true, kind: 'decimal' });
+    for (let i = 0; i < decimals; i++) {
+      segs.push({ text: '0', ghost: true, kind: 'digit' });
+    }
+  }
+  segs.push({ text: ' g', ghost: true, kind: 'unit' });
+  return segs;
+}
+
+interface NumberFormatOpts { decimal: string; thousand: string; }
+
+/** Reine Funktion, Locale-Format explizit übergeben — nutzbar für Tests. */
+export function buildStableSegmentsWith(
+  g: number | null | undefined,
+  model: { max_g: number; resolution_g: number },
+  fmt: NumberFormatOpts,
+): DisplaySegment[] {
+  const decimals = decimalsForResolution(model.resolution_g);
+  const intDigits = intDigitsForMax(model.max_g);
+  const segs: DisplaySegment[] = [];
+
+  if (g === null || g === undefined || Number.isNaN(g)) {
+    return buildGhostFrame(intDigits, decimals, fmt);
+  }
+
+  const sign = g < 0 ? '-' : '';
+  const abs = Math.abs(g);
+  const fixed = abs.toFixed(decimals);
+  const [whole, frac] = fixed.split('.');
+  const padded = whole.length >= intDigits
+    ? whole
+    : whole.padStart(intDigits, '0');
+  const firstReal = padded.search(/[1-9]/);
+  const ghostUntil = firstReal === -1 ? padded.length - 1 : firstReal;
+
+  if (sign) segs.push({ text: sign, ghost: false, kind: 'sign' });
+
+  let cursor = 0;
+  for (let i = 0; i < padded.length; i++) {
+    if (cursor > 0 && (padded.length - cursor) % 3 === 0 && i > 0) {
+      segs.push({ text: fmt.thousand, ghost: cursor <= ghostUntil, kind: 'sep' });
+    }
+    segs.push({ text: padded[i], ghost: cursor < ghostUntil, kind: 'digit' });
+    cursor++;
+  }
+  if (decimals > 0 && frac !== undefined) {
+    segs.push({ text: fmt.decimal, ghost: false, kind: 'decimal' });
+    for (const ch of frac) {
+      segs.push({ text: ch, ghost: false, kind: 'digit' });
+    }
+  }
+  segs.push({ text: ' g', ghost: false, kind: 'unit' });
+  return segs;
 }

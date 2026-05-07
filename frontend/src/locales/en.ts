@@ -24,6 +24,9 @@ const en = {
     search: 'Search (full-text in help and tools)',
     openSettings: 'Open model and settings',
     toolNav: 'Tool selector',
+    simulatedWarning: 'Warning — simulator only, no real scale connected',
+    sourceLive: 'Live mode',
+    sourceSimulate: 'Simulator mode',
   },
   tools: {
     wiegen: 'Weighing',
@@ -170,6 +173,18 @@ const en = {
     description: 'Description',
     takeCalibrated: 'Take calibrated piece weight',
     deleteConfirm: 'Really delete template „%s"?',
+  },
+  samples: {
+    captured: 'Value captured',
+    captureNow: 'Capture current value',
+    captureOnStable: 'Capture on next stable',
+    modeLabel: 'Capture mode',
+    modeManual: 'Manual',
+    modeHalfAuto: 'Half-auto',
+    modeAuto: 'Full-auto',
+    liveValue: 'Current live value',
+    autoHint: 'Auto-capture active — every new stable value lands in the list',
+    waitingForStable: 'Waiting for stable …',
   },
   count: {
     totalWeight: 'Total weight',
