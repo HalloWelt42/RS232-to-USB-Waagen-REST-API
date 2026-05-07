@@ -139,6 +139,24 @@
     overflow: hidden;
     resize: both;        /* native Größenänderung unten rechts */
   }
+  /* Vollbild-Hilfe auf Smartphones: das schwebende Mini-Fenster mit
+     Verschieben/Resize ist auf 380-px-Bildschirmen unbrauchbar. Wir
+     ignorieren die gespeicherte Geometrie und decken den ganzen
+     Viewport ab — Hilfetexte bleiben so lesbar groß. */
+  @media (max-width: 900px) {
+    .window {
+      left: 0 !important;
+      top: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw;
+      max-height: 100vh;
+      border-radius: 0;
+      border: none;
+      resize: none;
+    }
+    .grip { cursor: default; }
+  }
   .grip {
     flex: 0 0 auto;
     height: 36px;
