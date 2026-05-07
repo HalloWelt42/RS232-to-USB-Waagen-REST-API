@@ -31,6 +31,19 @@ export default defineConfig({
         changeOrigin: true,
         ws: true,
       },
+      // Swagger UI und OpenAPI-Schema direkt vom Backend
+      '/docs': {
+        target: BACKEND,
+        changeOrigin: true,
+      },
+      '/redoc': {
+        target: BACKEND,
+        changeOrigin: true,
+      },
+      '/openapi.json': {
+        target: BACKEND,
+        changeOrigin: true,
+      },
     },
   },
   test: {
