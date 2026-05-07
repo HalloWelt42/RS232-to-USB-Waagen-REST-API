@@ -184,8 +184,9 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
   donate: {
     id: 'donate', title: 'Danke',
     blocks: [
-      { heading: 'Worum geht es?', body: 'Diese Software ist nicht-kommerziell und open source. Wer Lust hat, kann mich per Ko-fi oder Krypto unterstützen.' },
-      { heading: 'Lizenz', body: 'MIT — Private Nutzung, Copyright 2026 HalloWelt42.' },
+      { heading: 'Worum geht es?', body: 'Quelloffen, aber ausschließlich für die <strong>private, nicht-kommerzielle</strong> Nutzung gedacht. Wer Lust hat, kann mich per Ko-fi oder Krypto unterstützen.' },
+      { heading: 'Lizenz', body: 'CC BY-NC-ND 4.0 mit Zusatzbestimmungen — private Modifikation und private Forks erlaubt, kommerzielle Nutzung und Veröffentlichung modifizierter Versionen nicht. Volltext liegt im Repository unter <code>LICENSE</code>.' },
+      { heading: 'Krypto', body: 'Drei Karten — BTC, DOGE, ETH. Klick zeigt QR-Code und Adresse. Ein-Klick-Kopieren-Knopf.' },
     ],
   },
 

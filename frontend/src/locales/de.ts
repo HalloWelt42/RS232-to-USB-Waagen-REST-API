@@ -89,21 +89,23 @@ const de = {
   donate: {
     title: 'Waage unterstützen',
     intro:
-      'Diese Software ist ein nicht-kommerzielles Open-Source-Projekt. ' +
-      'Wenn dir die Anwendung gefällt, freue ich mich über eine kleine ' +
-      'Unterstützung — entweder per Ko-fi oder über eine der Krypto-' +
-      'Adressen unten.',
+      'Quelloffen, aber ausschließlich für die private, nicht-kommerzielle ' +
+      'Nutzung gedacht. Wenn dir die Anwendung gefällt, freue ich mich über ' +
+      'eine kleine Unterstützung — per Ko-fi oder über eine der Krypto-Adressen.',
     kofi: 'Auf Ko-fi unterstützen',
     orCrypto: 'oder per Kryptowährung',
     addressCopy: 'Adresse kopieren',
     addressCopied: 'Kopiert',
     thanks: 'Vielen Dank für deine Unterstützung',
     addressCopyError: 'Kopieren fehlgeschlagen',
+    qrLabel: 'QR-Code zur Adresse',
+    selectCrypto: 'Eine Währung wählen — QR-Code und Adresse erscheinen dann darunter.',
   },
   contact: {
     label: 'Entwickler-Kontakt für Workflow-Integration',
     intro: 'Sie möchten die Software in Ihren Workflow integrieren? Schreiben Sie mir.',
-    license: 'MIT — Private Nutzung, Copyright 2026 HalloWelt42',
+    license: 'CC BY-NC-ND 4.0 + Zusatzbestimmungen — Private Nutzung. Copyright 2026 HalloWelt42',
+    licenseShort: 'Quelloffen, nur Privat — CC BY-NC-ND 4.0',
   },
   toast: {
     valueCopied: 'Wert kopiert',
