@@ -1,23 +1,41 @@
 <script lang="ts">
   /**
    * Hilfe-Übersicht. Listet alle Hilfe-Inhalte und öffnet sie als
-   * verschiebbare/größenveränderbare Fenster über den helpStore.
+   * verschiebbare/größenveränderbare Fenster.
+   *
+   * Öffnen läuft über `route.openHelp()`, nicht direkt über den
+   * helpStore — sonst würde der zentrale URL→Store-Sync-Effekt in
+   * App.svelte das Fenster im nächsten Tick wieder schließen, weil
+   * der URL-Querystring `?help=…` leer wäre.
    */
-  import { helpEntries } from '../../lib/help';
-  import { helpStore } from '../../lib/helpStore.svelte';
-  import { t } from '../../lib/i18n';
+  import { getHelpEntries, type HelpId } from '../../lib/help';
+  import { route } from '../../lib/routing.svelte';
+  import { i18n, t } from '../../lib/i18n';
 
-  function open(id: keyof typeof helpEntries): void {
-    helpStore.open(id);
+  // Lokal-spezifische Hilfe-Bäume — Titel und Vorschau-Texte folgen
+  // der aktuellen Sprache.
+  let entries = $derived(getHelpEntries(i18n.current));
+
+  function open(id: HelpId): void {
+    route.openHelp(id);
   }
 
   // Stabile Reihenfolge für die Anzeige
-  const sections: ReadonlyArray<keyof typeof helpEntries> = [
+  const sections: readonly HelpId[] = [
     'overview', 'glossary', 'wiegen', 'netto', 'count', 'tolerance',
     'samples', 'differenz', 'containers', 'history', 'tolerances',
     'tare', 'unit', 'light', 'copy', 'settings', 'donate',
     'architecture', 'disclaimer',
   ] as const;
+
+  function previewOf(id: HelpId): string {
+    const e = entries[id];
+    if (!e || e.blocks.length === 0) return '';
+    return e.blocks[0].body.replace(/\[\[[^\]]+\]\]/g, '')   // Cross-Links entfernen
+                            .replace(/<[^>]+>/g, '')          // HTML entfernen
+                            .replace(/\{\{[^}]+\}\}/g, '…')   // Platzhalter
+                            .slice(0, 120) + '…';
+  }
 </script>
 
 <section class="panel">
@@ -25,23 +43,21 @@
     <h2>{t('tools.help')}</h2>
   </header>
 
-  <p class="intro">
-    Klicken Sie auf einen Eintrag — die Hilfe öffnet sich in einem Fenster, das
-    sich frei verschieben und in der Größe verändern lässt. Mehrere Fenster
-    können gleichzeitig offen sein.
-  </p>
+  <p class="intro">{t('helpPanel.intro')}</p>
 
   <div class="grid">
-    {#each sections as id}
-      {@const entry = helpEntries[id]}
-      <button class="card" onclick={() => open(id)}>
-        <h3>{entry.title}</h3>
-        <p>{entry.blocks[0].body.replace(/<[^>]+>/g, '').slice(0, 110)}…</p>
-        <span class="open-hint">
-          <i class="fa-solid fa-up-right-from-square"></i>
-          Öffnen
-        </span>
-      </button>
+    {#each sections as id (id)}
+      {@const entry = entries[id]}
+      {#if entry}
+        <button class="card" onclick={() => open(id)}>
+          <h3>{entry.title}</h3>
+          <p>{previewOf(id)}</p>
+          <span class="open-hint">
+            <i class="fa-solid fa-up-right-from-square"></i>
+            {t('helpPanel.open')}
+          </span>
+        </button>
+      {/if}
     {/each}
   </div>
 </section>

@@ -231,6 +231,13 @@ const de = {
     grams: 'Gramm',
     kilograms: 'Kilogramm',
   },
+  helpPanel: {
+    intro:
+      'Klicken Sie auf einen Eintrag — die Hilfe öffnet sich in einem ' +
+      'Fenster, das sich frei verschieben und in der Größe verändern lässt. ' +
+      'Mehrere Fenster können gleichzeitig offen sein.',
+    open: 'Öffnen',
+  },
   tolerances: {
     title: 'Genauigkeits-Toleranzen des Modells',
     maxG: 'Maximalkapazität',

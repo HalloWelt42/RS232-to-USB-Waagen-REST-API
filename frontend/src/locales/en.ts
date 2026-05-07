@@ -231,6 +231,12 @@ const en = {
     grams: 'grams',
     kilograms: 'kilograms',
   },
+  helpPanel: {
+    intro:
+      'Click an entry — the help opens in a window that you can move freely ' +
+      'and resize. Several windows can be open at the same time.',
+    open: 'Open',
+  },
   tolerances: {
     title: 'Accuracy specs of this model',
     maxG: 'Maximum capacity',
