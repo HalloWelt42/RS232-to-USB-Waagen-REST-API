@@ -17,36 +17,54 @@
 </script>
 
 {#if visible}
-  <div class="banner" role="status" aria-live="polite">
+  <button class="banner" type="button" onclick={openSettings}
+          aria-label={t('topbar.simulatedWarning')}>
     <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-    <span>{t('topbar.simulatedWarning')}</span>
-    <button class="link" onclick={openSettings}>
-      <i class="fa-solid fa-gear"></i>
-      {t('tools.settings')}
-    </button>
-  </div>
+    <span class="msg">{t('topbar.simulatedWarning')}</span>
+    <span class="action">
+      <i class="fa-solid fa-arrow-right-arrow-left"></i>
+      {t('topbar.switchToLive')}
+    </span>
+  </button>
 {/if}
 
 <style>
   .banner {
     flex: 0 0 auto;
+    width: 100%;
     background: color-mix(in srgb, var(--orange) 18%, var(--bg-card));
+    border: none;
     border-bottom: 1px solid var(--orange);
     color: var(--orange);
+    font-family: var(--sans);
     font-size: var(--fs-sm);
     font-weight: 600;
     letter-spacing: 0.04em;
-    padding: 6px var(--sp-4);
+    padding: 8px var(--sp-4);
     display: flex; align-items: center; gap: var(--sp-3);
+    cursor: pointer;
+    text-align: left;
   }
-  .banner i { font-size: 16px; }
-  .link {
+  .banner:hover {
+    background: color-mix(in srgb, var(--orange) 28%, var(--bg-card));
+  }
+  .banner > i { font-size: 16px; flex: 0 0 auto; }
+  .msg { flex: 1 1 auto; }
+  .action {
     margin-left: auto;
-    background: transparent; border: none;
-    color: var(--orange); cursor: pointer;
-    padding: 0; font: inherit;
-    text-decoration: underline; text-underline-offset: 2px;
+    flex: 0 0 auto;
     display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--orange);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--orange);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
-  .link:hover { color: var(--fg); }
+  .banner:hover .action {
+    background: var(--orange);
+    color: var(--bg-card);
+  }
 </style>

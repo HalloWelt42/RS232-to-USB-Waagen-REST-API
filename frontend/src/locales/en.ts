@@ -25,6 +25,7 @@ const en = {
     openSettings: 'Open model and settings',
     toolNav: 'Tool selector',
     simulatedWarning: 'Warning — simulator only, no real scale connected',
+    switchToLive: 'Switch to live',
     sourceLive: 'Live mode',
     sourceSimulate: 'Simulator mode',
   },

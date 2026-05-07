@@ -25,6 +25,7 @@ const de = {
     openSettings: 'Modell und Einstellungen öffnen',
     toolNav: 'Werkzeug-Auswahl',
     simulatedWarning: 'Achtung — nur Simulation, keine echte Waage angeschlossen',
+    switchToLive: 'Auf Live umschalten',
     sourceLive: 'Live-Modus',
     sourceSimulate: 'Simulator-Modus',
   },
