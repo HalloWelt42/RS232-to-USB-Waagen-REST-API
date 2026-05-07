@@ -36,7 +36,33 @@ const LOCALE_FORMAT: Record<Lang, NumberFormat> = {
   en: { decimal: '.', thousand: ',' },
 };
 
-/** Reihenfolge für den LanguageToggle (zyklisches Durchschalten). */
+/**
+ * Metadaten pro Sprache — Anzeigename in der eigenen Sprache plus
+ * Flaggen-Emoji für den LanguageToggle. Beim Hinzufügen einer
+ * weiteren Sprache hier einen neuen Eintrag ergänzen — der Toggle
+ * zeigt sie automatisch in der Liste.
+ *
+ * Flaggen-Hinweis: für „Englisch" wird die UK-Flagge genutzt; das
+ * ist außerhalb der USA neutraler und in europäischen Kontexten
+ * üblicher. Für eine separate „US English"-Variante würde man
+ * eine zweite Locale-Datei (`en-US.ts`) anlegen.
+ */
+export interface LangMeta {
+  code: Lang;
+  /** Anzeigename in der eigenen Sprache, z.B. „Deutsch", „English". */
+  nativeName: string;
+  /** Flaggen-Emoji — landestypische Flagge für die Sprache. */
+  flag: string;
+  /** Kürzel für den Header (DE, EN, …). */
+  short: string;
+}
+
+export const LANG_META: Record<Lang, LangMeta> = {
+  de: { code: 'de', nativeName: 'Deutsch',  flag: '🇩🇪', short: 'DE' },
+  en: { code: 'en', nativeName: 'English',  flag: '🇬🇧', short: 'EN' },
+};
+
+/** Reihenfolge für den LanguageToggle und das Dropdown-Menü. */
 export const LANG_ORDER: readonly Lang[] = ['de', 'en'] as const;
 
 const KEY = 'waage.lang';

@@ -16,13 +16,28 @@ gesamte App reaktiv auf einen Sprachwechsel.
    - Den `Lang`-Typ erweitern: `'de' | 'en' | '<lang>'`
    - Import + `LOCALES`-Map ergänzen
    - `LOCALE_FORMAT` für Tausender-/Dezimaltrenner ergänzen
+   - `LANG_META` um Flagge und nativen Namen ergänzen, z.B.
+     `fr: { code: 'fr', nativeName: 'Français', flag: '🇫🇷', short: 'FR' }`
+   - `LANG_ORDER` um den neuen Code erweitern
 
 4. **Browser-Auto-Erkennung anpassen:** in `i18n.svelte.ts` der
    `detect()`-Funktion einen weiteren Branch hinzufügen.
 
-5. **Sprachflagge:** `LanguageToggle.svelte` zeigt das Kürzel der aktuellen
-   Sprache; `toggle()` durchläuft die Sprachen zyklisch — beim Hinzufügen
-   weiterer Sprachen wird der Toggle automatisch um sie erweitert.
+5. **Fertig.** `LanguageToggle.svelte` zeigt automatisch die neue Sprache:
+   - bei zwei Sprachen wechselt ein Klick direkt zwischen ihnen,
+   - ab drei Sprachen erscheint ein kleines Dropdown mit Flaggen,
+     nativen Namen und Kürzeln.
+
+## Flaggen-Konvention
+
+| Sprache | Flagge | Code | nativeName |
+|---------|--------|------|------------|
+| Deutsch | 🇩🇪 | `de` | „Deutsch"  |
+| English | 🇬🇧 | `en` | „English"  |
+
+Für Englisch wird die UK-Flagge genutzt (im europäischen Kontext
+neutraler als 🇺🇸). Eine separate „US English"-Variante würde mit
+Code `en-US` und eigener Flagge angelegt.
 
 ## Format-Konventionen
 
