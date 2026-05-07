@@ -184,6 +184,32 @@ class MesslogListOut(BaseModel):
     items: list[MesslogOut]
 
 
+class ContainerOut(BaseModel):
+    id: int
+    name: str
+    weight_g: float
+    note: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ContainerListOut(BaseModel):
+    count: int
+    items: list[ContainerOut]
+
+
+class ContainerIn(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    weight_g: float = Field(..., ge=0)
+    note: str = Field(default="", max_length=500)
+
+
+class ContainerPatchIn(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    weight_g: Optional[float] = Field(default=None, ge=0)
+    note: Optional[str] = Field(default=None, max_length=500)
+
+
 # ---------------------------------------------------------------------------
 #  Router-Factory
 # ---------------------------------------------------------------------------
@@ -431,6 +457,53 @@ def build_app_router(state: AppState) -> APIRouter:
     @router.delete("/messlog")
     def clear_messlog() -> dict:
         n = state.messlog.clear()
+        return {"ok": True, "deleted": n}
+
+    # ============================ Container-Bibliothek ============================
+    def _container_to_out(c) -> ContainerOut:
+        return ContainerOut(
+            id=c.id, name=c.name, weight_g=round(c.weight_g, 4),
+            note=c.note, created_at=c.created_at, updated_at=c.updated_at,
+        )
+
+    @router.get("/containers", response_model=ContainerListOut)
+    def list_containers() -> ContainerListOut:
+        items = [_container_to_out(c) for c in state.containers.list()]
+        return ContainerListOut(count=len(items), items=items)
+
+    @router.post("/containers", response_model=ContainerOut)
+    def add_container(payload: ContainerIn) -> ContainerOut:
+        try:
+            c = state.containers.add(payload.name, payload.weight_g, payload.note)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        return _container_to_out(c)
+
+    @router.put("/containers/{container_id}", response_model=ContainerOut)
+    def update_container(container_id: int, payload: ContainerPatchIn) -> ContainerOut:
+        if state.containers.get(container_id) is None:
+            raise HTTPException(status_code=404, detail="Behälter nicht gefunden")
+        try:
+            c = state.containers.update(
+                container_id,
+                name=payload.name,
+                weight_g=payload.weight_g,
+                note=payload.note,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        return _container_to_out(c)
+
+    @router.delete("/containers/{container_id}")
+    def delete_container(container_id: int) -> dict:
+        ok = state.containers.delete(container_id)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Behälter nicht gefunden")
+        return {"ok": True, "id": container_id}
+
+    @router.delete("/containers")
+    def clear_containers() -> dict:
+        n = state.containers.clear()
         return {"ok": True, "deleted": n}
 
     return router
