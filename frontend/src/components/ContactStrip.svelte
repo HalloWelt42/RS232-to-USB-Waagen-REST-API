@@ -28,8 +28,8 @@
 <div class="contact">
   <span class="label">{t('contact.label')}:</span>
   <button class="email-btn" onclick={handleClick}
-          title="Email kopieren / Mail-Client öffnen"
-          aria-label="Email-Adresse">
+          title={t('commands.contactMailTitle')}
+          aria-label={t('commands.contactMailAria')}>
     <svg width="220" height="20" viewBox="0 0 220 20"
          xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M2 4 L13 12 L24 4 M2 4 L2 17 L24 17 L24 4 Z"

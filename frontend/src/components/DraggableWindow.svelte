@@ -10,6 +10,7 @@
    */
   import { helpStore } from '../lib/helpStore.svelte';
   import { route } from '../lib/routing.svelte';
+  import { t } from '../lib/i18n';
   import type { HelpId } from '../lib/help';
   import type { Snippet } from 'svelte';
 
@@ -115,7 +116,7 @@
     <span class="grip-icon"><i class="fa-solid fa-grip-vertical"></i></span>
     <h3>{title}</h3>
     <button class="close" onclick={close}
-            title="Hilfe-Fenster schließen" aria-label="Schließen">
+            title={t('commands.closeHelpWindow')} aria-label={t('commands.closeWindow')}>
       <i class="fa-regular fa-circle-xmark"></i>
     </button>
   </header>

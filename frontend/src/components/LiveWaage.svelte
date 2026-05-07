@@ -46,9 +46,9 @@
       else if (key === 'unit') await api.scale.cmdUnit();
       else if (key === 'light') await api.scale.cmdLight();
       toast.show(
-        key === 'tare' ? 'Tara gesetzt'
-        : key === 'unit' ? 'Einheit gewechselt'
-        : 'Beleuchtung umgeschaltet', 'ok');
+        key === 'tare' ? t('commands.tareDone')
+        : key === 'unit' ? t('commands.unitDone')
+        : t('commands.lightDone'), 'ok');
     } catch (e) {
       toast.show((e as Error).message, 'error');
     } finally {
@@ -83,7 +83,7 @@
   </div>
 
   <button class="display" onclick={copyValue} disabled={!r}
-          title="Wert in die Zwischenablage kopieren" aria-label="Wert kopieren">
+          title={t('commands.copyValueTitle')} aria-label={t('commands.copyValueAria')}>
     <span class="value">
       <StableValue g={weightG} />
     </span>
