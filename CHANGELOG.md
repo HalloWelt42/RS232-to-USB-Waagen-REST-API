@@ -9,8 +9,44 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.4] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Geändert
+- **Native Bestätigungs-Popups durchgängig entfernt** — Anwender-
+  Vorgabe „Löschen ist Löschen, niemals native Popups". Sieben
+  Stellen waren betroffen: Messprotokoll-Komplett-Leeren, Tara-
+  Stapel leeren, Session leeren, „Alles zurücksetzen" (war doppelt
+  bestätigt), Stückzähl-Vorlage löschen, Behälter aus Bibliothek
+  löschen, Differenz-Stapel leeren. Alle Aktionen sind jetzt direkt
+  und mit Toast-Bestätigung; rückbaufähige Daten lassen sich
+  zügig wieder erfassen, das spart Klicks im Werkstatt-Workflow.
+
+### Behoben (i18n)
+- **Durchgängige Übersetzungen in allen Tool-Panels** — über die
+  Zeit waren in NettoPanel, DifferenzPanel, WiegenPanel,
+  TolerancePanel, SamplesPanel, SettingsPanel und ContainerPicker
+  zahlreiche Beschriftungen, Platzhalter, Toasts und Status-Strings
+  hardcoded auf Deutsch durchgerutscht. Englische UI sah dann den
+  englischen Tool-Header („Differential weighing", „Capture
+  values") über deutschen Tabellen-Inhalten („BRUTTO/Σ TARA/NETTO").
+- Neue Schlüssel-Blöcke `panels.*` (geteilte Tool-Strings:
+  Brutto/Tara/Netto, Modi, Toleranz-Status, Sample-Statistik,
+  Buttons/Toasts) und `settingsPanel.*` (Anzeigemodus, Aktives
+  Modell, Quelle, Anschluss, Lizenz-Stichpunkte) — DE und EN
+  parallel gepflegt.
+
+### Behoben (Mobile-UI)
+- **Hilfe-Vollbild schließt sich beim Tool-Sprung** — beim Klick
+  auf einen `[[tool:...]]`-Cross-Link in der Hilfe blieb das
+  Vollbild-Modal sonst über dem Werkzeug liegen. HelpLayer prüft
+  jetzt `matchMedia('(max-width: 900px)')` und ruft auf Mobile
+  `route.setHelp([])` auf, bevor zum Tool gesprungen wird. Auf
+  Desktop bleibt das schwebende Hilfe-Fenster wie gehabt parallel
+  offen.
+- **LiveWaage-Action-Buttons schrumpfen sauber** — der dritte
+  Knopf („Beleuchtung") wurde auf schmalen Bildschirmen über den
+  Karten-Rand gedrückt. Mit `flex: 1 1 0`, `min-width: 0` und
+  `overflow-wrap: anywhere` schrumpfen die drei Buttons jetzt
+  gleichmäßig und brechen lange Wörter auf zwei Zeilen, statt
+  zu überlaufen.
 
 ## [0.5.3] — 2026-05-07
 
