@@ -95,6 +95,15 @@ const en = {
     uptime: 'Uptime',
     version: 'Version',
   },
+  live: {
+    backendOk: 'BACKEND',
+    backendConnecting: 'CONNECTING',
+    backendOff: 'BACKEND OFF',
+    backendError: 'BACKEND ERROR',
+    scaleConnected: 'SCALE',
+    scaleSimulated: 'SIMULATION',
+    scaleOffline: 'SCALE OFF',
+  },
   donate: {
     title: 'Support Waage',
     intro:

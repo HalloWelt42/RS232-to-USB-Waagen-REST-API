@@ -64,6 +64,9 @@
   --green:  #3fb950;
   --orange: #d29922;
   --red:    #f85149;
+  /* Display-Grün: reines 7-Segment-Grün für Wäge-Anzeigen,
+     deutlich greller als das UI-Grün. */
+  --display-green: #00ff00;
   --shadow:    0 4px 14px rgba(0,0,0,0.4);
   --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
   --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'><path d='M0 8L8 0' stroke='%23ffffff' stroke-opacity='0.012' stroke-width='1'/></svg>");
@@ -85,6 +88,9 @@
   --green:  #1a7f37;
   --orange: #9a6700;
   --red:    #cf222e;
+  /* Display-Grün im Hellmodus dunkler gehalten, damit es auf weißem
+     Hintergrund nicht wegbrennt — bleibt aber bewusst „leuchtend". */
+  --display-green: #008f1a;
   --shadow:    0 1px 4px rgba(31,35,40,0.08), 0 4px 14px rgba(31,35,40,0.06);
   --shadow-lg: 0 8px 24px rgba(31,35,40,0.12);
   --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'><path d='M0 8L8 0' stroke='%23000000' stroke-opacity='0.018' stroke-width='1'/></svg>");

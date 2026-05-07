@@ -165,17 +165,18 @@
     /* Schrift skaliert mit Container — bei einer 480-px-Display-Karte
        wird sie ~62 px, auf schmaleren Containern entsprechend kleiner. */
     font-size: clamp(36px, 13cqi, 67px);
-    color: var(--green);
+    color: var(--display-green);
     line-height: 1;
     letter-spacing: 0;
     overflow: hidden;
+    text-shadow: 0 0 4px color-mix(in srgb, var(--display-green) 35%, transparent);
   }
   .value :global(.stable-value) { color: inherit; }
   .hint {
     display: block; margin-top: var(--sp-2);
     font-size: var(--fs-sm);
     letter-spacing: 0.18em;
-    color: var(--green);
+    color: var(--display-green);
   }
 
   .form {

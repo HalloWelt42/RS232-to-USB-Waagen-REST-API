@@ -95,6 +95,15 @@ const de = {
     uptime: 'Uptime',
     version: 'Version',
   },
+  live: {
+    backendOk: 'BACKEND',
+    backendConnecting: 'VERBINDE',
+    backendOff: 'BACKEND AUS',
+    backendError: 'BACKEND FEHLER',
+    scaleConnected: 'WAAGE',
+    scaleSimulated: 'SIMULATION',
+    scaleOffline: 'WAAGE AUS',
+  },
   donate: {
     title: 'Waage unterstützen',
     intro:

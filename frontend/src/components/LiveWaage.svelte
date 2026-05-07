@@ -4,6 +4,7 @@
   import { formatTime } from '../lib/format';
   import { toast } from '../lib/toast.svelte';
   import { live } from '../lib/liveStore.svelte';
+  import { healthStore } from '../lib/healthStore.svelte';
   import { t } from '../lib/i18n';
   import StableValue from './StableValue.svelte';
 
@@ -17,6 +18,17 @@
   let stable = $derived(r?.stable ?? false);
   let weightG = $derived(r?.weight_g ?? null);
   let timeText = $derived(r ? formatTime(r.timestamp) : '—');
+
+  // Backend-Status: WebSocket steht?
+  let backendState = $derived<'open' | 'connecting' | 'closed' | 'error'>(conn);
+  // Hardware-Waage: nur dann „grün", wenn der Reader echt liest und nicht
+  // simuliert wird. Im Simulator-Modus ist diese LED nie grün — wir
+  // zeigen ein orangefarbenes „SIMULATION" stattdessen.
+  let scaleState = $derived<'live' | 'simulated' | 'offline'>(
+    healthStore.simulated ? 'simulated'
+    : healthStore.scaleOk ? 'live'
+    : 'offline'
+  );
 
   async function copyValue(): Promise<void> {
     if (!r) return;
@@ -44,16 +56,28 @@
     }
   }
 
-  const connLabel: Record<string, string> = {
-    open: 'LIVE', connecting: 'VERBINDE', closed: 'GETRENNT', error: 'FEHLER',
+  const backendLabelKey: Record<string, string> = {
+    open: 'live.backendOk',
+    connecting: 'live.backendConnecting',
+    closed: 'live.backendOff',
+    error: 'live.backendError',
+  };
+  const scaleLabelKey: Record<string, string> = {
+    live: 'live.scaleConnected',
+    simulated: 'live.scaleSimulated',
+    offline: 'live.scaleOffline',
   };
 </script>
 
 <section class="live-card" class:stable>
   <div class="topline">
-    <span class="conn">
-      <span class="dot" data-state={conn}></span>
-      <span class="num">{connLabel[conn]}</span>
+    <span class="status">
+      <span class="led" data-state={backendState} aria-hidden="true"></span>
+      <span class="num lbl">{t(backendLabelKey[backendState])}</span>
+    </span>
+    <span class="status">
+      <span class="led" data-scale={scaleState} aria-hidden="true"></span>
+      <span class="num lbl">{t(scaleLabelKey[scaleState])}</span>
     </span>
     {#if r}<span class="ts num">{timeText}</span>{/if}
   </div>
@@ -102,16 +126,31 @@
        Breite anpasst (280–400 px). */
     container-type: inline-size;
   }
-  .live-card.stable { border-color: var(--green); }
+  .live-card.stable { border-color: var(--display-green); }
   .topline {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; flex-wrap: wrap;
+    justify-content: flex-start; align-items: center;
+    gap: var(--sp-2) var(--sp-3);
     font-size: var(--fs-xs); color: var(--fg-dim);
   }
-  .conn { display: flex; align-items: center; gap: 6px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fg-dim); }
-  .dot[data-state="open"]       { background: var(--green); box-shadow: 0 0 6px var(--green); }
-  .dot[data-state="connecting"] { background: var(--orange); animation: pulse 1.2s infinite; }
-  .dot[data-state="closed"], .dot[data-state="error"] { background: var(--red); }
+  .status { display: inline-flex; align-items: center; gap: 6px; }
+  .status .lbl { letter-spacing: 0.06em; }
+  .ts { margin-left: auto; }
+
+  /* LED — Default grau */
+  .led {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--fg-mute);
+    box-shadow: none;
+  }
+  /* Backend-LED */
+  .led[data-state="open"]       { background: var(--display-green); box-shadow: 0 0 6px var(--display-green); }
+  .led[data-state="connecting"] { background: var(--orange); animation: pulse 1.2s infinite; }
+  .led[data-state="closed"], .led[data-state="error"] { background: var(--red); }
+  /* Hardware-Waage-LED */
+  .led[data-scale="live"]      { background: var(--display-green); box-shadow: 0 0 6px var(--display-green); }
+  .led[data-scale="simulated"] { background: var(--orange); box-shadow: 0 0 6px color-mix(in srgb, var(--orange) 60%, transparent); }
+  .led[data-scale="offline"]   { background: var(--red); }
 
   .display {
     background: rgba(0,0,0,0.25);
@@ -136,21 +175,25 @@
     /* Schrift adaptive zur Container-Breite — bei einer 280-px-Sidebar
        wird sie etwa 36 px, bei einer 400-px-Sidebar 56 px. */
     font-size: clamp(28px, 14cqi, 56px);
-    color: var(--green);
+    color: var(--display-green);
     line-height: 1;
     letter-spacing: 0;
     overflow: hidden;
     text-overflow: clip;
+    text-shadow: 0 0 4px color-mix(in srgb, var(--display-green) 35%, transparent);
   }
   .value :global(.stable-value) { color: inherit; }
-  .stable .value { color: var(--green); }
-  .live-card:not(.stable) .value { color: var(--fg-dim); }
+  .stable .value { color: var(--display-green); }
+  .live-card:not(.stable) .value {
+    color: var(--fg-dim);
+    text-shadow: none;
+  }
   .label {
     display: block;
     margin-top: var(--sp-2);
     font-size: var(--fs-sm);
     letter-spacing: 0.18em;
-    color: var(--green);
+    color: var(--display-green);
   }
   .live-card:not(.stable) .label { color: var(--orange); }
 
