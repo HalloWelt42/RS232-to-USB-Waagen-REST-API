@@ -62,6 +62,13 @@ export interface ScaleModel {
   default_baudrate: number;
   rs232: boolean;
   note: string;
+  /** Genauigkeits-Toleranzen aus dem Datenblatt — 0 / null = nicht angegeben. */
+  min_load_g: number;
+  linearity_g: number;
+  repeatability_g: number;
+  stabilization_s: number;
+  warmup_min: number;
+  operating_temp_c: [number, number] | null;
 }
 
 export interface ScaleConfig {

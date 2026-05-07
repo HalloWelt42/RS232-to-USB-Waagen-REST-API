@@ -22,7 +22,7 @@ export type HelpId =
   | 'overview' | 'glossary' | 'wiegen' | 'netto' | 'count' | 'tolerance'
   | 'samples' | 'differenz' | 'sparkline' | 'history' | 'containers'
   | 'tare' | 'unit' | 'light' | 'copy' | 'settings' | 'donate'
-  | 'architecture' | 'disclaimer';
+  | 'architecture' | 'disclaimer' | 'tolerances';
 
 export interface HelpBlock {
   heading: string;
@@ -253,6 +253,20 @@ const helpDe: HelpTree = {
     ],
   },
 
+  tolerances: {
+    id: 'tolerances', title: 'Genauigkeits-Toleranzen',
+    blocks: [
+      { heading: 'Worum geht es?', body: 'Jede Waage hat im Datenblatt mehrere Genauigkeits-Werte: Mindest-Auflage, Linearität, Wiederholbarkeit, Beruhigungszeit, Aufwärmzeit, Betriebstemperatur. Diese Toleranzen werden in den Einstellungen und teilweise live in den Werkzeug-Panels angezeigt.' },
+      { heading: 'Mindest-Auflage', body: 'Unterhalb der Mindest-Auflage zeigt die Waage zwar Werte, der Hersteller garantiert aber keine Genauigkeit mehr. Ein Beispiel: Aktives Modell <strong>{{modelName}}</strong> mit Mindest-Auflage <strong>{{minLoadG}}</strong> — Werte darunter liefern eher Schätzungen als Messungen. Die App warnt orange.' },
+      { heading: 'Linearität', body: 'Maximale Abweichung über den ganzen Wägebereich. Eine PLC-6000 mit Linearität <strong>±0,2 g</strong> heißt: bei jedem beliebigen Wert darf der Anzeigewert maximal 0,2 g vom wahren Wert abweichen.' },
+      { heading: 'Wiederholbarkeit (σ)', body: 'Standardabweichung wenn dasselbe Gewicht mehrfach hingestellt wird. Üblich: gleich der Ablesbarkeit, bei manchen Modellen besser.' },
+      { heading: 'Beruhigungszeit', body: 'Zeit, die die Waage nach der Auflage typischerweise braucht, bis sie „Stable" meldet. Im [[tool:samples|Erfassen]]-Modus „Voll-Auto" wartet die App diese Phase ab, bevor sie automatisch erfasst.' },
+      { heading: 'Aufwärmzeit', body: 'Empfohlene Wartezeit nach dem Einschalten — bei Analysewaagen oft <strong>60 min</strong>, bei Präzisionswaagen <strong>30 min</strong>. Erst danach sind die Spezifikationen garantiert.' },
+      { heading: 'Betriebstemperatur', body: 'Liegt die Raumtemperatur außerhalb des angegebenen Bereichs, kann die Genauigkeit deutlich leiden. Besonders Analysewaagen reagieren empfindlich.' },
+      { heading: 'Andere Werkzeuge', body: 'Auch [[tool:tolerance|Qualitätskontrolle]] sollte mit Sollwerten arbeiten, die deutlich über der Mindest-Auflage liegen — sonst kann die Ampel nicht zuverlässig grün/rot anzeigen.' },
+    ],
+  },
+
   containers: {
     id: 'containers', title: 'Behälter-Bibliothek',
     blocks: [
@@ -423,6 +437,20 @@ const helpEn: HelpTree = {
       { heading: 'User responsibility', body: 'The user alone is responsible for proper use, regular verification with calibrated reference weights and plausibility-checking the values. Full text: <code>DISCLAIMER.md</code> in the repo.' },
     ],
   },
+  tolerances: {
+    id: 'tolerances', title: 'Accuracy specs',
+    blocks: [
+      { heading: 'What is this?', body: 'Every scale has accuracy specs in its datasheet: minimum load, linearity, repeatability, stabilisation time, warm-up, operating temperature. These show up in Settings and partly live in the tool panels.' },
+      { heading: 'Minimum load', body: 'Below the minimum load the scale still shows numbers, but the manufacturer no longer guarantees accuracy. Active model <strong>{{modelName}}</strong> minimum <strong>{{minLoadG}}</strong> — anything below is an estimate, not a measurement. The app warns in orange.' },
+      { heading: 'Linearity', body: 'Maximum deviation across the whole weighing range. A PLC-6000 with linearity <strong>±0.2 g</strong> means: at any value, the displayed weight may deviate at most 0.2 g from the true weight.' },
+      { heading: 'Repeatability (σ)', body: 'Standard deviation when the same weight is placed multiple times. Usually equals the readability; some models are better.' },
+      { heading: 'Stabilisation time', body: 'Typical settling time after loading, until the scale reports „Stable". In [[tool:samples|Capture]] mode „Full-auto" the app waits this phase out before recording automatically.' },
+      { heading: 'Warm-up', body: 'Recommended wait after powering on — analytical balances often <strong>60 min</strong>, precision balances <strong>30 min</strong>. Only after that are the specs guaranteed.' },
+      { heading: 'Operating temperature', body: 'If the ambient temperature is outside the specified range, accuracy can suffer noticeably. Analytical balances are particularly sensitive.' },
+      { heading: 'Other tools', body: '[[tool:tolerance|Quality control]] should also use targets well above the minimum load — otherwise the traffic light cannot reliably indicate green/red.' },
+    ],
+  },
+
   containers: {
     id: 'containers', title: 'Container library',
     blocks: [

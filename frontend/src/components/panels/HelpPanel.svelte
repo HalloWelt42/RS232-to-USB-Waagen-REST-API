@@ -14,8 +14,9 @@
   // Stabile Reihenfolge für die Anzeige
   const sections: ReadonlyArray<keyof typeof helpEntries> = [
     'overview', 'glossary', 'wiegen', 'netto', 'count', 'tolerance',
-    'samples', 'differenz', 'containers', 'history', 'tare', 'unit',
-    'light', 'copy', 'settings', 'donate', 'architecture', 'disclaimer',
+    'samples', 'differenz', 'containers', 'history', 'tolerances',
+    'tare', 'unit', 'light', 'copy', 'settings', 'donate',
+    'architecture', 'disclaimer',
   ] as const;
 </script>
 

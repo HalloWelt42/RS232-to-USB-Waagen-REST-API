@@ -39,7 +39,7 @@ const HELP_IDS: readonly HelpId[] = [
   'overview', 'glossary', 'wiegen', 'netto', 'count', 'tolerance',
   'samples', 'differenz', 'sparkline', 'history', 'containers',
   'tare', 'unit', 'light', 'copy', 'settings', 'donate',
-  'architecture', 'disclaimer',
+  'architecture', 'disclaimer', 'tolerances',
 ] as const;
 
 class RouteState {

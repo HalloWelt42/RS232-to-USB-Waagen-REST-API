@@ -6,12 +6,16 @@ const PLC: ScaleModel = {
   id: 'gg.plc.6000', manufacturer: 'G&G', series: 'PLC', name: 'PLC-6000 (6000 g / 0,1 g)',
   category: 'precision', max_g: 6000, resolution_g: 0.1,
   default_baudrate: 9600, rs232: true, note: '',
+  min_load_g: 5, linearity_g: 0.2, repeatability_g: 0.1,
+  stabilization_s: 3, warmup_min: 30, operating_temp_c: [10, 30],
 };
 
 const ANALYTICAL: ScaleModel = {
   id: 'gg.jjbc.224', manufacturer: 'G&G', series: 'JJ-BC', name: 'JJ-BC 224 (220 g / 0,1 mg)',
   category: 'analytical', max_g: 220, resolution_g: 0.0001,
   default_baudrate: 9600, rs232: true, note: '',
+  min_load_g: 0.01, linearity_g: 0.0002, repeatability_g: 0.0001,
+  stabilization_s: 5, warmup_min: 60, operating_temp_c: [15, 25],
 };
 
 describe('buildHelpVars', () => {

@@ -11,6 +11,7 @@
   import { t } from '../../lib/i18n';
   import { modelStore } from '../../lib/modelStore.svelte';
   import HelpButton from '../HelpButton.svelte';
+  import ModelTolerances from '../ModelTolerances.svelte';
   import type { ScaleConfig, ScaleModel, HealthInfo } from '../../lib/types';
 
   let models = $state<ScaleModel[]>([]);
@@ -106,6 +107,8 @@
       {:else}
         <p>Wird geladen …</p>
       {/if}
+
+      <ModelTolerances />
 
       <div class="models">
         {#each grouped as [groupName, list] (groupName)}

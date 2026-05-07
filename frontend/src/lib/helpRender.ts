@@ -38,6 +38,8 @@ export function buildHelpVars(m: ScaleModel): Record<string, string | number> {
       : (m.name || 'Waage'),
     maxG: formatGramsForHelp(m.max_g),
     resolutionG: formatGramsForHelp(m.resolution_g),
+    minLoadG: m.min_load_g > 0 ? formatGramsForHelp(m.min_load_g) : '—',
+    linearityG: m.linearity_g > 0 ? formatGramsForHelp(m.linearity_g) : '—',
     minPiecesUnder1g: minPiecesUnder1g(m.resolution_g),
   };
 }

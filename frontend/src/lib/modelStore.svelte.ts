@@ -25,6 +25,12 @@ const FALLBACK_MODEL: ScaleModel = {
   default_baudrate: 9600,
   rs232: true,
   note: '',
+  min_load_g: 0,
+  linearity_g: 0,
+  repeatability_g: 0,
+  stabilization_s: 0,
+  warmup_min: 0,
+  operating_temp_c: null,
 };
 
 class ModelStore {
