@@ -32,8 +32,9 @@
   }
 
   // PWA-konformer Cross-Link-Handler: fängt Klicks auf .xlink-Buttons
-  // ab und navigiert via route. Kein href, kein Reload.
-  function onContainerClick(ev: MouseEvent): void {
+  // dokumentweit ab, sodass Klicks innerhalb der Help-Fenster (egal in
+  // welchem Container) zuverlässig an die Route weitergegeben werden.
+  function onDocumentClick(ev: MouseEvent): void {
     const t = ev.target as HTMLElement | null;
     if (!t) return;
     const btn = t.closest('button.xlink') as HTMLButtonElement | null;
@@ -49,9 +50,11 @@
   }
 </script>
 
-<div class="help-layer" onclick={onContainerClick} role="presentation">
-  {#each helpStore.windows as w (w.id)}
-    {@const entry = entries[w.id]}
+<svelte:document onclick={onDocumentClick} />
+
+{#each helpStore.windows as w (w.id)}
+  {@const entry = entries[w.id]}
+  {#if entry}
     <DraggableWindow id={w.id} title={entry.title}
                      x={w.x} y={w.y} w={w.w} h={w.h} z={w.z}>
       {#each entry.blocks as b (b.heading)}
@@ -62,13 +65,12 @@
         </section>
       {/each}
     </DraggableWindow>
-  {/each}
-</div>
+  {/if}
+{/each}
 
 <style>
-  .help-layer { display: contents; }
   /* Cross-Link-Buttons als Inline-Tags im Hilfe-Text */
-  .help-layer :global(button.xlink) {
+  :global(button.xlink) {
     background: transparent;
     border: none;
     padding: 0 2px;
@@ -78,13 +80,13 @@
     text-underline-offset: 2px;
     border-radius: 0;
   }
-  .help-layer :global(button.xlink-tool) { color: var(--accent); }
-  .help-layer :global(button.xlink-tool:hover) {
+  :global(button.xlink-tool) { color: var(--accent); }
+  :global(button.xlink-tool:hover) {
     color: var(--accent-strong);
     text-decoration-thickness: 2px;
   }
-  .help-layer :global(button.xlink-help) { color: var(--info-blue); }
-  .help-layer :global(button.xlink-help:hover) {
+  :global(button.xlink-help) { color: var(--info-blue); }
+  :global(button.xlink-help:hover) {
     color: var(--info-blue-hover);
     text-decoration-thickness: 2px;
   }
