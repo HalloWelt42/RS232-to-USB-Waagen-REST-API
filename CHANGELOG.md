@@ -9,8 +9,30 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.4.5] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Neu
+- **Sprachumschalter mit Flaggen** — `LANG_META` bündelt Flag-Emoji,
+  nativen Namen und Kürzel pro Sprache. Bei zwei Sprachen direkter
+  Klick-Wechsel, ab drei Sprachen ein kleines Dropdown unter dem
+  Header-Knopf mit 🇩🇪 Deutsch / 🇬🇧 English. Erweiterung um neue
+  Sprachen vollständig in `locales/README.md` dokumentiert.
+
+### Behoben
+- **docker-compose.yml und Backend-Dockerfile** auf die aktuellen
+  env-Variablen umgestellt. Die alten `WAAGE_CSV` und `WAAGE_SQLITE`
+  existierten im Backend nicht mehr; jetzt werden alle SQLite-DBs
+  (`samples`, `messlog`, `containers`, `count_templates`) ins
+  `/data`-Volume persistiert, plus `WAAGE_DATA_DIR` für `config.json`.
+  Healthcheck-Pfad korrigiert auf `/scale/health`.
+- Compose: env-Variablen `${X:-default}`-überschreibbar, `WAAGE_SIMULATE`
+  durchgereicht, Frontend wartet auf `service_healthy` statt nur
+  `depends_on`.
+
+### Geändert
+- **README.md komplett überarbeitet** für den 0.4er-Stand —
+  vollständige Endpoint-Tabelle (scale + app), aktuelle env-Variablen,
+  Liste der unterstützten Modell-Familien, Hinweis auf Genauigkeits-
+  Toleranzen, Lizenz- und Disclaimer-Verweise, Versionierungs-Anleitung,
+  Datenpersistenz-Sektion mit konkreten Pfaden.
 
 ## [0.4.4] — 2026-05-07
 
