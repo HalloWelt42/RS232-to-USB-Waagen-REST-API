@@ -8,6 +8,7 @@ Frames über einen internen Puffer.
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from contextlib import AbstractContextManager
 from typing import Iterator, Optional
@@ -26,6 +27,14 @@ MAX_BUFFER_BYTES = 4096  # Schutz gegen unbegrenzten Pufferaufbau bei Müll
 # G&G-Standard-Print-Befehl (Werkseinstellung Adresse 0x1B = ESC, plus 'p')
 DEFAULT_POLL_COMMAND = b"\x1bp"
 DEFAULT_POLL_INTERVAL = 0.5
+
+# G&G-Fernsteuerkommandos laut Anleitung Kapitel 5.2
+COMMAND_PRINT     = b"\x1bp"   # Datenanforderung (Print)
+COMMAND_CALIBRATE = b"\x1bq"   # Kalibrierfunktion (gefährlich!)
+COMMAND_COUNT     = b"\x1br"   # Stückzählung an der Waage aktivieren
+COMMAND_UNIT      = b"\x1bs"   # Einheit umschalten
+COMMAND_TARE      = b"\x1bt"   # Tara setzen
+COMMAND_LIGHT     = b"\x1bu"   # Beleuchtung umschalten
 
 
 class Waage(AbstractContextManager["Waage"]):
@@ -66,6 +75,9 @@ class Waage(AbstractContextManager["Waage"]):
         self._ser: Optional[serial.Serial] = None
         self._buf = bytearray()
         self._last_poll: float = 0.0
+        # Lock zum thread-sicheren Senden ad-hoc-Kommandos, falls der
+        # Reader-Thread parallel pollt.
+        self._write_lock = threading.Lock()
 
     def __enter__(self) -> "Waage":
         self._ser = serial.Serial(
@@ -105,11 +117,25 @@ class Waage(AbstractContextManager["Waage"]):
         if now - self._last_poll < self.poll_interval:
             return
         try:
-            self._ser.write(self.poll_command)
+            with self._write_lock:
+                self._ser.write(self.poll_command)
         except serial.SerialException:
             log.exception("Polling-Befehl konnte nicht gesendet werden")
             raise
         self._last_poll = now
+
+    def send_command(self, command: bytes) -> None:
+        """Sendet ein beliebiges Bytes-Kommando an die Waage.
+
+        Thread-sicher gegenüber dem Polling im Reader-Loop. Wird typisch
+        für die G&G-Fernsteuerkommandos (Tara, Unit, Light, ...) genutzt.
+        """
+        if self._ser is None:
+            raise RuntimeError("Waage nicht geöffnet — als Kontextmanager benutzen")
+        if not command:
+            return
+        with self._write_lock:
+            self._ser.write(command)
 
     def read_one(self) -> Optional[Reading]:
         """Liest genau ein Frame und gibt das geparste ``Reading`` zurück.

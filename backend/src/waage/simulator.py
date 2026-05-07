@@ -80,6 +80,23 @@ class SimulatedWaage:
         if seconds > 0:
             time.sleep(seconds)
 
+    def send_command(self, command: bytes) -> None:
+        """Reagiert auf Fernsteuerkommandos im Simulator.
+
+        Tara setzt das Zielgewicht auf 0 zurück. Andere Kommandos werden
+        ohne sichtbare Auswirkung akzeptiert (das UI bekommt aber den
+        OK-Status), damit das Frontend gegen den Simulator entwickelt
+        werden kann.
+        """
+        if not command:
+            return
+        # ESC t = Tara
+        if command in (b"\x1bt", b"t"):
+            self._target = 0.0
+            self._next_change_at = self._now() + self._rng.uniform(8.0, 16.0)
+            self._phase = self.PHASE_RAMP
+            self._stable_count = 0
+
     def __enter__(self) -> "SimulatedWaage":
         return self
 

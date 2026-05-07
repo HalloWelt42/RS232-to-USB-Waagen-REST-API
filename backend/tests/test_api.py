@@ -211,6 +211,44 @@ def test_count_calibrate_validates_reference(stubbed_app: TestClient) -> None:
     assert stubbed_app.post("/count/calibrate", json={"reference_count": -3}).status_code == 422
 
 
+def test_command_endpoints_send_to_reader() -> None:
+    """Tare/Unit/Light senden die korrekten Bytes an den Reader."""
+
+    sent: list[bytes] = []
+
+    class _RecordingReader:
+        def send_command(self, command: bytes) -> None:
+            sent.append(command)
+
+    async def fake_reader_loop(reader_factory, state, sinks):
+        state.reader_alive = True
+        state.current_reader = _RecordingReader()
+        await asyncio.sleep(3600)
+
+    with patch.object(api_module, "_reader_loop", fake_reader_loop):
+        app = api_module.create_app(port="/dev/null", baudrate=9600)
+        with TestClient(app) as client:
+            assert client.post("/command/tare").status_code == 200
+            assert client.post("/command/unit").status_code == 200
+            assert client.post("/command/light").status_code == 200
+
+    assert sent == [b"\x1bt", b"\x1bs", b"\x1bu"]
+
+
+def test_command_endpoints_503_without_reader() -> None:
+    """Ohne aktiven Reader -> 503."""
+
+    async def silent_reader(reader_factory, state, sinks):
+        await asyncio.sleep(3600)  # current_reader bleibt None
+
+    with patch.object(api_module, "_reader_loop", silent_reader):
+        app = api_module.create_app(port="/dev/null", baudrate=9600)
+        with TestClient(app) as client:
+            assert client.post("/command/tare").status_code == 503
+            assert client.post("/command/unit").status_code == 503
+            assert client.post("/command/light").status_code == 503
+
+
 def test_docs_page_renders(stubbed_app: TestClient) -> None:
     r = stubbed_app.get("/docs")
     assert r.status_code == 200

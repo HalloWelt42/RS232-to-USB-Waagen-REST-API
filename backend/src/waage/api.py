@@ -42,7 +42,14 @@ from pydantic import BaseModel, Field
 
 from .logger import CsvSink, MultiSink, SqliteSink
 from .parser import Reading
-from .reader import DEFAULT_BAUD, DEFAULT_PORT, Waage
+from .reader import (
+    COMMAND_LIGHT,
+    COMMAND_TARE,
+    COMMAND_UNIT,
+    DEFAULT_BAUD,
+    DEFAULT_PORT,
+    Waage,
+)
 from .simulator import SimulatedWaage
 
 log = logging.getLogger(__name__)
@@ -125,6 +132,10 @@ class _State:
         self.piece_weight_g: Optional[float] = None
         self.piece_calibrated_at: Optional[datetime] = None
         self.piece_reference_count: Optional[int] = None
+        # Aktiver Reader (oder None, wenn keine Verbindung steht).
+        # Wird vom Reader-Loop gesetzt und genutzt, um aus HTTP-Handlern
+        # heraus Kommandos an die Waage zu schicken.
+        self.current_reader: Optional[Waage] = None
         self._lock = asyncio.Lock()
 
     async def publish(self, reading: Reading) -> None:
@@ -169,6 +180,7 @@ async def _reader_loop(
         try:
             with reader_factory() as w:
                 state.reader_alive = True
+                state.current_reader = w
                 backoff = 1.0
                 log.info("Reader geöffnet: %s", type(w).__name__)
                 # Generator in Thread laufen lassen (pyserial ist blocking)
@@ -183,9 +195,11 @@ async def _reader_loop(
         except asyncio.CancelledError:
             log.info("Reader-Loop abgebrochen")
             state.reader_alive = False
+            state.current_reader = None
             raise
         except Exception:  # noqa: BLE001
             state.reader_alive = False
+            state.current_reader = None
             log.exception("Reader-Loop Fehler — Reconnect in %.1fs", backoff)
             await asyncio.sleep(backoff)
             backoff = min(backoff * 2, 30.0)
@@ -261,6 +275,9 @@ def create_app(
             "count":         "/count",
             "count_calibrate": "POST /count/calibrate",
             "count_reset":   "POST /count/reset",
+            "command_tare":  "POST /command/tare",
+            "command_unit":  "POST /command/unit",
+            "command_light": "POST /command/light",
             "stream":        "ws://<host>:8200/stream",
             "docs":          "/docs",
             "openapi":       "/openapi.json",
@@ -414,6 +431,33 @@ def create_app(
         state.piece_calibrated_at = None
         log.info("Zählmodus zurückgesetzt")
         return _count_response()
+
+    # --------------------- Direkte Steuerung -------------------------
+    async def _send_to_scale(command: bytes, label: str) -> dict:
+        reader = state.current_reader
+        if reader is None:
+            raise HTTPException(503, detail="Reader nicht verbunden")
+        try:
+            await asyncio.to_thread(reader.send_command, command)
+        except Exception as exc:  # noqa: BLE001
+            log.exception("Befehl %s fehlgeschlagen", label)
+            raise HTTPException(500, detail=f"Befehl fehlgeschlagen: {exc}")
+        return {"ok": True, "command": label, "hex": command.hex()}
+
+    @app.post("/command/tare", tags=["command"])
+    async def post_tare() -> dict:
+        """Sendet Tara-Befehl (ESC t / 1B 74) an die Waage."""
+        return await _send_to_scale(COMMAND_TARE, "tare")
+
+    @app.post("/command/unit", tags=["command"])
+    async def post_unit() -> dict:
+        """Schaltet die Einheit an der Waage um (ESC s / 1B 73)."""
+        return await _send_to_scale(COMMAND_UNIT, "unit")
+
+    @app.post("/command/light", tags=["command"])
+    async def post_light() -> dict:
+        """Schaltet die Display-Beleuchtung um (ESC u / 1B 75)."""
+        return await _send_to_scale(COMMAND_LIGHT, "light")
 
     @app.websocket("/stream")
     async def stream(ws: WebSocket) -> None:

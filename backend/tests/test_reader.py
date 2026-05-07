@@ -136,3 +136,25 @@ def test_polling_respects_interval() -> None:
         w.read_one()
         w.read_one()
     assert fake.writes.count(b"\x1bp") == 1
+
+
+def test_send_command_writes_bytes() -> None:
+    patcher, fake = _patch_serial([])
+    with patcher, Waage("/dev/ttyUSB0", poll_command=None) as w:
+        w.send_command(b"\x1bt")
+        w.send_command(b"\x1bs")
+        w.send_command(b"\x1bu")
+    assert fake.writes == [b"\x1bt", b"\x1bs", b"\x1bu"]
+
+
+def test_send_command_without_open_raises() -> None:
+    w = Waage("/dev/ttyUSB0")
+    with pytest.raises(RuntimeError):
+        w.send_command(b"\x1bt")
+
+
+def test_send_empty_command_is_noop() -> None:
+    patcher, fake = _patch_serial([])
+    with patcher, Waage("/dev/ttyUSB0", poll_command=None) as w:
+        w.send_command(b"")
+    assert fake.writes == []
