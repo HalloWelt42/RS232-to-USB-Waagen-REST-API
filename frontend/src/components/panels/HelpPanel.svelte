@@ -49,9 +49,12 @@
     {#each sections as id (id)}
       {@const entry = entries[id]}
       {#if entry}
+        <!-- Innerhalb des <button> nur Phrasing-Content: <h3>/<p>
+             wären Flow-Content und damit per HTML-Spec verboten.
+             Stattdessen <span class="title|preview"> mit display:block. -->
         <button class="card" onclick={() => open(id)}>
-          <h3>{entry.title}</h3>
-          <p>{previewOf(id)}</p>
+          <span class="title">{entry.title}</span>
+          <span class="preview">{previewOf(id)}</span>
           <span class="open-hint">
             <i class="fa-solid fa-up-right-from-square"></i>
             {t('helpPanel.open')}
@@ -93,14 +96,14 @@
     transition: border-color 0.15s, transform 0.15s;
   }
   .card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .card h3 {
-    margin: 0;
+  .card .title {
+    display: block;
     font-size: var(--fs-md);
     color: var(--accent);
     letter-spacing: 0.02em;
   }
-  .card p {
-    margin: 0;
+  .card .preview {
+    display: block;
     font-size: var(--fs-sm);
     color: var(--fg-dim);
     line-height: 1.5;

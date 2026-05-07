@@ -12,13 +12,17 @@
   function open(): void { route.go(tool); }
 </script>
 
+<!-- Inhalts-Elemente: nur Phrasing-Content innerhalb des <button>.
+     <h3>/<p> wären Flow-Content und damit per HTML-Spec verboten —
+     der Browser würde den Button frühzeitig schließen.
+     Stattdessen <span class="title|desc"> mit display:block via CSS. -->
 <button class="card" data-color={iconColor} onclick={open}>
   <span class="original num">{t(`toolsOriginal.${tool}`)}</span>
   <span class="icon">
     <i class={icon} aria-hidden="true"></i>
   </span>
-  <h3>{t(`tools.${tool}`)}</h3>
-  <p>{t(`toolsDescription.${tool}`)}</p>
+  <span class="title">{t(`tools.${tool}`)}</span>
+  <span class="desc">{t(`toolsDescription.${tool}`)}</span>
 </button>
 
 <style>
@@ -53,8 +57,9 @@
   .card[data-color="accent"] .icon { color: var(--accent); }
   .card[data-color="donate"] .icon { color: var(--donate); }
   .card[data-color="info"]   .icon { color: var(--info-blue); }
-  .card h3 {
-    margin: 0; font-size: var(--fs-lg); font-weight: 600;
+  .card .title {
+    display: block;
+    font-size: var(--fs-lg); font-weight: 600;
     letter-spacing: 0.01em;
   }
   .card .original {
@@ -66,8 +71,9 @@
     letter-spacing: 0.04em;
   }
   .card:hover .original { opacity: 1; }
-  .card p {
-    margin: 0; font-size: var(--fs-sm); color: var(--fg-dim);
+  .card .desc {
+    display: block;
+    font-size: var(--fs-sm); color: var(--fg-dim);
     line-height: 1.5;
   }
 </style>
