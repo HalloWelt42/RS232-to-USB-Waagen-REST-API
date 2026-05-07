@@ -23,6 +23,10 @@ DEFAULT_BAUD = 9600
 DEFAULT_TIMEOUT = 2.0
 MAX_BUFFER_BYTES = 4096  # Schutz gegen unbegrenzten Pufferaufbau bei Müll
 
+# G&G-Standard-Print-Befehl (Werkseinstellung Adresse 0x1B = ESC, plus 'p')
+DEFAULT_POLL_COMMAND = b"\x1bp"
+DEFAULT_POLL_INTERVAL = 0.5
+
 
 class Waage(AbstractContextManager["Waage"]):
     """Kontextmanager für die serielle Verbindung zur Waage.
@@ -36,6 +40,14 @@ class Waage(AbstractContextManager["Waage"]):
     Der Reader puffert eingehende Bytes intern, sodass Frames auch dann
     korrekt erkannt werden, wenn sie über mehrere ``read()``-Aufrufe
     verteilt ankommen.
+
+    G&G-Waagen senden im Standard nur auf einen Print-Befehl. Über die
+    Parameter ``poll_command`` und ``poll_interval`` kann der Reader
+    aktiv pollen — bei jedem Aufruf von ``read_one()`` wird, sofern seit
+    dem letzten Polling mindestens ``poll_interval`` Sekunden vergangen
+    sind, der Befehl gesendet, und auf die Antwort gewartet. Setze
+    ``poll_command=None`` für rein passives Lesen (z.B. bei Waagen mit
+    aktivem Stream-Mode oder Waagen mit Stable-Auto-Send).
     """
 
     def __init__(
@@ -43,12 +55,17 @@ class Waage(AbstractContextManager["Waage"]):
         port: str = DEFAULT_PORT,
         baudrate: int = DEFAULT_BAUD,
         timeout: float = DEFAULT_TIMEOUT,
+        poll_command: Optional[bytes] = DEFAULT_POLL_COMMAND,
+        poll_interval: float = DEFAULT_POLL_INTERVAL,
     ) -> None:
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
+        self.poll_command = poll_command
+        self.poll_interval = poll_interval
         self._ser: Optional[serial.Serial] = None
         self._buf = bytearray()
+        self._last_poll: float = 0.0
 
     def __enter__(self) -> "Waage":
         self._ser = serial.Serial(
@@ -80,8 +97,26 @@ class Waage(AbstractContextManager["Waage"]):
         del self._buf[: idx + 1]
         return frame
 
+    def _maybe_poll(self) -> None:
+        """Sendet den Print-Befehl, wenn das Polling-Intervall abgelaufen ist."""
+        if self.poll_command is None or self._ser is None:
+            return
+        now = time.monotonic()
+        if now - self._last_poll < self.poll_interval:
+            return
+        try:
+            self._ser.write(self.poll_command)
+        except serial.SerialException:
+            log.exception("Polling-Befehl konnte nicht gesendet werden")
+            raise
+        self._last_poll = now
+
     def read_one(self) -> Optional[Reading]:
         """Liest genau ein Frame und gibt das geparste ``Reading`` zurück.
+
+        Wenn ``poll_command`` gesetzt ist, wird vor dem Lesen ggf. ein
+        Print-Befehl an die Waage geschickt — typisch für G&G-Waagen, die
+        nur auf Anforderung antworten.
 
         Returns:
             ``Reading`` bei erfolgreichem Lesen + Parsen, ``None`` bei
@@ -91,6 +126,8 @@ class Waage(AbstractContextManager["Waage"]):
         """
         if self._ser is None:
             raise RuntimeError("Waage nicht geöffnet — als Kontextmanager benutzen")
+
+        self._maybe_poll()
 
         frame = self._take_frame()
         if frame is None:

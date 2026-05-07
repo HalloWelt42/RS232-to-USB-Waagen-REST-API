@@ -20,6 +20,7 @@ class _FakeSerial:
         self._buf = bytearray(b"".join(chunks))
         self.is_open = True
         self.in_waiting = 0
+        self.writes: list[bytes] = []
 
     def read(self, size: int = 1) -> bytes:
         if not self._buf:
@@ -28,6 +29,10 @@ class _FakeSerial:
         out = bytes(self._buf[:n])
         del self._buf[:n]
         return out
+
+    def write(self, data: bytes) -> int:
+        self.writes.append(bytes(data))
+        return len(data)
 
     def close(self) -> None:
         self.is_open = False
@@ -101,3 +106,33 @@ def test_read_one_without_open_raises() -> None:
     w = Waage("/dev/ttyUSB0")
     with pytest.raises(RuntimeError):
         w.read_one()
+
+
+def test_polling_sends_print_command() -> None:
+    """Default-Konfig pollt mit ESC p; Befehl muss bei jedem Read-Zyklus
+    rausgehen, sofern das Polling-Intervall abgelaufen ist."""
+    patcher, fake = _patch_serial([b"      0.0 g \r\n"])
+    with patcher, Waage("/dev/ttyUSB0", poll_interval=0.0) as w:
+        w.read_one()
+    assert b"\x1bp" in fake.writes
+
+
+def test_polling_disabled_when_command_is_none() -> None:
+    """Mit poll_command=None darf der Reader nichts senden."""
+    patcher, fake = _patch_serial([b"      0.0 g \r\n"])
+    with patcher, Waage("/dev/ttyUSB0", poll_command=None) as w:
+        w.read_one()
+    assert fake.writes == []
+
+
+def test_polling_respects_interval() -> None:
+    """Bei poll_interval > 0 wird zwischen den Read-Aufrufen nicht gepollt."""
+    patcher, fake = _patch_serial([
+        b"      0.0 g \r\n", b"      0.0 g \r\n", b"      0.0 g \r\n",
+    ])
+    # Sehr langes Intervall, damit nur der erste read_one() pollt
+    with patcher, Waage("/dev/ttyUSB0", poll_interval=60.0) as w:
+        w.read_one()
+        w.read_one()
+        w.read_one()
+    assert fake.writes.count(b"\x1bp") == 1
