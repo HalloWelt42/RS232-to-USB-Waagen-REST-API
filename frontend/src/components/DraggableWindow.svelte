@@ -9,6 +9,7 @@
    * - Pinch/Touch wird unterstützt (Pointer Events).
    */
   import { helpStore } from '../lib/helpStore.svelte';
+  import { route } from '../lib/routing.svelte';
   import type { HelpId } from '../lib/help';
   import type { Snippet } from 'svelte';
 
@@ -36,13 +37,18 @@
   // Externer Geometrie-Sync — auch beim ersten Mounten
   $effect(() => { curX = x; curY = y; curW = w; curH = h; });
 
+  /**
+   * Lokales Begrenzen während des Ziehens — der helpStore wendet
+   * beim Speichern noch einmal eine konsistente Clamping-Regel an,
+   * sodass das Fenster bei späteren Sessions garantiert wieder im
+   * sichtbaren Bereich erscheint.
+   */
   function clamp(): void {
-    const minX = 8;
-    const minY = 8;
-    const maxX = Math.max(minX, window.innerWidth  - curW - 8);
-    const maxY = Math.max(minY, window.innerHeight - curH - 8);
-    if (curX < minX) curX = minX;
-    if (curY < minY) curY = minY;
+    const PAD = 8;
+    const maxX = Math.max(PAD, window.innerWidth  - curW - PAD);
+    const maxY = Math.max(PAD, window.innerHeight - curH - PAD);
+    if (curX < PAD) curX = PAD;
+    if (curY < PAD) curY = PAD;
     if (curX > maxX) curX = maxX;
     if (curY > maxY) curY = maxY;
   }
@@ -83,7 +89,8 @@
   }
 
   function close(): void {
-    helpStore.close(id);
+    // Über die Route schließen — die URL bleibt damit konsistent.
+    route.closeHelp(id);
   }
 
   $effect(() => {
