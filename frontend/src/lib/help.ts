@@ -7,7 +7,7 @@ export type HelpId =
   | 'overview' | 'glossary' | 'wiegen' | 'netto' | 'count' | 'tolerance'
   | 'samples' | 'differenz' | 'sparkline' | 'history'
   | 'tare' | 'unit' | 'light' | 'copy' | 'settings' | 'donate'
-  | 'architecture';
+  | 'architecture' | 'disclaimer';
 
 export interface HelpBlock {
   heading: string;
@@ -196,6 +196,16 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       { heading: 'Was ist getrennt?', body: 'Das <strong>Scale-Modul</strong> (Endpoint /scale/*) macht nur das Auslesen und Steuern der Waage. Es kann eigenständig laufen — Drittsysteme können das einbinden, ohne den App-Layer mitzunehmen.' },
       { heading: 'Was ist optional?', body: 'Das <strong>App-Modul</strong> (/app/*) bietet Toleranz, Netto, Zählen, Erfassen, Differenz und Messprotokoll — UI-Komfort. Setzt das Scale-Modul voraus.' },
       { heading: 'Konsequenz', body: 'Wer nur das Gewicht in seinen Workflow integriert, braucht nur /scale/*. UI-Updates an /app/* berühren das Scale-Modul nicht.' },
+    ],
+  },
+
+  disclaimer: {
+    id: 'disclaimer', title: 'Haftungsausschluss',
+    blocks: [
+      { heading: 'Keine Gewähr', body: 'Diese Software wird kostenlos bereitgestellt — <strong>ohne Gewähr</strong> für Richtigkeit, Vollständigkeit oder Aktualität der Werte. Keine Eignung für einen bestimmten Zweck zugesichert.' },
+      { heading: 'Nicht eichfähig', body: 'Die Software ist <strong>kein eichfähiges Mess-System</strong>. Für Verkauf nach Gewicht, amtliche Mengenangaben, medizinische Dosierungen mit gesetzlichen Toleranzen, Zoll- oder Steuer­relevanz ist sie <strong>nicht zulässig</strong>.' },
+      { heading: 'Keine Haftung', body: 'Soweit gesetzlich zulässig, ist jede Haftung für mittelbare Schäden, entgangenen Gewinn, Datenverlust oder Folgeschäden ausgeschlossen. Haftung bei Verletzung von Leben/Körper/Gesundheit oder bei Vorsatz/grober Fahrlässigkeit bleibt unberührt.' },
+      { heading: 'Verantwortung beim Anwender', body: 'Die Verantwortung für richtige Anwendung, regelmäßige Kontrolle mit geeichten Prüfgewichten und Plausibilität der Werte liegt allein beim Anwender. Volltext: <code>DISCLAIMER.md</code> im Repo.' },
     ],
   },
 };

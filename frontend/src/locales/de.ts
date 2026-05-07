@@ -19,6 +19,9 @@ const de = {
     themeAuto: 'Anzeigemodus: Automatisch',
     themeLight: 'Anzeigemodus: Hell',
     themeDark: 'Anzeigemodus: Dunkel',
+    languageDe: 'Sprache: Deutsch',
+    languageEn: 'Language: English',
+    search: 'Suchen (Volltext in Hilfe und Werkzeugen)',
   },
   tools: {
     wiegen: 'Wiegen',
@@ -107,6 +110,20 @@ const de = {
     license: 'CC BY-NC-ND 4.0 + Zusatzbestimmungen — Private Nutzung. Copyright 2026 HalloWelt42',
     licenseShort: 'Quelloffen, nur Privat — CC BY-NC-ND 4.0',
   },
+  disclaimer: {
+    title: 'Haftungsausschluss',
+    short: 'Keine Gewähr · Keine Haftung · Nicht eichfähig',
+    body:
+      'Diese Software wird ohne Gewähr für Richtigkeit, Vollständigkeit oder ' +
+      'Aktualität bereitgestellt. Sie ist kein eichfähiges Mess-System; für ' +
+      'Verkauf nach Gewicht, amtliche Mengenangaben oder medizinische Dosierungen ' +
+      'mit gesetzlichen Toleranzen ist sie nicht zulässig. Soweit gesetzlich ' +
+      'zulässig, ist jede Haftung für mittelbare Schäden, entgangenen Gewinn ' +
+      'oder Datenverlust ausgeschlossen. Die Verantwortung für richtige ' +
+      'Anwendung und regelmäßige Kontrolle der Genauigkeit mit geeichten ' +
+      'Prüfgewichten liegt beim Anwender.',
+    fullTextLink: 'Volltext: DISCLAIMER.md im Repository',
+  },
   toast: {
     valueCopied: 'Wert kopiert',
     valueCopiedG: (g: string) => `${g} kopiert`,
@@ -134,6 +151,15 @@ const de = {
     pieces: 'Stück',
     grams: 'Gramm',
     kilograms: 'Kilogramm',
+  },
+  search: {
+    placeholder: 'Hilfe, Werkzeuge, Glossar durchsuchen …',
+    noResults: 'Keine Treffer',
+    hintTool: 'Werkzeug',
+    hintHelp: 'Hilfe',
+    hintTerm: 'Begriff',
+    open: 'Eingabe öffnen mit Enter',
+    keys: 'Tastatur: ↑/↓ navigieren · Enter öffnen · Esc schließen',
   },
 } as const;
 

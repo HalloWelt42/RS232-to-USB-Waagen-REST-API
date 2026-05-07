@@ -128,6 +128,16 @@
       </p>
     </div>
 
+    <div class="card disclaimer-card">
+      <h3>{t('disclaimer.title')}</h3>
+      <p class="disclaimer-short">{t('disclaimer.short')}</p>
+      <p class="disclaimer-body">{t('disclaimer.body')}</p>
+      <p class="hint">
+        <a href="https://github.com/HalloWelt42/RS232-to-USB-Waagen-REST-API/blob/main/DISCLAIMER.md"
+           target="_blank" rel="noopener">{t('disclaimer.fullTextLink')}</a>
+      </p>
+    </div>
+
     <div class="card license">
       <h3>Lizenz</h3>
       <p class="license-line">{t('contact.license')}</p>
@@ -264,4 +274,20 @@
   .license-list li { display: flex; align-items: center; gap: 8px; }
   .license-list i { color: var(--green); width: 14px; text-align: center; }
   .license-list i.warn { color: var(--red); }
+
+  .disclaimer-card { border-color: var(--orange); }
+  .disclaimer-card h3 { color: var(--orange); }
+  .disclaimer-short {
+    margin: 0;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--orange);
+    letter-spacing: 0.02em;
+  }
+  .disclaimer-body {
+    margin: 0;
+    font-size: 18px;       /* gut lesbar */
+    line-height: 1.6;
+    color: var(--fg);
+  }
 </style>
