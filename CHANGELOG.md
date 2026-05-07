@@ -9,8 +9,30 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.4.2] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben
+- **Hilfe-Fenster öffnen sich wieder zuverlässig** — der bisherige
+  HelpLayer-Wrapper mit `display: contents` schluckte unter Svelte 5
+  die Klick-Events; Hilfe blieb stumm, ohne Fehler. Wrapper entfernt,
+  Cross-Link-Klicks per `<svelte:document onclick>` global abgefangen.
+  Zusätzlich `{#if entry}`-Guard, falls eine HelpId in der URL
+  landet, die in der aktuellen Sprache (noch) keinen Eintrag hat.
+
+### Geändert
+- **Messprotokoll rechtsbündig** — bei gemischten Werten
+  (+1.969 kg / +38,8 g / −105,8 g) fluchten jetzt Einheiten und
+  Dezimaltrenner untereinander, das Ablesen wird ruhiger.
+  Tabular-Figures auf Row-Ebene.
+- **Display-Anzeige adaptive** — `LiveWaage`, `WiegenPanel`,
+  `TolerancePanel` mit `container-type: inline-size`. Schrift skaliert
+  per `clamp(…, 13–14cqi, …)` mit der Container-Breite. Damit passt
+  jetzt sicher auch ein langer Wert wie „-30.000,0 g" auf eine
+  schmale Sidebar (280 px), ohne dass etwas abgeschnitten wird.
+- **StableValue ohne min-width-Reservierung** auf den Ziffern —
+  JetBrains Mono ist bereits monospaced, die zusätzlichen 0.65em
+  pro Glyph fielen für den schmalen Fall ins Gewicht.
+- **Simulator-Banner ist komplett klickbarer Knopf** mit Action-Chip
+  „Auf Live umschalten" rechts. Direkter Sprung in die Quellen-Karte
+  der Einstellungen, beim Hover invertierter Look.
 
 ## [0.4.1] — 2026-05-07
 
