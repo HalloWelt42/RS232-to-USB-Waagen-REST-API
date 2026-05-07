@@ -110,7 +110,7 @@
   .display {
     background: rgba(0,0,0,0.25);
     border: 1px solid rgba(255,255,255,0.06);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-soft);
     padding: var(--sp-4);
     text-align: center;
     box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);

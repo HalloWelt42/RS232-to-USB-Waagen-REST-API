@@ -19,10 +19,12 @@
   --fs-xxl: 42px;
   --fs-xxxl: 67px;
 
-  /* Layout */
-  --radius:    10px;
-  --radius-sm: 6px;
-  --radius-lg: 14px;
+  /* Layout — Industrial: Container/Karten eckig, Buttons leicht gerundet,
+     spezielle Elemente (Live-Display, Lampen, Pills) bleiben weich. */
+  --radius:    0px;       /* Container, Karten, Panels */
+  --radius-sm: 4px;       /* Buttons, Inputs, kleine Elemente */
+  --radius-lg: 0px;
+  --radius-soft: 6px;     /* spezielle Anzeigen (Live-Display, Toleranz-Lampe) */
   --header-h:  56px;
   --footer-h:  28px;
   --contact-h: 36px;
@@ -132,9 +134,11 @@ button:hover:not(:disabled) {
   background: var(--bg-card-2);
   border-color: var(--accent);
 }
+/* Focus-Ring per Default innerhalb der Klick-Fläche, damit der Effekt
+   nicht über Container-Kanten oder die Topbar hinausragt. */
 button:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 

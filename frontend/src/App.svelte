@@ -25,6 +25,8 @@
   import { WaageStream } from './lib/stream';
   import { theme } from './lib/theme';
   import { helpStore } from './lib/helpStore.svelte';
+  import { modelStore } from './lib/modelStore.svelte';
+  import { setDefaultResolution } from './lib/format';
   import type { ConnectionState, HealthInfo, MesslogEntry } from './lib/types';
 
   import Topbar from './components/Topbar.svelte';
@@ -68,6 +70,7 @@
 
     void refreshHealth();
     void refreshMesslog();
+    void modelStore.refresh();
     healthTimer = window.setInterval(refreshHealth, 5000);
     messlogTimer = window.setInterval(refreshMesslog, 4000);
 
@@ -83,6 +86,10 @@
   // Hilfe-Stack ist URL-getrieben: route.helpOpen ist die Wahrheit,
   // helpStore folgt; das macht Deeplinks wie ?help=count,glossary möglich.
   $effect(() => { helpStore.syncOpenIds(route.helpOpen); });
+
+  // Bei Modell-Wechsel die Default-Auflösung der Format-Funktionen
+  // anpassen — alle Anzeigen rendern sofort mit passender Präzision neu.
+  $effect(() => { setDefaultResolution(modelStore.active.resolution_g); });
 
   let connection = $derived(live.connection);
 </script>
@@ -122,7 +129,9 @@
     min-height: 0;
     display: flex;
     gap: var(--sp-3);
-    padding: var(--sp-3);
+    /* Mehr Luft oben, damit aktive Tab-Indikatoren und Box-Schatten
+       der Karten nicht in den Bereich der Topbar reinrutschen. */
+    padding: var(--sp-4) var(--sp-3) var(--sp-3);
     overflow: hidden;
   }
   .right {

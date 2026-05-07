@@ -151,7 +151,7 @@
   }
   .lamp {
     width: 100%; max-width: 480px;
-    border-radius: var(--radius);
+    border-radius: var(--radius-soft);
     padding: var(--sp-5) var(--sp-4);
     text-align: center;
     border: 2px solid var(--border);
