@@ -91,6 +91,22 @@ class ApiInfo(BaseModel):
     endpoints: dict[str, str]
 
 
+class CountCalibrateIn(BaseModel):
+    reference_count: int = Field(..., ge=1, le=100000,
+                                 description="Anzahl der aktuell aufliegenden Teile")
+
+
+class CountOut(BaseModel):
+    pieces: Optional[int] = Field(None, description="Geschätzte Anzahl Teile auf der Waage")
+    pieces_exact: Optional[float] = Field(None, description="Anzahl als Float, vor dem Runden")
+    piece_weight_g: Optional[float] = Field(None, description="Gewicht eines Teils in Gramm")
+    total_weight_g: Optional[float] = Field(None, description="Aktuelles Gesamtgewicht")
+    reference_count: Optional[int] = Field(None, description="Beim Kalibrieren angegebene Stückzahl")
+    calibrated_at: Optional[str] = Field(None, description="Zeitpunkt der Kalibrierung (ISO)")
+    stable: Optional[bool] = Field(None, description="Ist der aktuelle Wägewert stabil?")
+    calibrated: bool = Field(..., description="True sobald ein Stückgewicht eingelernt wurde")
+
+
 # ---------------------------------------------------------------------------
 #  State + Background-Reader
 # ---------------------------------------------------------------------------
@@ -105,6 +121,10 @@ class _State:
         self.subscribers: set[asyncio.Queue[Reading]] = set()
         self.reader_alive: bool = False
         self.started_at: datetime = datetime.now()
+        # Zählmodus: einmal kalibriertes Stückgewicht in Gramm. None = aus.
+        self.piece_weight_g: Optional[float] = None
+        self.piece_calibrated_at: Optional[datetime] = None
+        self.piece_reference_count: Optional[int] = None
         self._lock = asyncio.Lock()
 
     async def publish(self, reading: Reading) -> None:
@@ -238,6 +258,9 @@ def create_app(
             "weight_stable": "/weight/stable",
             "history":       "/history?limit=100",
             "health":        "/health",
+            "count":         "/count",
+            "count_calibrate": "POST /count/calibrate",
+            "count_reset":   "POST /count/reset",
             "stream":        "ws://<host>:8200/stream",
             "docs":          "/docs",
             "openapi":       "/openapi.json",
@@ -313,6 +336,84 @@ def create_app(
             count=len(items),
             items=[ReadingOut.from_reading(r) for r in items],
         )
+
+    # ----------------------- Zählmodus -------------------------------
+    def _count_response() -> CountOut:
+        latest = state.latest
+        if state.piece_weight_g is None or state.piece_weight_g <= 0:
+            return CountOut(
+                calibrated=False,
+                total_weight_g=round(latest.weight, 4) if latest else None,
+                stable=latest.stable if latest else None,
+            )
+        if latest is None:
+            return CountOut(
+                calibrated=True,
+                piece_weight_g=round(state.piece_weight_g, 6),
+                reference_count=state.piece_reference_count,
+                calibrated_at=state.piece_calibrated_at.isoformat(timespec="seconds")
+                              if state.piece_calibrated_at else None,
+            )
+        pieces_exact = latest.weight / state.piece_weight_g
+        return CountOut(
+            calibrated=True,
+            pieces=int(round(pieces_exact)),
+            pieces_exact=round(pieces_exact, 4),
+            piece_weight_g=round(state.piece_weight_g, 6),
+            total_weight_g=round(latest.weight, 4),
+            reference_count=state.piece_reference_count,
+            calibrated_at=state.piece_calibrated_at.isoformat(timespec="seconds")
+                          if state.piece_calibrated_at else None,
+            stable=latest.stable,
+        )
+
+    @app.get("/count", response_model=CountOut, tags=["count"])
+    def get_count() -> CountOut:
+        """Aktueller Zählmodus-Status mit Live-Stückzahl, sofern kalibriert."""
+        return _count_response()
+
+    @app.post(
+        "/count/calibrate",
+        response_model=CountOut,
+        tags=["count"],
+        responses={
+            400: {"description": "Aktuelles Gewicht ist nicht positiv oder Waage instabil"},
+            503: {"description": "Noch kein Reading verfügbar"},
+        },
+    )
+    def post_count_calibrate(payload: CountCalibrateIn) -> CountOut:
+        """Lernt das Stückgewicht ein.
+
+        Vorgehen: lege ``reference_count`` Teile auf die Waage, warte bis
+        der Wert stabil ist, dann diesen Endpoint mit der Anzahl aufrufen.
+        Das Backend merkt sich anschließend das Stückgewicht und liefert
+        in ``GET /count`` und im WebSocket-Stream die Anzahl der Teile,
+        die aktuell auf der Waage liegen.
+        """
+        latest = state.latest
+        if latest is None:
+            raise HTTPException(503, detail="Waage hat noch nichts gesendet")
+        if latest.weight <= 0:
+            raise HTTPException(
+                400,
+                detail=(f"Aktuelles Gewicht muss positiv sein "
+                        f"(ist {latest.weight:.2f} g)"),
+            )
+        state.piece_weight_g = latest.weight / payload.reference_count
+        state.piece_reference_count = payload.reference_count
+        state.piece_calibrated_at = datetime.now()
+        log.info("Zählmodus kalibriert: %d Teile = %.3f g (%.6f g/Stück)",
+                 payload.reference_count, latest.weight, state.piece_weight_g)
+        return _count_response()
+
+    @app.post("/count/reset", response_model=CountOut, tags=["count"])
+    def post_count_reset() -> CountOut:
+        """Verwirft die aktuelle Stückgewicht-Kalibrierung."""
+        state.piece_weight_g = None
+        state.piece_reference_count = None
+        state.piece_calibrated_at = None
+        log.info("Zählmodus zurückgesetzt")
+        return _count_response()
 
     @app.websocket("/stream")
     async def stream(ws: WebSocket) -> None:
