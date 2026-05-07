@@ -1,6 +1,21 @@
 /**
  * Hilfe-Inhalte. Texte mind. 18 px lesbar (siehe Styles), Zahlen
  * werden im Markup mit <strong> hervorgehoben.
+ *
+ * Die Texte sind modell-neutral — modellspezifische Werte erscheinen
+ * als Platzhalter und werden zur Laufzeit aus dem `modelStore`
+ * ersetzt:
+ *   {{maxG}}        Maximalkapazität in Gramm  (z.B. „6000 g")
+ *   {{resolutionG}} Auflösung in Gramm        (z.B. „0,1 g")
+ *   {{modelName}}   Anzeigename des Modells   (z.B. „G&G PLC-6000")
+ *   {{minPiecesUnder1g}} empfohlene Mindest-Referenzmenge bei
+ *                        Stückzählung kleiner Teile
+ *
+ * Cross-Links zu anderen Werkzeugen oder Hilfe-Eintragungen sind
+ * mit doppelten eckigen Klammern markiert und werden vom HelpLayer
+ * in PWA-konforme Buttons umgewandelt — kein Page-Reload:
+ *   [[tool:count|Stückzählung]]   öffnet das Werkzeug
+ *   [[help:wiegen|Wiegen]]        öffnet ein Hilfe-Fenster
  */
 
 export type HelpId =
@@ -20,7 +35,13 @@ export interface HelpEntry {
   blocks: HelpBlock[];
 }
 
-export const helpEntries: Record<HelpId, HelpEntry> = {
+/**
+ * Locale-spezifischer Hilfe-Baum. Sprache wird vom HelpLayer beim
+ * Lesen anhand der aktuellen i18n-Locale ausgewählt.
+ */
+type HelpTree = Record<HelpId, HelpEntry>;
+
+const helpDe: HelpTree = {
   overview: {
     id: 'overview',
     title: 'Willkommen',
@@ -29,17 +50,24 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
         heading: 'Was ist das hier?',
         body:
           'Eine Live-Anzeige für Ihre Präzisionswaage mit Werkzeugen für ' +
-          'Qualitätskontrolle, Stückzählung, Behälterwägung und Mess-Protokoll. ' +
-          'Die Waage wird über RS232 ausgelesen und ihre Werte erscheinen sofort ' +
-          'in der Anzeige.',
+          '[[tool:tolerance|Qualitätskontrolle]], [[tool:count|Stückzählung]], ' +
+          '[[tool:netto|Behälterwägung]] und Mess-Protokoll. Die Waage wird über ' +
+          'RS232 ausgelesen und ihre Werte erscheinen sofort in der Anzeige.',
+      },
+      {
+        heading: 'Aktuelles Modell',
+        body:
+          'Es ist <strong>{{modelName}}</strong> mit max. <strong>{{maxG}}</strong> ' +
+          'und einer Auflösung von <strong>{{resolutionG}}</strong> aktiv. ' +
+          'Eine andere Waage wählen Sie unter [[tool:settings|Einstellungen]].',
       },
       {
         heading: 'Aufbau',
         body:
-          'Beim Start sehen Sie ein Dashboard mit Karten — links die Live-Anzeige ' +
-          'der Waage, rechts die verfügbaren Werkzeuge. Klick auf eine Karte ' +
-          'öffnet das Werkzeug; oben erscheint dann eine Tab-Leiste, mit der Sie ' +
-          'zwischen den Werkzeugen wechseln können.',
+          'Links steht die Live-Anzeige der Waage, rechts die verfügbaren ' +
+          'Werkzeuge als Karten. Klick auf eine Karte öffnet das Werkzeug; ' +
+          'die Live-Anzeige bleibt sichtbar. Eine Tab-Leiste oben erlaubt ' +
+          'das Wechseln zwischen Werkzeugen.',
       },
       {
         heading: 'Hilfe immer dabei',
@@ -47,6 +75,12 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
           'In jedem Bereich gibt es einen <strong>blauen Info-Knopf</strong>. ' +
           'Das Hilfe-Fenster lässt sich frei verschieben und in der Größe ändern. ' +
           'Mehrere Fenster können parallel offen sein.',
+      },
+      {
+        heading: 'Wichtig',
+        body:
+          'Die Software ist <strong>nicht eichfähig</strong> — siehe ' +
+          '[[help:disclaimer|Haftungsausschluss]].',
       },
     ],
   },
@@ -56,14 +90,14 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     title: 'Glossar',
     blocks: [
       { heading: 'Brutto', body: 'Gesamtgewicht — Behälter plus Inhalt zusammen.' },
-      { heading: 'Tara', body: 'Gewicht des leeren Behälters. Wer Tara speichert, sieht nur noch das Netto.' },
+      { heading: 'Tara', body: 'Gewicht des leeren Behälters. Wer Tara speichert, sieht nur noch das Netto. Werkzeug: [[tool:netto|Behälter wiegen]].' },
       { heading: 'Netto', body: 'Brutto minus Tara — nur der Inhalt.' },
-      { heading: 'Stückgewicht', body: 'Gewicht eines einzelnen Teils. Beispiel: <strong>100</strong> Schrauben wiegen <strong>250 g</strong> -> <strong>2,5 g</strong> pro Stück.' },
+      { heading: 'Stückgewicht', body: 'Gewicht eines einzelnen Teils. Beispiel: <strong>100</strong> Schrauben wiegen <strong>250 g</strong> → <strong>2,5 g</strong> pro Stück. Werkzeug: [[tool:count|Stückzählung]].' },
       { heading: 'Stable / Stabil', body: 'Wert hat sich beruhigt und schwankt nicht mehr.' },
-      { heading: 'Toleranz', body: 'Erlaubte Abweichung vom Sollwert. Bei <strong>50 g ± 2 g</strong> ist alles zwischen <strong>48 g</strong> und <strong>52 g</strong> in Ordnung.' },
-      { heading: 'Auflösung', body: 'Kleinste Anzeigeschritt der Waage. Bei der PLC-6000: <strong>0,1 g</strong>.' },
-      { heading: 'Maximalkapazität', body: 'Höchste Last, die die Waage messen kann. Bei der PLC-6000: <strong>6000 g</strong>.' },
-      { heading: 'Session', body: 'Name für eine Mess-Reihe — gruppiert mehrere Wägungen unter einem Etikett.' },
+      { heading: 'Toleranz', body: 'Erlaubte Abweichung vom Sollwert. Bei <strong>50 g ± 2 g</strong> ist alles zwischen <strong>48 g</strong> und <strong>52 g</strong> in Ordnung. Werkzeug: [[tool:tolerance|Qualitätskontrolle]].' },
+      { heading: 'Auflösung', body: 'Kleinster Anzeigeschritt der Waage. Aktuelles Modell: <strong>{{resolutionG}}</strong>.' },
+      { heading: 'Maximalkapazität', body: 'Höchste Last, die die Waage messen kann. Aktuelles Modell: <strong>{{maxG}}</strong>.' },
+      { heading: 'Session', body: 'Name für eine Mess-Reihe — gruppiert mehrere Wägungen unter einem Etikett. Werkzeug: [[tool:samples|Werte erfassen]].' },
       { heading: 'Mittelwert / Standardabweichung', body: 'Durchschnitt mehrerer Wägungen und ihre Streuung darum herum.' },
     ],
   },
@@ -73,6 +107,8 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     blocks: [
       { heading: 'Funktion', body: 'Reines Ablesen des Live-Werts. Klick auf den großen Wert kopiert ihn in die Zwischenablage.' },
       { heading: 'Untermodi', body: 'Frei (nur ablesen) oder mit Sollwert-Hinweis: gewünschtes Gewicht eintragen, beim Auflegen sieht man wie nahe man dran ist.' },
+      { heading: 'Reichweite', body: 'Aktives Modell <strong>{{modelName}}</strong> — bis maximal <strong>{{maxG}}</strong> bei <strong>{{resolutionG}}</strong> Auflösung.' },
+      { heading: 'Verwandt', body: 'Tara setzen siehe [[help:tare|Auf Null setzen]], Einheit wechseln siehe [[help:unit|Maßeinheit]].' },
     ],
   },
 
@@ -83,6 +119,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       { heading: 'Variante 1: Behälter aufstellen', body: 'Leeres Gefäß auf die Waage, „Tara einfrieren". Ab jetzt Netto-Anzeige.' },
       { heading: 'Variante 2: Tara als Zahl', body: 'Behältergewicht direkt eintragen, z.B. <strong>23,4 g</strong>. „Setzen" speichert es.' },
       { heading: 'Beispiel Bäckerei', body: 'Schüssel auflegen, Tara — Mehl bis <strong>500 g</strong>, Wasser bis <strong>250 g</strong>. Alles im selben Gefäß abgewogen, ohne zu rechnen.' },
+      { heading: 'Mehrfach-Tara?', body: 'Wenn Sie Schichten stapeln möchten (mehrere Behälter übereinander), nutzen Sie [[tool:differenz|Differenz-Wiegen]].' },
     ],
   },
 
@@ -93,7 +130,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       { heading: 'Vorlagen', body: 'Schrauben, Tabletten, Münzen, Briefe — Vorlagen mit typischen Stückgewichten als Schnell-Start.' },
       { heading: 'Beispiel Werkstatt', body: '<strong>10</strong> Schrauben auflegen, <strong>10</strong> eingeben, kalibrieren. Beim weiteren Auflegen sieht man live die Stückzahl.' },
       { heading: 'Beispiel Apotheke', body: '<strong>50</strong> Tabletten als Referenz. Beim Befüllen einer Bestellung zeigt die App die aktuelle Anzahl.' },
-      { heading: 'Genauigkeit', body: 'Mehr Referenzteile = genauer. Bei Teilen unter <strong>1 g</strong> mindestens <strong>20</strong> Stück, sonst kippt die Anzeige wegen der Auflösung von <strong>0,1 g</strong>.' },
+      { heading: 'Genauigkeit', body: 'Mehr Referenzteile = genauer. Bei Teilen unter <strong>1 g</strong> mindestens <strong>{{minPiecesUnder1g}}</strong> Stück, sonst kippt die Anzeige wegen der Auflösung von <strong>{{resolutionG}}</strong>.' },
     ],
   },
 
@@ -101,9 +138,10 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     id: 'tolerance', title: 'Qualitätskontrolle',
     blocks: [
       { heading: 'Was ist das?', body: 'Sie geben einen Sollwert mit Toleranzgrenzen vor. Eine große Ampel zeigt grün, gelb oder rot — je nach Abweichung.' },
-      { heading: 'Beispiel Apotheke', body: 'Rezeptur verlangt <strong>2,000 g</strong> ± <strong>0,05 g</strong>. Beim Einwiegen reagiert die Ampel sofort — kein Rechnen, kein zweiter Blick.' },
+      { heading: 'Beispiel Apotheke', body: 'Rezeptur verlangt <strong>2,000 g</strong> ± <strong>0,05 g</strong>. Beim Einwiegen reagiert die Ampel sofort — kein Rechnen, kein zweiter Blick. (Voraussetzung: die Waage löst fein genug auf.)' },
       { heading: 'Beispiel Verpackung', body: 'Tütchen mit <strong>50 g</strong> ± <strong>2 g</strong>. Alles zwischen <strong>48 g</strong> und <strong>52 g</strong> ist grün.' },
       { heading: 'Tipp Mindestmenge', body: 'Wenn Sie nur Untergewicht prüfen wollen, setzen Sie Tol+ auf einen sehr großen Wert.' },
+      { heading: 'Verwandt', body: 'Werte erfassen siehe [[tool:samples|Erfassen]].' },
     ],
   },
 
@@ -123,6 +161,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       { heading: 'Mehrfach-Tara', body: 'Mehrere Tara-Stufen stapelbar. Inhalt = Brutto minus Summe aller Tarae.' },
       { heading: 'Beispiel', body: 'Behälter auflegen, „als Tara" — <strong>53 g</strong>. Trägermedium auflegen, „als Tara" — weitere <strong>20 g</strong>. Der eigentliche Inhalt erscheint als Netto, ohne dass die Behälter mitgewogen werden.' },
       { heading: 'Schichten verwalten', body: 'Jede Schicht in einer Liste — einzelne Tarae lassen sich entfernen, ohne den Rest zu verlieren.' },
+      { heading: 'Einfache Tara?', body: 'Wenn Sie nur eine Schicht brauchen, ist [[tool:netto|Behälter wiegen]] schneller.' },
     ],
   },
 
@@ -136,7 +175,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
 
   sparkline: {
     id: 'sparkline', title: 'Mini-Verlauf',
-    blocks: [{ heading: 'Hinweis', body: 'In dieser Version ist der Mini-Verlauf durch das Messprotokoll ersetzt — siehe Hilfe „Messprotokoll".' }],
+    blocks: [{ heading: 'Hinweis', body: 'In dieser Version ist der Mini-Verlauf durch das [[help:history|Messprotokoll]] ersetzt.' }],
   },
 
   tare: {
@@ -144,6 +183,7 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     blocks: [
       { heading: 'Funktion', body: 'Setzt den aktuellen Anzeigewert der Waage auf Null. Entspricht der Tara-Taste an der Waage.' },
       { heading: 'Wozu?', body: 'Behälter aufstellen, Tara, Inhalt füllen — die Anzeige zeigt direkt das Netto.' },
+      { heading: 'Software-Tara', body: 'Wer die Tara nicht in der Hardware löschen will, nutzt [[tool:netto|Behälter wiegen]].' },
     ],
   },
 
@@ -167,16 +207,17 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     id: 'copy', title: 'Werte kopieren',
     blocks: [
       { heading: 'Klick kopiert', body: 'Tippen oder klicken Sie auf den großen Wägewert. Der Wert wandert in die Zwischenablage; ein kurzer Hinweis bestätigt.' },
-      { heading: 'Übernehmen', body: 'In Toleranz, Netto und Zählung gibt es Knöpfe „aktuellen Wert übernehmen". Spart Tippen, vermeidet Tippfehler.' },
+      { heading: 'Übernehmen', body: 'In [[tool:tolerance|Toleranz]], [[tool:netto|Behälter]] und [[tool:count|Zählung]] gibt es Knöpfe „aktuellen Wert übernehmen". Spart Tippen, vermeidet Tippfehler.' },
     ],
   },
 
   settings: {
     id: 'settings', title: 'Einstellungen',
     blocks: [
-      { heading: 'Modell', body: 'Wählen Sie Ihre Waage aus der Liste. Das Modell beeinflusst Anzeige-Einheiten und Maximal-/Auflösungswerte.' },
+      { heading: 'Modell', body: 'Wählen Sie Ihre Waage aus der Liste. Das Modell beeinflusst Anzeige-Einheiten, Maximal- und Auflösungswerte. Aktiv: <strong>{{modelName}}</strong>.' },
       { heading: 'Theme', body: 'Hell, Dunkel oder Automatisch (folgt der Systemeinstellung).' },
-      { heading: 'Anschluss', body: 'Serieller Port und Baudrate. Beim Default „auto" findet die App den FTDI-Adapter selbst.' },
+      { heading: 'Sprache', body: 'DE oder EN — Auswahl bleibt zwischen Sitzungen erhalten.' },
+      { heading: 'Anschluss', body: 'Serieller Port und Baudrate. Beim Default „auto" findet die App den USB-Serial-Adapter selbst.' },
       { heading: 'Polling', body: 'Wie oft die App den Print-Befehl an die Waage schickt — Standard <strong>0,5 s</strong>.' },
     ],
   },
@@ -209,3 +250,187 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     ],
   },
 };
+
+const helpEn: HelpTree = {
+  overview: {
+    id: 'overview', title: 'Welcome',
+    blocks: [
+      { heading: 'What is this?', body: 'A live display for your precision scale with tools for [[tool:tolerance|quality control]], [[tool:count|piece counting]], [[tool:netto|tare-and-net weighing]] and a measurement log. The scale is read out via RS232 and its values appear instantly in the display.' },
+      { heading: 'Active model', body: 'Currently <strong>{{modelName}}</strong> with a maximum of <strong>{{maxG}}</strong> and a resolution of <strong>{{resolutionG}}</strong>. To choose a different scale, see [[tool:settings|Settings]].' },
+      { heading: 'Layout', body: 'The live display sits permanently on the left, the available tools as cards on the right. Click a card to open the tool — the live value stays visible. A tab bar at the top lets you switch between tools.' },
+      { heading: 'Help is always there', body: 'Each section has a <strong>blue info button</strong>. Help windows can be moved freely and resized. Several windows can be open at the same time.' },
+      { heading: 'Important', body: 'The software is <strong>not legal-for-trade</strong> — see [[help:disclaimer|Disclaimer]].' },
+    ],
+  },
+  glossary: {
+    id: 'glossary', title: 'Glossary',
+    blocks: [
+      { heading: 'Gross', body: 'Total weight — container plus content together.' },
+      { heading: 'Tare', body: 'Weight of the empty container. Storing a tare gives a net-only display. Tool: [[tool:netto|Tare / Net]].' },
+      { heading: 'Net', body: 'Gross minus tare — the content alone.' },
+      { heading: 'Piece weight', body: 'Weight of a single part. Example: <strong>100</strong> screws weigh <strong>250 g</strong> → <strong>2.5 g</strong> per piece. Tool: [[tool:count|Piece counting]].' },
+      { heading: 'Stable', body: 'The value has settled and no longer fluctuates.' },
+      { heading: 'Tolerance', body: 'Allowed deviation from the target. With <strong>50 g ± 2 g</strong>, anything between <strong>48 g</strong> and <strong>52 g</strong> is OK. Tool: [[tool:tolerance|Quality control]].' },
+      { heading: 'Resolution', body: 'Smallest display step of the scale. Active model: <strong>{{resolutionG}}</strong>.' },
+      { heading: 'Maximum capacity', body: 'Highest load the scale can measure. Active model: <strong>{{maxG}}</strong>.' },
+      { heading: 'Session', body: 'Name for a measurement series — groups several weighings under a label. Tool: [[tool:samples|Capture values]].' },
+      { heading: 'Mean / standard deviation', body: 'Average of several weighings and their spread.' },
+    ],
+  },
+  wiegen: {
+    id: 'wiegen', title: 'Weighing',
+    blocks: [
+      { heading: 'Function', body: 'Pure reading of the live value. Click on the large value to copy it to the clipboard.' },
+      { heading: 'Submodes', body: 'Free (read only) or with target hint: enter the desired weight, see how close you are while loading.' },
+      { heading: 'Range', body: 'Active model <strong>{{modelName}}</strong> — up to <strong>{{maxG}}</strong> at <strong>{{resolutionG}}</strong> resolution.' },
+      { heading: 'Related', body: 'Set tare see [[help:tare|Set to zero]], switch unit see [[help:unit|Unit]].' },
+    ],
+  },
+  netto: {
+    id: 'netto', title: 'Tare / Net',
+    blocks: [
+      { heading: 'What does it do?', body: 'Stores a container weight (tare) in the software and shows only the content from then on — net = gross − tare.' },
+      { heading: 'Variant 1: place the container', body: 'Empty vessel on the scale, „freeze tare". From now on net display.' },
+      { heading: 'Variant 2: tare as a number', body: 'Enter the container weight directly, e.g. <strong>23.4 g</strong>. „Set" stores it.' },
+      { heading: 'Bakery example', body: 'Bowl on, tare — flour up to <strong>500 g</strong>, water up to <strong>250 g</strong>. Everything weighed in the same vessel without doing arithmetic.' },
+      { heading: 'Multiple tares?', body: 'For stacking layers (multiple containers on top of each other), use [[tool:differenz|Differential weighing]].' },
+    ],
+  },
+  count: {
+    id: 'count', title: 'Piece counting',
+    blocks: [
+      { heading: 'How it works', body: 'Calibrate with a known number of identical parts. The app computes the piece weight and shows the count for every new weight.' },
+      { heading: 'Templates', body: 'Screws, tablets, coins, letters — templates with typical piece weights as a quick start.' },
+      { heading: 'Workshop example', body: 'Place <strong>10</strong> screws, enter <strong>10</strong>, calibrate. Loading more parts shows the live count.' },
+      { heading: 'Pharmacy example', body: '<strong>50</strong> tablets as reference. While filling an order the app shows the current count.' },
+      { heading: 'Accuracy', body: 'More reference parts = more accurate. For parts below <strong>1 g</strong>, use at least <strong>{{minPiecesUnder1g}}</strong> pieces — otherwise the display jumps because of the <strong>{{resolutionG}}</strong> resolution.' },
+    ],
+  },
+  tolerance: {
+    id: 'tolerance', title: 'Quality control',
+    blocks: [
+      { heading: 'What is this?', body: 'Specify a target with tolerance limits. A large traffic light shows green, yellow or red depending on deviation.' },
+      { heading: 'Pharmacy example', body: 'Recipe requires <strong>2.000 g</strong> ± <strong>0.05 g</strong>. The light reacts immediately — no calculation, no second look. (Provided the scale resolves finely enough.)' },
+      { heading: 'Packaging example', body: 'Bag of <strong>50 g</strong> ± <strong>2 g</strong>. Anything between <strong>48 g</strong> and <strong>52 g</strong> is green.' },
+      { heading: 'Min-only tip', body: 'If you only want to check for under-weight, set tol+ to a very large number.' },
+      { heading: 'Related', body: 'Capture values see [[tool:samples|Capture]].' },
+    ],
+  },
+  samples: {
+    id: 'samples', title: 'Capture values',
+    blocks: [
+      { heading: 'What gets stored?', body: 'Current weight with label and note, in a database — survives backend restarts.' },
+      { heading: 'Sessions', body: 'Group several weighings under one session name, e.g. „Batch-2026-05-07".' },
+      { heading: 'Statistics', body: 'Count, min, max, mean, standard deviation and sum computed automatically.' },
+      { heading: 'Lab example', body: 'Series with sample-A1, A2, A3 … CSV export delivers the row as a file for analysis.' },
+    ],
+  },
+  differenz: {
+    id: 'differenz', title: 'Differential weighing',
+    blocks: [
+      { heading: 'Multi-tare', body: 'Stack several tare layers. Content = gross minus sum of all tares.' },
+      { heading: 'Example', body: 'Place container, „as tare" — <strong>53 g</strong>. Place carrier, „as tare" — another <strong>20 g</strong>. The actual content shows up as net, without the containers being weighed in.' },
+      { heading: 'Manage layers', body: 'Each layer in a list — individual tares can be removed without losing the rest.' },
+      { heading: 'Single tare?', body: 'For just one layer, [[tool:netto|Tare / Net]] is faster.' },
+    ],
+  },
+  history: {
+    id: 'history', title: 'Measurement log',
+    blocks: [
+      { heading: 'What is this?', body: 'A list of value <strong>changes</strong>: every new load, every removal, every tare event becomes one entry with difference and resulting value.' },
+      { heading: 'Why not all frames?', body: 'A still scale delivers the same value many times per second — that would not help. The list reacts only to real changes.' },
+    ],
+  },
+  sparkline: {
+    id: 'sparkline', title: 'Mini timeline',
+    blocks: [{ heading: 'Note', body: 'In this version the mini timeline has been replaced by the [[help:history|measurement log]].' }],
+  },
+  tare: {
+    id: 'tare', title: 'Set to zero (Tare)',
+    blocks: [
+      { heading: 'Function', body: 'Resets the scale display to zero — equivalent to the tare button on the device.' },
+      { heading: 'What for?', body: 'Place container, tare, fill content — the display shows the net directly.' },
+      { heading: 'Software tare', body: 'If you do not want to wipe the hardware tare, use [[tool:netto|Tare / Net]].' },
+    ],
+  },
+  unit: {
+    id: 'unit', title: 'Switch unit',
+    blocks: [
+      { heading: 'Function', body: 'The scale switches between grams, kilograms, carats, ounces and pounds — depending on model.' },
+      { heading: 'Tip', body: 'The app always computes internally in grams.' },
+    ],
+  },
+  light: {
+    id: 'light', title: 'Backlight',
+    blocks: [
+      { heading: 'Function', body: 'Turns the backlight on the scale display on or off.' },
+      { heading: 'Diagnostics', body: 'When the backlight toggles, your commands reach the scale — a good function test.' },
+    ],
+  },
+  copy: {
+    id: 'copy', title: 'Copy values',
+    blocks: [
+      { heading: 'Click copies', body: 'Tap or click the large weight value. The value is copied to the clipboard; a brief hint confirms.' },
+      { heading: 'Take over', body: 'In [[tool:tolerance|Tolerance]], [[tool:netto|Tare]] and [[tool:count|Counting]] there are „take current value" buttons. Saves typing, avoids typos.' },
+    ],
+  },
+  settings: {
+    id: 'settings', title: 'Settings',
+    blocks: [
+      { heading: 'Model', body: 'Pick your scale from the list. The model affects display units, maximum and resolution. Active: <strong>{{modelName}}</strong>.' },
+      { heading: 'Theme', body: 'Light, dark or automatic (follows system setting).' },
+      { heading: 'Language', body: 'DE or EN — choice persists across sessions.' },
+      { heading: 'Connection', body: 'Serial port and baudrate. With default „auto" the app finds the USB-serial adapter on its own.' },
+      { heading: 'Polling', body: 'How often the app sends the print command to the scale — default <strong>0.5 s</strong>.' },
+    ],
+  },
+  donate: {
+    id: 'donate', title: 'Thanks',
+    blocks: [
+      { heading: 'What is this?', body: 'Open source, but intended for <strong>private, non-commercial</strong> use only. If you like the application, you can support me via Ko-fi or crypto.' },
+      { heading: 'License', body: 'CC BY-NC-ND 4.0 with additional terms — private modification and private forks allowed, no commercial use and no publication of modified versions. Full text in the repository under <code>LICENSE</code>.' },
+      { heading: 'Crypto', body: 'Three cards — BTC, DOGE, ETH. Click shows the QR code and the address. One-click copy button.' },
+    ],
+  },
+  architecture: {
+    id: 'architecture', title: 'Scale ↔ App architecture',
+    blocks: [
+      { heading: 'What is separated?', body: 'The <strong>scale module</strong> (endpoint /scale/*) does only the readout and control of the scale. It can run on its own — third-party systems can integrate it without the app layer.' },
+      { heading: 'What is optional?', body: 'The <strong>app module</strong> (/app/*) provides tolerance, net, counting, capture, differential and the measurement log — UI conveniences. Requires the scale module.' },
+      { heading: 'Consequence', body: 'For just the weight in your workflow, only /scale/* is needed. UI updates to /app/* leave the scale module untouched.' },
+    ],
+  },
+  disclaimer: {
+    id: 'disclaimer', title: 'Disclaimer',
+    blocks: [
+      { heading: 'No warranty', body: 'This software is provided free of charge — <strong>without warranty</strong> as to accuracy, completeness or timeliness. No fitness for a particular purpose is assured.' },
+      { heading: 'Not legal-for-trade', body: 'The software is <strong>not a legal-for-trade measurement system</strong>. For sale by weight, official quantity declarations, medical dosing with statutory tolerances, customs or tax-relevant data it <strong>may not be used</strong>.' },
+      { heading: 'No liability', body: 'To the extent permitted by law, any liability for indirect damages, lost profits, loss of data or consequential damages is excluded. Liability for injury to life, body or health, or for gross negligence or wilful misconduct, remains unaffected.' },
+      { heading: 'User responsibility', body: 'The user alone is responsible for proper use, regular verification with calibrated reference weights and plausibility-checking the values. Full text: <code>DISCLAIMER.md</code> in the repo.' },
+    ],
+  },
+};
+
+/** Locale-spezifische Hilfe-Bäume — werden im Layer reaktiv ausgewählt. */
+export const helpEntriesByLang: Record<'de' | 'en', HelpTree> = { de: helpDe, en: helpEn };
+
+/**
+ * Default-Export für Suche/Index/Search-Test: deutsche Bäume mit
+ * unaufgelösten Platzhaltern. Konsumenten, die Texte rendern, gehen
+ * über `getHelpEntries(lang)`.
+ */
+export const helpEntries: HelpTree = helpDe;
+
+export function getHelpEntries(lang: 'de' | 'en'): HelpTree {
+  return helpEntriesByLang[lang] ?? helpDe;
+}
+
+/** Substituiert {{platzhalter}} im Text. */
+export function fillTemplate(
+  text: string,
+  vars: Record<string, string | number>,
+): string {
+  return text.replace(/\{\{(\w+)\}\}/g, (_m, key) =>
+    key in vars ? String(vars[key]) : `{{${key}}}`,
+  );
+}

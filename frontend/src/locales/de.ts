@@ -22,6 +22,8 @@ const de = {
     languageDe: 'Sprache: Deutsch',
     languageEn: 'Language: English',
     search: 'Suchen (Volltext in Hilfe und Werkzeugen)',
+    openSettings: 'Modell und Einstellungen öffnen',
+    toolNav: 'Werkzeug-Auswahl',
   },
   tools: {
     wiegen: 'Wiegen',
