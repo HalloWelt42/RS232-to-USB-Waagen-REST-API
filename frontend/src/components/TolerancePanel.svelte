@@ -2,6 +2,7 @@
   import { api } from '../lib/api';
   import { formatGrams } from '../lib/format';
   import type { Reading, Status, ToleranceState } from '../lib/types';
+  import PanelHeader from './PanelHeader.svelte';
 
   interface Props { reading: Reading | null; }
   let { reading = null }: Props = $props();
@@ -66,6 +67,8 @@
 </script>
 
 <section class="panel">
+  <PanelHeader title="Qualitätskontrolle" help="tolerance" />
+
   {#if !cfg?.active}
     <p class="hint">Sollwert + Toleranz festlegen — Anzeige zeigt grün, gelb oder rot je nach Abweichung.</p>
     <div class="grid">
@@ -78,17 +81,17 @@
     </button>
   {:else}
     <div class="lamp" data-status={liveStatus}>
-      <span>{
+      <span class="num">{
         liveStatus === 'ok'   ? 'IN ORDNUNG'
       : liveStatus === 'low'  ? 'ZU LEICHT'
       : liveStatus === 'high' ? 'ZU SCHWER'
       : '...'}</span>
     </div>
     <dl>
-      <div><dt>Soll</dt><dd>{formatGrams(cfg.target_g)}</dd></div>
-      <div><dt>Bereich</dt><dd>{formatGrams(cfg.min_g)} ... {formatGrams(cfg.max_g)}</dd></div>
-      <div><dt>Aktuell</dt><dd>{reading ? formatGrams(reading.weight_g) : '—'}</dd></div>
-      <div><dt>Abweichung</dt><dd class:ok={liveStatus==='ok'} class:warn={liveStatus!=='ok' && liveStatus!=='idle'}>
+      <div><dt>Soll</dt><dd class="num">{formatGrams(cfg.target_g)}</dd></div>
+      <div><dt>Bereich</dt><dd class="num">{formatGrams(cfg.min_g)} … {formatGrams(cfg.max_g)}</dd></div>
+      <div><dt>Aktuell</dt><dd class="num">{reading ? formatGrams(reading.weight_g) : '—'}</dd></div>
+      <div><dt>Abweichung</dt><dd class="num" class:ok={liveStatus==='ok'} class:warn={liveStatus!=='ok' && liveStatus!=='idle'}>
         {liveDeviation === null ? '—' : (liveDeviation >= 0 ? '+' : '') + liveDeviation.toFixed(2) + ' g'}
       </dd></div>
     </dl>
@@ -106,44 +109,45 @@
 </section>
 
 <style>
-  .panel { display: flex; flex-direction: column; gap: 0.85rem; height: 100%; }
-  .hint { margin: 0; color: var(--fg-dim); font-size: 0.9rem; }
+  .panel { display: flex; flex-direction: column; gap: var(--sp-3); height: 100%; }
+  .hint { margin: 0; color: var(--fg-dim); font-size: var(--fs-sm); }
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.5rem;
+    gap: var(--sp-2);
   }
   label {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
-    font-size: 0.72rem;
+    gap: 4px;
+    font-size: var(--fs-xs);
     color: var(--fg-dim);
   }
   input[type="number"] { width: 100%; }
-  .row { display: flex; gap: 0.5rem; }
-  button.primary { background: var(--bg-card-2); border-color: var(--accent); }
+  .row { display: flex; gap: var(--sp-2); }
+  .row button { flex: 1; }
+  button.primary { background: var(--bg-card-2); border-color: var(--accent); color: var(--accent); }
   button.warn-btn { color: var(--orange); }
   .lamp {
     border-radius: var(--radius);
-    padding: 1.5rem 1rem;
+    padding: var(--sp-5) var(--sp-3);
     text-align: center;
     font-family: var(--mono);
-    font-size: 1.4rem;
+    font-size: var(--fs-lg);
     font-weight: 700;
     letter-spacing: 0.1em;
     border: 2px solid var(--border);
     background: var(--bg);
   }
-  .lamp[data-status="ok"]   { border-color: var(--green);  background: rgba(63, 185, 80, 0.15);  color: var(--green); }
-  .lamp[data-status="low"]  { border-color: var(--orange); background: rgba(210, 153, 34, 0.15); color: var(--orange); }
-  .lamp[data-status="high"] { border-color: var(--red);    background: rgba(248, 81, 73, 0.15);  color: var(--red); }
+  .lamp[data-status="ok"]   { border-color: var(--green);  background: color-mix(in srgb, var(--green)  18%, transparent); color: var(--green); }
+  .lamp[data-status="low"]  { border-color: var(--orange); background: color-mix(in srgb, var(--orange) 18%, transparent); color: var(--orange); }
+  .lamp[data-status="high"] { border-color: var(--red);    background: color-mix(in srgb, var(--red)    18%, transparent); color: var(--red); }
   .lamp[data-status="idle"] { color: var(--fg-dim); }
-  dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1rem; margin: 0; font-size: 0.9rem; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--sp-1) var(--sp-3); margin: 0; font-size: var(--fs-sm); }
   dl div { display: contents; }
   dt { color: var(--fg-dim); }
-  dd { margin: 0; text-align: right; font-family: var(--mono); }
+  dd { margin: 0; text-align: right; }
   dd.ok { color: var(--green); }
   dd.warn { color: var(--orange); }
-  .error { color: var(--red); font-size: 0.85rem; margin: 0; }
+  .error { color: var(--red); font-size: var(--fs-sm); margin: 0; }
 </style>

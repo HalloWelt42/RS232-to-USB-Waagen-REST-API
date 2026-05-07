@@ -2,6 +2,7 @@
   import { api } from '../lib/api';
   import { formatGrams } from '../lib/format';
   import type { NettoState, Reading } from '../lib/types';
+  import PanelHeader from './PanelHeader.svelte';
 
   interface Props { reading: Reading | null; }
   let { reading = null }: Props = $props();
@@ -56,30 +57,33 @@
 </script>
 
 <section class="panel">
+  <PanelHeader title="Netto und Tara" help="netto" />
+
   {#if !cfg?.active}
     <p class="hint">
-      Behälter aufstellen, "Tara einfrieren" — danach Netto-Anzeige.
-      Alternativ ein bekanntes Tara-Gewicht eintragen.
+      Behälter aufstellen, „Tara einfrieren" — danach erscheint hier das
+      Netto-Gewicht. Alternativ ein bekanntes Behältergewicht direkt
+      eintragen.
     </p>
     <button class="primary" onclick={tareCurrent} disabled={busy || !reading}>
-      {busy ? '...' : 'Aktuelles Gewicht als Tara einfrieren'}
+      {busy ? '…' : 'Aktuelles Gewicht als Tara einfrieren'}
     </button>
     <div class="manual-row">
       <input type="number" step="0.01" placeholder="Tara [g]" bind:value={manualTare} disabled={busy} />
       <button onclick={tareManual} disabled={busy || manualTare === ''}>Setzen</button>
     </div>
     {#if reading}
-      <p class="current">Aktuell: <code>{formatGrams(reading.weight_g)}</code></p>
+      <p class="current">Aktuell: <code class="num">{formatGrams(reading.weight_g)}</code></p>
     {/if}
   {:else}
     <div class="netto-display">
-      <span class="big" class:stable={reading?.stable}>{formatGrams(liveNetto)}</span>
+      <span class="big num" class:stable={reading?.stable}>{formatGrams(liveNetto)}</span>
       <span class="big-label">Netto</span>
     </div>
     <dl>
-      <div><dt>Brutto</dt><dd>{reading ? formatGrams(reading.weight_g) : '—'}</dd></div>
-      <div><dt>Tara</dt><dd>{formatGrams(cfg.tare_g)}</dd></div>
-      <div><dt>Gesetzt am</dt><dd class="ts">{cfg.tare_set_at?.replace('T', ' ') ?? '—'}</dd></div>
+      <div><dt>Brutto</dt><dd class="num">{reading ? formatGrams(reading.weight_g) : '—'}</dd></div>
+      <div><dt>Tara</dt><dd class="num">{formatGrams(cfg.tare_g)}</dd></div>
+      <div><dt>Gesetzt am</dt><dd class="ts num">{cfg.tare_set_at?.replace('T', ' ') ?? '—'}</dd></div>
     </dl>
     <div class="row">
       <button onclick={tareCurrent} disabled={busy}>Tara neu setzen</button>
@@ -90,35 +94,34 @@
 </section>
 
 <style>
-  .panel { display: flex; flex-direction: column; gap: 0.85rem; height: 100%; }
-  .hint { margin: 0; color: var(--fg-dim); font-size: 0.9rem; line-height: 1.4; }
-  button.primary { background: var(--bg-card-2); border-color: var(--accent); }
+  .panel { display: flex; flex-direction: column; gap: var(--sp-3); height: 100%; }
+  .hint { margin: 0; color: var(--fg-dim); font-size: var(--fs-sm); line-height: 1.55; }
+  button.primary { background: var(--bg-card-2); border-color: var(--accent); color: var(--accent); }
   button.warn-btn { color: var(--orange); }
-  .manual-row { display: flex; gap: 0.5rem; }
+  .manual-row { display: flex; gap: var(--sp-2); }
   .manual-row input { flex: 1; }
-  .row { display: flex; gap: 0.5rem; }
+  .row { display: flex; gap: var(--sp-2); }
   .row button { flex: 1; }
-  .current { margin: 0; color: var(--fg-dim); font-size: 0.85rem; }
+  .current { margin: 0; color: var(--fg-dim); font-size: var(--fs-sm); }
   .netto-display {
     display: flex;
     align-items: baseline;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 0;
+    gap: var(--sp-2);
+    padding: var(--sp-3) 0;
   }
   .big {
-    font-family: var(--mono);
-    font-size: 2.5rem;
+    font-size: var(--fs-xxl);
     font-weight: 600;
     color: var(--fg-dim);
     transition: color 0.3s;
   }
   .big.stable { color: var(--green); }
-  .big-label { font-size: 0.85rem; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.1em; }
-  dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1rem; margin: 0; font-size: 0.9rem; }
+  .big-label { font-size: var(--fs-sm); color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--sp-1) var(--sp-3); margin: 0; font-size: var(--fs-sm); }
   dl div { display: contents; }
   dt { color: var(--fg-dim); }
-  dd { margin: 0; text-align: right; font-family: var(--mono); }
-  dd.ts { font-size: 0.8rem; color: var(--fg-dim); }
-  .error { color: var(--red); font-size: 0.85rem; margin: 0; }
+  dd { margin: 0; text-align: right; }
+  dd.ts { font-size: var(--fs-xs); color: var(--fg-dim); }
+  .error { color: var(--red); font-size: var(--fs-sm); margin: 0; }
 </style>

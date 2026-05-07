@@ -1,5 +1,6 @@
 <script lang="ts">
   import { formatGrams } from '../lib/format';
+  import HelpButton from './HelpButton.svelte';
   import type { Reading } from '../lib/types';
 
   interface Props {
@@ -62,16 +63,18 @@
 <section class="spark">
   <header>
     <h3>Verlauf {windowSeconds}s</h3>
-    {#if stats}
-      <span class="meta">
-        min {formatGrams(stats.min)} · max {formatGrams(stats.max)}
-      </span>
-    {/if}
+    <div class="meta">
+      {#if stats}
+        <span class="num">min {formatGrams(stats.min)}</span>
+        <span class="num">max {formatGrams(stats.max)}</span>
+      {/if}
+      <HelpButton id="sparkline" label="Hilfe zum Verlauf" />
+    </div>
   </header>
   {#if path}
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" role="img"
          aria-label="Live-Verlauf der letzten {windowSeconds} Sekunden">
-      <path d={area} fill="rgba(88, 166, 255, 0.18)" stroke="none" />
+      <path d={area} fill="color-mix(in srgb, var(--accent) 18%, transparent)" stroke="none" />
       <path d={path} fill="none" stroke="var(--accent)" stroke-width="1.5"
             stroke-linejoin="round" stroke-linecap="round" />
     </svg>
@@ -85,20 +88,23 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0.75rem 1rem;
+    padding: var(--sp-2) var(--sp-3);
     box-shadow: var(--shadow);
     flex: 0 0 auto;
   }
   header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 0.4rem;
+    align-items: center;
+    margin-bottom: var(--sp-1);
+    gap: var(--sp-2);
   }
-  h3 { margin: 0; font-size: 0.9rem; color: var(--fg-dim); font-weight: 500; }
+  h3 { margin: 0; font-size: var(--fs-sm); color: var(--fg-dim); font-weight: 500; }
   .meta {
-    font-family: var(--mono);
-    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    font-size: var(--fs-xs);
     color: var(--fg-dim);
   }
   svg {
@@ -108,8 +114,8 @@
   }
   .placeholder {
     color: var(--fg-dim);
-    font-size: 0.8rem;
+    font-size: var(--fs-sm);
     text-align: center;
-    padding: 1rem 0;
+    padding: var(--sp-3) 0;
   }
 </style>

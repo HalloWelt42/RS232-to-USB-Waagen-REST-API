@@ -2,6 +2,7 @@
   import { api } from '../lib/api';
   import { formatGrams, formatTime } from '../lib/format';
   import type { Reading, Sample, SampleStats } from '../lib/types';
+  import PanelHeader from './PanelHeader.svelte';
 
   interface Props { reading: Reading | null; }
   let { reading = null }: Props = $props();
@@ -52,40 +53,40 @@
   }
 
   async function clearAll(): Promise<void> {
-    if (!confirm(`Alle Samples der Session "${session}" loeschen?`)) return;
+    if (!confirm(`Alle Werte der Session „${session}" löschen?`)) return;
     try { await api.sampleClear(session); await refresh(); }
     catch (e) { errorMsg = (e as Error).message; }
   }
 </script>
 
 <section class="panel">
-  <div class="header-row">
-    <input class="session-input" type="text" bind:value={session} maxlength="80" placeholder="Session" />
-  </div>
+  <PanelHeader title="Werte erfassen" help="samples">
+    <input class="session-input num" type="text" bind:value={session} maxlength="80" placeholder="Session" />
+  </PanelHeader>
 
   <div class="capture-row">
     <input type="text" placeholder="Label" bind:value={label} maxlength="120" disabled={busy} />
     <input type="text" placeholder="Notiz" bind:value={note} maxlength="200" disabled={busy} />
     <button class="primary" onclick={capture} disabled={busy || !reading}>
-      {busy ? '...' : 'Erfassen'}
+      {busy ? '…' : 'Erfassen'}
     </button>
   </div>
 
   {#if reading}
     <p class="hint">
-      Aktuell: <code>{formatGrams(reading.weight_g)}</code>
+      Aktuell: <code class="num">{formatGrams(reading.weight_g)}</code>
       {reading.stable ? '· stabil' : '· wartet'}
     </p>
   {/if}
 
   {#if stats && stats.count > 0}
     <dl class="stats">
-      <div><dt>Anzahl</dt><dd>{stats.count}</dd></div>
-      <div><dt>Min</dt><dd>{formatGrams(stats.min_g)}</dd></div>
-      <div><dt>Max</dt><dd>{formatGrams(stats.max_g)}</dd></div>
-      <div><dt>Mittel</dt><dd>{formatGrams(stats.mean_g)}</dd></div>
-      <div><dt>Stdabw</dt><dd>{formatGrams(stats.stdev_g)}</dd></div>
-      <div><dt>Summe</dt><dd>{formatGrams(stats.sum_g)}</dd></div>
+      <div><dt>Anzahl</dt><dd class="num">{stats.count}</dd></div>
+      <div><dt>Min</dt><dd class="num">{formatGrams(stats.min_g)}</dd></div>
+      <div><dt>Max</dt><dd class="num">{formatGrams(stats.max_g)}</dd></div>
+      <div><dt>Mittel</dt><dd class="num">{formatGrams(stats.mean_g)}</dd></div>
+      <div><dt>Stdabw</dt><dd class="num">{formatGrams(stats.stdev_g)}</dd></div>
+      <div><dt>Summe</dt><dd class="num">{formatGrams(stats.sum_g)}</dd></div>
     </dl>
   {/if}
 
@@ -105,14 +106,14 @@
         <tbody>
           {#each samples as s (s.id)}
             <tr class:stable={s.stable}>
-              <td class="ts">{formatTime(s.ts)}</td>
-              <td class="w">{formatGrams(s.weight_g)}</td>
+              <td class="ts num">{formatTime(s.ts)}</td>
+              <td class="w num">{formatGrams(s.weight_g)}</td>
               <td class="lbl">
                 <strong>{s.label || '—'}</strong>
                 {#if s.note}<span class="note">{s.note}</span>{/if}
               </td>
               <td class="del-col">
-                <button class="del" title="Löschen" onclick={() => removeSample(s.id)}>x</button>
+                <button class="del" title="Löschen" onclick={() => removeSample(s.id)}>×</button>
               </td>
             </tr>
           {/each}
@@ -125,58 +126,49 @@
 </section>
 
 <style>
-  .panel { display: flex; flex-direction: column; gap: 0.7rem; height: 100%; min-height: 0; }
-  .header-row { display: flex; justify-content: flex-end; }
-  .session-input {
-    width: 12rem;
-    text-align: right;
-    color: var(--fg-dim);
-  }
-  .capture-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: 0.5rem;
-  }
+  .panel { display: flex; flex-direction: column; gap: var(--sp-2); height: 100%; min-height: 0; }
+  .session-input { width: 11rem; text-align: right; color: var(--fg-dim); }
+  .capture-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: var(--sp-2); }
   .capture-row input { font-family: var(--sans); }
-  button.primary { background: var(--bg-card-2); border-color: var(--accent); }
+  button.primary { background: var(--bg-card-2); border-color: var(--accent); color: var(--accent); }
   button.warn-btn { color: var(--orange); }
-  .hint { margin: 0; color: var(--fg-dim); font-size: 0.85rem; }
+  .hint { margin: 0; color: var(--fg-dim); font-size: var(--fs-sm); }
   dl.stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.4rem 0.8rem;
+    gap: var(--sp-1) var(--sp-3);
     margin: 0;
-    padding: 0.6rem 0.8rem;
+    padding: var(--sp-2) var(--sp-3);
     background: var(--bg);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
   }
-  dl.stats div { display: flex; flex-direction: column; gap: 0.05rem; }
-  dl.stats dt { color: var(--fg-dim); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  dl.stats dd { margin: 0; font-family: var(--mono); font-size: 0.85rem; }
-  .toolbar { display: flex; gap: 0.5rem; align-items: center; }
+  dl.stats div { display: flex; flex-direction: column; gap: 1px; }
+  dl.stats dt { color: var(--fg-dim); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.05em; }
+  dl.stats dd { margin: 0; font-size: var(--fs-sm); }
+  .toolbar { display: flex; gap: var(--sp-2); align-items: center; }
   a.export-btn {
     display: inline-block;
-    padding: 0.4rem 0.8rem;
+    padding: 7px 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--bg-card);
     color: var(--fg);
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
   }
   a.export-btn:hover { border-color: var(--accent); text-decoration: none; }
   a.export-btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
   .list { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-  .empty { color: var(--fg-dim); text-align: center; padding: 0.8rem 0; font-size: 0.85rem; margin: 0; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
-  td.ts  { color: var(--fg-dim); font-family: var(--mono); width: 5.5rem; }
-  td.w   { font-family: var(--mono); text-align: right; width: 6rem; color: var(--fg-dim); }
+  .empty { color: var(--fg-dim); text-align: center; padding: var(--sp-2) 0; font-size: var(--fs-sm); margin: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+  td { padding: 6px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td.ts  { color: var(--fg-dim); width: 5.5rem; }
+  td.w   { text-align: right; width: 6rem; color: var(--fg-dim); }
   tr.stable td.w { color: var(--fg); }
   td.lbl strong { display: block; font-weight: 500; }
-  td.lbl .note  { display: block; color: var(--fg-dim); font-size: 0.78rem; margin-top: 0.05rem; }
-  .del-col { width: 1.8rem; text-align: right; }
-  button.del { padding: 0.15rem 0.45rem; font-size: 0.85rem; color: var(--fg-dim); }
+  td.lbl .note  { display: block; color: var(--fg-dim); font-size: var(--fs-xs); margin-top: 2px; }
+  .del-col { width: 1.6rem; text-align: right; }
+  button.del { padding: 2px 7px; font-size: var(--fs-md); color: var(--fg-dim); line-height: 1; }
   button.del:hover { color: var(--red); border-color: var(--red); }
-  .error { color: var(--red); font-size: 0.85rem; margin: 0; }
+  .error { color: var(--red); font-size: var(--fs-sm); margin: 0; }
 </style>

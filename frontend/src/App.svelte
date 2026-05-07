@@ -3,6 +3,7 @@
   import { api } from './lib/api';
   import { WaageStream } from './lib/stream';
   import { HistoryTracker } from './lib/historyTracker';
+  import { isWelcomeDismissed } from './lib/welcome';
   import type {
     ConnectionState,
     HealthInfo,
@@ -18,6 +19,10 @@
   import CountPanel from './components/CountPanel.svelte';
   import SamplesPanel from './components/SamplesPanel.svelte';
   import StatusFooter from './components/StatusFooter.svelte';
+  import ThemeToggle from './components/ThemeToggle.svelte';
+  import HelpButton from './components/HelpButton.svelte';
+  import HelpLayer from './components/HelpLayer.svelte';
+  import WelcomeHint from './components/WelcomeHint.svelte';
 
   type TabKey = 'tolerance' | 'netto' | 'count' | 'samples';
 
@@ -35,15 +40,16 @@
 
   let activeTab = $state<TabKey>('tolerance');
 
-  // ---- State ----
   let reading    = $state<Reading | null>(null);
   let history    = $state<Reading[]>([]);
   let health     = $state<HealthInfo | null>(null);
   let connection = $state<ConnectionState>('connecting');
+  let showWelcome = $state(false);
 
   const tracker = new HistoryTracker(200, 0.05);
 
   onMount(() => {
+    showWelcome = !isWelcomeDismissed();
     void loadInitial();
     void pollHealth();
     const healthTimer = window.setInterval(() => void pollHealth(), 5000);
@@ -92,13 +98,15 @@
 
 <div class="app">
   <header class="topbar">
-    <h1>
+    <div class="brand">
       <span class="title">Waage</span>
       <span class="model">G&amp;G PLC 6000g/0,1g</span>
-    </h1>
-    <div class="header-actions">
-      <ActionButtons />
-      <a class="docs-link" href="/docs" target="_blank" rel="noopener">API-Doku</a>
+    </div>
+    <ActionButtons />
+    <div class="header-right">
+      <ThemeToggle />
+      <a class="docs-link" href="/docs" target="_blank" rel="noopener" title="REST-Schnittstelle als Swagger UI öffnen">API-Doku</a>
+      <HelpButton id="overview" label="App-Übersicht öffnen" />
     </div>
   </header>
 
@@ -110,10 +118,12 @@
     </section>
 
     <section class="right">
-      <nav class="tabs">
+      <nav class="tabs" role="tablist">
         {#each tabs as t (t.key)}
           <button
+            role="tab"
             class:active={activeTab === t.key}
+            aria-selected={activeTab === t.key}
             onclick={() => (activeTab = t.key)}
           >{t.label}</button>
         {/each}
@@ -135,6 +145,11 @@
   <StatusFooter {health} {connection} />
 </div>
 
+<HelpLayer />
+{#if showWelcome}
+  <WelcomeHint onClose={() => (showWelcome = false)} />
+{/if}
+
 <style>
   .app {
     display: flex;
@@ -151,29 +166,27 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 1.25rem;
+    padding: 0 var(--sp-4);
     flex: 0 0 auto;
+    gap: var(--sp-3);
   }
-  h1 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 500;
+  .brand {
     display: flex;
     align-items: baseline;
-    gap: 0.5rem;
+    gap: var(--sp-2);
   }
-  .title { font-weight: 600; letter-spacing: 0.04em; }
-  .model { color: var(--fg-dim); font-size: 0.85rem; }
-  .header-actions {
+  .title { font-weight: 600; letter-spacing: 0.04em; font-size: var(--fs-md); }
+  .model { color: var(--fg-dim); font-size: var(--fs-sm); }
+  .header-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--sp-2);
   }
   .docs-link {
     font-family: var(--mono);
-    font-size: 0.8rem;
+    font-size: var(--fs-xs);
     color: var(--fg-dim);
-    padding: 0.35rem 0.7rem;
+    padding: 6px 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
   }
@@ -183,20 +196,21 @@
     text-decoration: none;
   }
 
+  /* Goldener Schnitt im Layout: linke Spalte 1, rechte 1.618 */
   .content {
     flex: 1 1 auto;
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.2fr);
-    gap: 1rem;
-    padding: 1rem;
+    grid-template-columns: 1fr 1.618fr;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
     overflow: hidden;
   }
 
   .left {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--sp-3);
     min-height: 0;
   }
 
@@ -223,10 +237,11 @@
     border: none;
     border-radius: 0;
     border-bottom: 2px solid transparent;
-    padding: 0.7rem 0.5rem;
-    font-size: 0.85rem;
+    padding: var(--sp-2) var(--sp-2);
+    font-size: var(--fs-sm);
     color: var(--fg-dim);
     cursor: pointer;
+    letter-spacing: 0.02em;
   }
   .tabs button:hover {
     background: var(--bg-card-2);
@@ -236,13 +251,14 @@
     color: var(--fg);
     border-bottom-color: var(--accent);
     background: var(--bg-card);
+    font-weight: 500;
   }
 
   .tab-body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    padding: 1.25rem;
+    padding: var(--sp-4);
   }
 
   @media (max-width: 800px) {
