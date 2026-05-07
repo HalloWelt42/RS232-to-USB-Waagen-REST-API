@@ -9,8 +9,31 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.2] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben (Mobile-UI)
+- **Karten-Menü auf Mobile sofort sichtbar** — die Sidebar mit
+  LiveWaage und Messprotokoll wurde im Dashboard-Modus auf Mobile
+  bisher oben ausgespielt und drückte die Werkzeug-Karten unter die
+  Bildschirmkante. Da die Karten das Hauptmenü sind und die Live-
+  Werte über jedes Tool und Cmd+K erreichbar bleiben, wird die
+  Sidebar jetzt auf Mobile generell ausgeblendet (Dashboard und Tool).
+- **Modell-Label in der Topbar nicht mehr abgeschnitten** —
+  „G&G PLC-6000 · 6 kg / 0,1 g" wurde auf schmalen Bildschirmen zu
+  „…6000 · 6000 g / 0…" gekürzt. Label ist jetzt zweigeteilt:
+  Modell-Name bleibt, Eckdaten-Anhang („· 6 kg / 0,1 g") wird unter
+  900 px ausgeblendet. Neuer Getter `modelStore.specLabel`.
+- **Footer-Statusleiste auf Mobile aus** — die ausführliche Zeile
+  „Live · Reader aktiv · Anschluss /dev/ttyUSB0 · 9600 Baud · Uptime
+  24m · v0.5.1" war zwischen den Zellen abgeschnitten. Information
+  ist über die LiveWaage-LEDs („BACKEND" / „WAAGE") und Settings
+  ohnehin verfügbar; der Footer wird unter 900 px komplett versteckt.
+- **ContactStrip auf Email-Knopf reduziert** — Intro-Text, Label und
+  Lizenz-Hinweis auf Mobile ausgeblendet (Settings + Disclaimer-Hilfe
+  haben das doppelt).
+- **Hilfe-Fenster auf Mobile als Vollbild-Modal** — das schwebende,
+  per Drag verschiebbare Fenster ist auf 380-px-Smartphone-Bildschirmen
+  unbrauchbar. Unter 900 px wird die gespeicherte Geometrie ignoriert
+  und das Fenster auf 100 vw / 100 vh aufgezogen, ohne Border-Radius.
+  Resize ist auf Mobile abgeschaltet.
 
 ## [0.5.1] — 2026-05-07
 
