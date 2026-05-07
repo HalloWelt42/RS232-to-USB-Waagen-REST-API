@@ -1,57 +1,80 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
-  import { api, subscribe } from './lib/api.js';
+  import { api } from './lib/api';
+  import { WaageStream } from './lib/stream';
+  import { HistoryTracker } from './lib/historyTracker';
+  import type {
+    ConnectionState,
+    HealthInfo,
+    Reading,
+  } from './lib/types';
+
   import WeightDisplay from './components/WeightDisplay.svelte';
+  import Sparkline from './components/Sparkline.svelte';
   import HistoryList from './components/HistoryList.svelte';
-  import HealthPanel from './components/HealthPanel.svelte';
-  import CountPanel from './components/CountPanel.svelte';
   import ActionButtons from './components/ActionButtons.svelte';
-  import SamplesPanel from './components/SamplesPanel.svelte';
   import TolerancePanel from './components/TolerancePanel.svelte';
   import NettoPanel from './components/NettoPanel.svelte';
-  import Sparkline from './components/Sparkline.svelte';
+  import CountPanel from './components/CountPanel.svelte';
+  import SamplesPanel from './components/SamplesPanel.svelte';
+  import StatusFooter from './components/StatusFooter.svelte';
 
-  let reading       = $state(null);
-  let history       = $state([]);
-  let health        = $state(null);
-  let connection    = $state('connecting');
-  let healthError   = $state(null);
-  let stableTarget  = $state(null);     // {weight_g, ts} – nach explizitem Klick
-  let stableLoading = $state(false);
+  type TabKey = 'tolerance' | 'netto' | 'count' | 'samples';
 
-  const HISTORY_MAX = 200;
+  interface TabDef {
+    key: TabKey;
+    label: string;
+  }
+
+  const tabs: TabDef[] = [
+    { key: 'tolerance', label: 'Toleranz' },
+    { key: 'netto',     label: 'Netto' },
+    { key: 'count',     label: 'Zählen' },
+    { key: 'samples',   label: 'Erfassen' },
+  ];
+
+  let activeTab = $state<TabKey>('tolerance');
+
+  // ---- State ----
+  let reading    = $state<Reading | null>(null);
+  let history    = $state<Reading[]>([]);
+  let health     = $state<HealthInfo | null>(null);
+  let connection = $state<ConnectionState>('connecting');
+
+  const tracker = new HistoryTracker(200, 0.05);
 
   onMount(() => {
-    loadInitial();
-    pollHealth();
-    const healthTimer = setInterval(pollHealth, 5000);
+    void loadInitial();
+    void pollHealth();
+    const healthTimer = window.setInterval(() => void pollHealth(), 5000);
 
-    const unsubscribe = subscribe(
-      (r) => {
+    const stream = new WaageStream(
+      '/stream',
+      (r: Reading) => {
         reading = r;
-        history = [...history, r].slice(-HISTORY_MAX);
+        if (tracker.push(r)) {
+          history = tracker.get();
+        }
       },
-      (state) => {
-        connection = state.status;
-      },
+      (state) => { connection = state.status; },
     );
+    stream.start();
 
     return () => {
       clearInterval(healthTimer);
-      unsubscribe();
+      stream.stop();
     };
   });
 
-  async function loadInitial() {
-    // Beim Mount sofort den letzten Wert und die History via REST holen,
-    // damit das UI nicht erst auf den ersten WebSocket-Frame warten muss.
+  async function loadInitial(): Promise<void> {
     try {
       const [hist, current] = await Promise.allSettled([
-        api.history(50),
+        api.history(200),
         api.weight(),
       ]);
       if (hist.status === 'fulfilled') {
-        history = hist.value.items;
+        tracker.hydrate(hist.value.items);
+        history = tracker.get();
       }
       if (current.status === 'fulfilled') {
         reading = current.value;
@@ -61,161 +84,173 @@
     }
   }
 
-  async function pollHealth() {
-    try {
-      health = await api.health();
-      healthError = null;
-    } catch (e) {
-      healthError = e.message;
-    }
-  }
-
-  async function fetchStable() {
-    stableLoading = true;
-    stableTarget = null;
-    try {
-      const r = await api.stable(10);
-      stableTarget = r;
-    } catch (e) {
-      stableTarget = { error: e.message };
-    } finally {
-      stableLoading = false;
-    }
+  async function pollHealth(): Promise<void> {
+    try { health = await api.health(); }
+    catch (e) { console.warn('Health-Poll Fehler:', e); }
   }
 </script>
 
-<main>
+<div class="app">
   <header class="topbar">
     <h1>
-      Waage <span class="model">G&amp;G PLC 6000g/0,1g</span>
+      <span class="title">Waage</span>
+      <span class="model">G&amp;G PLC 6000g/0,1g</span>
     </h1>
-    <a class="docs-link" href="/docs" target="_blank" rel="noopener">
-      API-Dokumentation
-    </a>
+    <div class="header-actions">
+      <ActionButtons />
+      <a class="docs-link" href="/docs" target="_blank" rel="noopener">API-Doku</a>
+    </div>
   </header>
 
-  <div class="grid">
-    <div class="primary">
+  <main class="content">
+    <section class="left">
       <WeightDisplay {reading} {connection} />
-
       <Sparkline {history} windowSeconds={60} />
+      <HistoryList {history} />
+    </section>
 
-      <ActionButtons />
-
-      <div class="actions">
-        <button onclick={fetchStable} disabled={stableLoading}>
-          {stableLoading ? 'Warte auf Stable...' : 'Stable-Wert abrufen'}
-        </button>
-        {#if stableTarget && !stableTarget.error}
-          <span class="stable-result">
-            Letzter Stable: <code>{stableTarget.weight_g} g</code>
-          </span>
-        {:else if stableTarget?.error}
-          <span class="stable-error">{stableTarget.error}</span>
+    <section class="right">
+      <nav class="tabs">
+        {#each tabs as t (t.key)}
+          <button
+            class:active={activeTab === t.key}
+            onclick={() => (activeTab = t.key)}
+          >{t.label}</button>
+        {/each}
+      </nav>
+      <div class="tab-body">
+        {#if activeTab === 'tolerance'}
+          <TolerancePanel {reading} />
+        {:else if activeTab === 'netto'}
+          <NettoPanel {reading} />
+        {:else if activeTab === 'count'}
+          <CountPanel {reading} />
+        {:else if activeTab === 'samples'}
+          <SamplesPanel {reading} />
         {/if}
       </div>
-    </div>
+    </section>
+  </main>
 
-    <aside>
-      <TolerancePanel {reading} />
-      <NettoPanel {reading} />
-      <CountPanel {reading} />
-      <SamplesPanel {reading} />
-      <HealthPanel {health} />
-      <HistoryList {history} />
-    </aside>
-  </div>
-
-  <footer>
-    <span>v{__APP_VERSION__}</span>
-    <span>
-      <a href="https://github.com/HalloWelt42/RS232-to-USB-Waagen-REST-API"
-         target="_blank" rel="noopener">GitHub</a>
-    </span>
-  </footer>
-</main>
+  <StatusFooter {health} {connection} />
+</div>
 
 <style>
-  main {
-    min-height: 100vh;
-    padding: 1.5rem clamp(1rem, 4vw, 3rem);
+  .app {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
   }
+
   .topbar {
+    height: var(--header-h);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
+    justify-content: space-between;
+    padding: 0 1.25rem;
+    flex: 0 0 auto;
   }
   h1 {
     margin: 0;
-    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    font-size: 1rem;
     font-weight: 500;
-    letter-spacing: 0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
   }
-  .model {
-    color: var(--fg-dim);
-    font-weight: 400;
-    font-size: 0.85em;
-    margin-left: 0.4rem;
+  .title { font-weight: 600; letter-spacing: 0.04em; }
+  .model { color: var(--fg-dim); font-size: 0.85rem; }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
   .docs-link {
     font-family: var(--mono);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    color: var(--fg-dim);
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .docs-link:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    text-decoration: none;
   }
 
-  .grid {
+  .content {
+    flex: 1 1 auto;
+    min-height: 0;
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    align-items: start;
-    justify-items: center;
-  }
-  @media (min-width: 900px) {
-    .grid {
-      grid-template-columns: 1fr 1fr;
-      justify-items: stretch;
-    }
-  }
-  .primary {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.2fr);
     gap: 1rem;
+    padding: 1rem;
+    overflow: hidden;
   }
-  aside {
+
+  .left {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    align-items: center;
+    min-height: 0;
   }
 
-  .actions {
+  .right {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .stable-result {
-    font-family: var(--mono);
-    color: var(--fg-dim);
-  }
-  .stable-error {
-    color: var(--red);
-    font-size: 0.9rem;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    min-height: 0;
   }
 
-  footer {
-    margin-top: auto;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
+  .tabs {
     display: flex;
-    justify-content: space-between;
-    color: var(--fg-dim);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    flex: 0 0 auto;
+  }
+  .tabs button {
+    flex: 1 1 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    padding: 0.7rem 0.5rem;
     font-size: 0.85rem;
+    color: var(--fg-dim);
+    cursor: pointer;
+  }
+  .tabs button:hover {
+    background: var(--bg-card-2);
+    color: var(--fg);
+  }
+  .tabs button.active {
+    color: var(--fg);
+    border-bottom-color: var(--accent);
+    background: var(--bg-card);
+  }
+
+  .tab-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.25rem;
+  }
+
+  @media (max-width: 800px) {
+    .content {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      overflow-y: auto;
+    }
+    .left { min-height: 0; }
   }
 </style>

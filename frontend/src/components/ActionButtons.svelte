@@ -1,63 +1,54 @@
-<script>
-  import { api } from '../lib/api.js';
+<script lang="ts">
+  import { api } from '../lib/api';
 
-  let busy = $state(null);
-  let lastResult = $state(null);
-  let errorMsg   = $state(null);
+  type CommandKey = 'tare' | 'unit' | 'light';
 
-  async function runCommand(name, fn, label) {
+  let busy = $state<CommandKey | null>(null);
+  let lastResult = $state<string | null>(null);
+  let errorMsg = $state<string | null>(null);
+
+  async function runCommand(key: CommandKey, fn: () => Promise<unknown>, label: string) {
     if (busy) return;
-    busy = name;
+    busy = key;
     errorMsg = null;
     lastResult = null;
     try {
       await fn();
       lastResult = label;
+      window.setTimeout(() => {
+        if (lastResult === label) lastResult = null;
+      }, 1500);
     } catch (e) {
-      errorMsg = e.message;
+      errorMsg = (e as Error).message;
     } finally {
       busy = null;
-      // Erfolgsanzeige nach kurzer Zeit ausblenden
-      if (lastResult) {
-        setTimeout(() => { if (lastResult === label) lastResult = null; }, 2000);
-      }
     }
   }
 
-  const tare  = () => runCommand('tare',  api.cmdTare,  'Tara gesetzt');
-  const unit  = () => runCommand('unit',  api.cmdUnit,  'Einheit gewechselt');
-  const light = () => runCommand('light', api.cmdLight, 'Beleuchtung umgeschaltet');
+  const tare  = () => runCommand('tare',  () => api.cmdTare(),  'Tara gesetzt');
+  const unit  = () => runCommand('unit',  () => api.cmdUnit(),  'Einheit gewechselt');
+  const light = () => runCommand('light', () => api.cmdLight(), 'Licht umgeschaltet');
 </script>
 
-<section class="actions">
-  <button onclick={tare}  disabled={busy !== null} class:active={busy === 'tare'}>
-    {busy === 'tare'  ? '...' : 'Tara'}
-  </button>
-  <button onclick={unit}  disabled={busy !== null} class:active={busy === 'unit'}>
-    {busy === 'unit'  ? '...' : 'Einheit'}
-  </button>
-  <button onclick={light} disabled={busy !== null} class:active={busy === 'light'}>
-    {busy === 'light' ? '...' : 'Licht'}
-  </button>
-
-  {#if lastResult}
-    <span class="status ok">{lastResult}</span>
-  {:else if errorMsg}
-    <span class="status err">{errorMsg}</span>
-  {/if}
-</section>
+<div class="actions">
+  <button onclick={tare}  disabled={busy !== null} class:active={busy === 'tare'}>Tara</button>
+  <button onclick={unit}  disabled={busy !== null} class:active={busy === 'unit'}>Einheit</button>
+  <button onclick={light} disabled={busy !== null} class:active={busy === 'light'}>Licht</button>
+  {#if lastResult}<span class="status ok">{lastResult}</span>
+  {:else if errorMsg}<span class="status err">{errorMsg}</span>{/if}
+</div>
 
 <style>
   .actions {
     display: flex;
-    gap: 0.6rem;
+    gap: 0.5rem;
     align-items: center;
-    flex-wrap: wrap;
   }
   button {
-    min-width: 5rem;
+    min-width: 4.5rem;
     font-family: var(--mono);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.7rem;
   }
   button.active {
     border-color: var(--accent);
@@ -65,9 +56,8 @@
   }
   .status {
     font-family: var(--mono);
-    font-size: 0.85rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
+    font-size: 0.78rem;
+    margin-left: 0.5rem;
   }
   .status.ok  { color: var(--green); }
   .status.err { color: var(--red); }

@@ -1,10 +1,20 @@
-<script>
-  import { formatGrams, formatTime } from '../lib/format.js';
+<script lang="ts">
+  import { formatGrams } from '../lib/format';
+  import type { Reading } from '../lib/types';
 
-  let { history = [], windowSeconds = 60 } = $props();
+  interface Props {
+    history: Reading[];
+    windowSeconds?: number;
+  }
 
-  // Punkte aus den letzten N Sekunden filtern und auf SVG-Koordinaten mappen
-  let points = $derived.by(() => {
+  let { history = [], windowSeconds = 60 }: Props = $props();
+
+  const W = 320;
+  const H = 64;
+  const PAD_X = 4;
+  const PAD_Y = 4;
+
+  let points = $derived.by<Reading[]>(() => {
     if (!history || history.length === 0) return [];
     const cutoff = Date.now() - windowSeconds * 1000;
     return history.filter(r => new Date(r.timestamp).getTime() >= cutoff);
@@ -16,18 +26,11 @@
     return {
       min: Math.min(...weights),
       max: Math.max(...weights),
-      first: points[0].weight_g,
-      last:  points[points.length - 1].weight_g,
-      count: points.length,
+      last: points[points.length - 1].weight_g,
     };
   });
 
-  const W = 320;
-  const H = 80;
-  const PAD_X = 6;
-  const PAD_Y = 6;
-
-  let path = $derived.by(() => {
+  let path = $derived.by<string>(() => {
     if (!stats || points.length < 2) return '';
     const tStart = new Date(points[0].timestamp).getTime();
     const tEnd   = new Date(points[points.length - 1].timestamp).getTime();
@@ -35,7 +38,6 @@
     let yMin = stats.min;
     let yMax = stats.max;
     if (yMax - yMin < 0.001) {
-      // konstante Linie: künstlich etwas Range, damit nicht kollabiert
       yMin -= 0.5;
       yMax += 0.5;
     }
@@ -50,9 +52,10 @@
     }).join(' ');
   });
 
-  let area = $derived.by(() => {
+  let area = $derived.by<string>(() => {
     if (!path) return '';
-    return path + ` L${(W - PAD_X).toFixed(1)},${(H - PAD_Y).toFixed(1)} L${PAD_X.toFixed(1)},${(H - PAD_Y).toFixed(1)} Z`;
+    return path + ` L${(W - PAD_X).toFixed(1)},${(H - PAD_Y).toFixed(1)}` +
+           ` L${PAD_X.toFixed(1)},${(H - PAD_Y).toFixed(1)} Z`;
   });
 </script>
 
@@ -61,7 +64,7 @@
     <h3>Verlauf {windowSeconds}s</h3>
     {#if stats}
       <span class="meta">
-        Min {formatGrams(stats.min)} · Max {formatGrams(stats.max)}
+        min {formatGrams(stats.min)} · max {formatGrams(stats.max)}
       </span>
     {/if}
   </header>
@@ -79,34 +82,34 @@
 
 <style>
   .spark {
-    background:    var(--bg-card);
-    border:        1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding:       1rem 1.25rem;
-    box-shadow:    var(--shadow);
-    width:         min(28rem, 90vw);
+    padding: 0.75rem 1rem;
+    box-shadow: var(--shadow);
+    flex: 0 0 auto;
   }
   header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
   }
-  h3 { margin: 0; font-size: 1rem; }
+  h3 { margin: 0; font-size: 0.9rem; color: var(--fg-dim); font-weight: 500; }
   .meta {
     font-family: var(--mono);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     color: var(--fg-dim);
   }
   svg {
     width: 100%;
-    height: 80px;
+    height: 64px;
     display: block;
   }
   .placeholder {
     color: var(--fg-dim);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     text-align: center;
-    padding: 1.5rem 0;
+    padding: 1rem 0;
   }
 </style>

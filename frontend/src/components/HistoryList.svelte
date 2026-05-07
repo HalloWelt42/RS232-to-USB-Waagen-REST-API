@@ -1,103 +1,102 @@
-<script>
-  import { formatGrams, formatTime } from '../lib/format.js';
+<script lang="ts">
+  import { formatGrams, formatTime } from '../lib/format';
+  import type { Reading } from '../lib/types';
 
-  let { history = [] } = $props();
+  interface Props {
+    history: Reading[];
+  }
 
-  let recent = $derived(history.slice(-20).reverse());
+  let { history = [] }: Props = $props();
+
+  // Neueste zuerst, max 50 Einträge anzeigen
+  let recent = $derived(history.slice(-50).reverse());
 </script>
 
 <section class="history">
   <header>
-    <h3>Verlauf</h3>
-    <span class="count">{history.length} Werte</span>
+    <h3>Verlauf (Änderungen)</h3>
+    <span class="count">{history.length}</span>
   </header>
 
-  {#if recent.length === 0}
-    <div class="empty">Noch keine Werte</div>
-  {:else}
-    <ul>
-      {#each recent as r (r.timestamp + r.raw)}
-        <li class:stable={r.stable}>
-          <span class="time">{formatTime(r.timestamp)}</span>
-          <span class="weight">{formatGrams(r.weight_g)}</span>
-          <span class="flag">
-            {#if r.stable}<span class="dot ok"></span>{:else}<span class="dot warn"></span>{/if}
-          </span>
-        </li>
-      {/each}
-    </ul>
-  {/if}
+  <div class="scroll">
+    {#if recent.length === 0}
+      <div class="empty">Noch keine Werte-Änderungen</div>
+    {:else}
+      <table>
+        <tbody>
+          {#each recent as r (r.timestamp + r.raw)}
+            <tr class:stable={r.stable}>
+              <td class="time">{formatTime(r.timestamp)}</td>
+              <td class="weight">{formatGrams(r.weight_g)}</td>
+              <td class="flag">
+                {#if r.stable}<span class="dot ok"></span>
+                {:else}<span class="dot warn"></span>{/if}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {/if}
+  </div>
 </section>
 
 <style>
   .history {
-    background:    var(--bg-card);
-    border:        1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding:       1.25rem 1.5rem;
-    box-shadow:    var(--shadow);
-    width:         min(28rem, 90vw);
+    padding: 0.75rem 1rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
   }
   header {
-    display:         flex;
+    display: flex;
     justify-content: space-between;
-    align-items:     baseline;
-    margin-bottom:   0.75rem;
+    align-items: baseline;
+    margin-bottom: 0.4rem;
+    flex: 0 0 auto;
   }
-  h3 {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 600;
-  }
+  h3 { margin: 0; font-size: 0.9rem; color: var(--fg-dim); font-weight: 500; }
   .count {
     color: var(--fg-dim);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-family: var(--mono);
+  }
+  .scroll {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
   }
   .empty {
     color: var(--fg-dim);
     text-align: center;
     padding: 1rem 0;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 24rem;
-    overflow-y: auto;
-  }
-  li {
-    display: grid;
-    grid-template-columns: 1fr 2fr auto;
-    gap: 0.5rem;
-    align-items: center;
-    padding: 0.4rem 0;
-    border-bottom: 1px solid var(--border);
+  table {
+    width: 100%;
+    border-collapse: collapse;
     font-family: var(--mono);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
-  li:last-child {
-    border-bottom: none;
+  td {
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--border);
   }
-  .time {
-    color: var(--fg-dim);
-  }
-  .weight {
+  tr:last-child td { border-bottom: none; }
+  td.time   { color: var(--fg-dim); }
+  td.weight { text-align: right; color: var(--fg-dim); }
+  tr.stable td.weight { color: var(--fg); }
+  td.flag {
     text-align: right;
-    color: var(--fg-dim);
-    font-weight: 500;
-  }
-  li.stable .weight {
-    color: var(--fg);
-  }
-  .flag {
-    display: flex;
-    justify-content: flex-end;
+    width: 20px;
   }
   .dot {
-    width: 8px;
-    height: 8px;
+    display: inline-block;
+    width: 7px; height: 7px;
     border-radius: 50%;
   }
   .dot.ok   { background: var(--green); }
