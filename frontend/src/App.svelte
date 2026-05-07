@@ -164,9 +164,12 @@
       overflow-y: auto;
     }
     .right { flex: 1 1 auto; }
-    /* Im Tool-Modus die LiveWaage/MessLog-Sidebar ausblenden — die
-       Werkzeug-Panels zeigen den Live-Wert eh prominent.
-       Verhindert die doppelte Anzeige des Wägewerts. */
-    .body[data-mode="tool"] .sidebar-wrap { display: none; }
+    /* Auf Mobile generell die LiveWaage/MessLog-Sidebar ausblenden:
+       - Im Tool-Modus zeigen die Werkzeug-Panels den Live-Wert eh.
+       - Im Dashboard-Modus würde die Sidebar das Karten-Menü unter
+         die Bildschirmkante drücken — die Karten SIND das Menü und
+         müssen sofort erreichbar sein.
+       Live-Werte bleiben über jedes Tool und Cmd+K erreichbar. */
+    .body .sidebar-wrap { display: none; }
   }
 </style>
