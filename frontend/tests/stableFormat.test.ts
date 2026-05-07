@@ -25,65 +25,83 @@ describe('intDigitsForMax', () => {
 describe('buildStableSegments — DE locale', () => {
   beforeEach(() => i18n.set('de'));
 
+  // Hilfsfunktion: ohne den reservierten Minus-Slot joinen — der ist
+  // bei positivem Wert ghost und nicht teil des „lesbaren" Strings.
+  function joinNoSign(segs: { text: string; kind: string }[]): string {
+    return segs.filter(s => s.kind !== 'sign').map(s => s.text).join('');
+  }
+
   it('renders 12.3 g on a 6000g/0.1g scale as 0.012,3 g with ghosts', () => {
     const segs = buildStableSegments(12.3, PLC_6000);
-    expect(joinSegs(segs)).toBe('0.012,3 g');
-    // Ghost: führende '0', der Tausender-Trenner, der zweite '0'
-    expect(ghostSegs(segs)).toBe('0.0');
+    expect(joinNoSign(segs)).toBe('0.012,3 g');
+    // Sign-Slot ist da, aber ghost
+    const sign = segs.find(s => s.kind === 'sign');
+    expect(sign?.text).toBe('−');
+    expect(sign?.ghost).toBe(true);
+    // Ghost: Sign + führende '0' + Tausender-Trenner + zweite '0'
+    expect(ghostSegs(segs)).toBe('−0.0');
   });
 
   it('renders 0 g with all leading zeros as ghost except the last digit', () => {
     const segs = buildStableSegments(0, PLC_6000);
-    expect(joinSegs(segs)).toBe('0.000,0 g');
-    expect(ghostSegs(segs)).toBe('0.00');
+    expect(joinNoSign(segs)).toBe('0.000,0 g');
+    // Sign + führende Nullen + Tausender-Trenner + zweite Null sind ghost
+    expect(ghostSegs(segs)).toBe('−0.00');
   });
 
-  it('renders 1234.5 g with no ghost', () => {
+  it('renders 1234.5 g with sign-slot ghost, rest opaque', () => {
     const segs = buildStableSegments(1234.5, PLC_6000);
-    expect(joinSegs(segs)).toBe('1.234,5 g');
-    expect(ghostSegs(segs)).toBe('');
+    expect(joinNoSign(segs)).toBe('1.234,5 g');
+    // Nur das Vorzeichen ist ghost (positiver Wert)
+    expect(ghostSegs(segs)).toBe('−');
   });
 
-  it('renders null as full ghost frame', () => {
+  it('renders null as full ghost frame including sign', () => {
     const segs = buildStableSegments(null, PLC_6000);
-    expect(joinSegs(segs)).toBe('0.000,0 g');
-    // Alle Stellen außer ' g' sind Ghost
-    const nonUnit = segs.filter(s => s.kind !== 'unit');
-    expect(nonUnit.every(s => s.ghost)).toBe(true);
+    expect(joinNoSign(segs)).toBe('0.000,0 g');
+    // Alles ist Ghost
+    expect(segs.every(s => s.ghost)).toBe(true);
   });
 
   it('handles analytical balance with 4 decimal places', () => {
     const segs = buildStableSegments(0.1234, ANALYTICAL);
-    expect(joinSegs(segs)).toBe('000,1234 g');
-    expect(ghostSegs(segs)).toBe('00');
+    expect(joinNoSign(segs)).toBe('000,1234 g');
+    expect(ghostSegs(segs)).toBe('−00');
   });
 
   it('handles 30 kg scale (no decimals)', () => {
     const segs = buildStableSegments(2500, HEAVY);
-    expect(joinSegs(segs)).toBe('02.500 g');
-    expect(ghostSegs(segs)).toBe('0');
+    expect(joinNoSign(segs)).toBe('02.500 g');
+    expect(ghostSegs(segs)).toBe('−0');
   });
 
-  it('keeps negative sign visible', () => {
+  it('shows minus opaque for negative values', () => {
     const segs = buildStableSegments(-12.3, PLC_6000);
-    expect(joinSegs(segs)).toBe('-0.012,3 g');
     const sign = segs.find(s => s.kind === 'sign');
+    expect(sign?.text).toBe('−');
     expect(sign?.ghost).toBe(false);
+    // Ziffern dahinter haben dieselbe Ghost-Logik wie bei positivem Wert
+    expect(ghostSegs(segs)).toBe('0.0');
   });
 });
 
 describe('buildStableSegments — EN locale', () => {
   beforeEach(() => i18n.set('en'));
 
+  function joinNoSign(segs: { text: string; kind: string }[]): string {
+    return segs.filter(s => s.kind !== 'sign').map(s => s.text).join('');
+  }
+
   it('uses comma as thousand and dot as decimal', () => {
     const segs = buildStableSegments(1234.5, PLC_6000);
-    expect(joinSegs(segs)).toBe('1,234.5 g');
+    expect(joinNoSign(segs)).toBe('1,234.5 g');
   });
 
   it('renders 12.3 g with EN separators', () => {
     const segs = buildStableSegments(12.3, PLC_6000);
-    expect(joinSegs(segs)).toBe('0,012.3 g');
-    expect(ghostSegs(segs)).toBe('0,0');
+    expect(joinNoSign(segs)).toBe('0,012.3 g');
+    // Ghost: Sign + erste Null + Komma-Trenner + zweite Null
+    expect(ghostSegs(segs)).toBe('−0,0');
   });
 
   it('reset to de after test', () => {

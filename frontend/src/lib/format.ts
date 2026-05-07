@@ -131,7 +131,7 @@ export function buildStableSegments(
     return buildGhostFrame(intDigits, decimals, fmt);
   }
 
-  const sign = g < 0 ? '-' : '';
+  const isNeg = g < 0;
   const abs = Math.abs(g);
   // Begrenze auf Modell-Max — alles darüber ist „außerhalb des
   // Anzeige-Bereichs", aber wir zeigen den Wert trotzdem (nicht abschneiden).
@@ -147,7 +147,10 @@ export function buildStableSegments(
   const firstReal = padded.search(/[1-9]/);
   const ghostUntil = firstReal === -1 ? padded.length - 1 : firstReal;
 
-  if (sign) segs.push({ text: sign, ghost: false, kind: 'sign' });
+  // Minus-Slot ist immer reserviert — bei positivem Wert ghost,
+  // bei negativem Wert opak. Damit zappelt die Stellen-Position
+  // nicht, wenn der Wert das Vorzeichen wechselt.
+  segs.push({ text: '−', ghost: !isNeg, kind: 'sign' });
 
   // Tausender-Trenner alle 3 Stellen von rechts; ghost wenn vor erstem real.
   let cursor = 0;
@@ -185,6 +188,7 @@ function buildGhostFrame(
   fmt: NumberFormatOpts,
 ): DisplaySegment[] {
   const segs: DisplaySegment[] = [];
+  segs.push({ text: '−', ghost: true, kind: 'sign' });
   for (let i = 0; i < intDigits; i++) {
     if (i > 0 && (intDigits - i) % 3 === 0) {
       segs.push({ text: fmt.thousand, ghost: true, kind: 'sep' });
@@ -217,7 +221,7 @@ export function buildStableSegmentsWith(
     return buildGhostFrame(intDigits, decimals, fmt);
   }
 
-  const sign = g < 0 ? '-' : '';
+  const isNeg = g < 0;
   const abs = Math.abs(g);
   const fixed = abs.toFixed(decimals);
   const [whole, frac] = fixed.split('.');
@@ -227,7 +231,7 @@ export function buildStableSegmentsWith(
   const firstReal = padded.search(/[1-9]/);
   const ghostUntil = firstReal === -1 ? padded.length - 1 : firstReal;
 
-  if (sign) segs.push({ text: sign, ghost: false, kind: 'sign' });
+  segs.push({ text: '−', ghost: !isNeg, kind: 'sign' });
 
   let cursor = 0;
   for (let i = 0; i < padded.length; i++) {
