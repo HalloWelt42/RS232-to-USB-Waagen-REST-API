@@ -19,6 +19,19 @@
   let busy = $state(false);
   let currentTheme = $state<Theme>(themeManager.get());
 
+  async function setSource(mode: 'live' | 'simulate'): Promise<void> {
+    busy = true;
+    try {
+      await api.scale.setSource(mode);
+      health = await api.scale.health();
+      toast.show(t('toast.settingSaved'), 'ok');
+    } catch (e) {
+      toast.show((e as Error).message, 'error');
+    } finally {
+      busy = false;
+    }
+  }
+
   async function refresh(): Promise<void> {
     try {
       [models, cfg, health] = await Promise.all([
@@ -115,6 +128,24 @@
           </details>
         {/each}
       </div>
+    </div>
+
+    <div class="card source">
+      <h3>Quelle</h3>
+      <div class="theme-row">
+        <button class:active={health?.source_mode === 'live'}
+                onclick={() => setSource('live')} disabled={busy}>
+          <i class="fa-solid fa-plug"></i> {t('topbar.sourceLive')}
+        </button>
+        <button class:active={health?.source_mode === 'simulate'}
+                onclick={() => setSource('simulate')} disabled={busy}>
+          <i class="fa-solid fa-flask-vial"></i> {t('topbar.sourceSimulate')}
+        </button>
+      </div>
+      {#if health?.simulated}
+        <p class="hint warn"><i class="fa-solid fa-triangle-exclamation"></i>
+          {t('topbar.simulatedWarning')}</p>
+      {/if}
     </div>
 
     <div class="card">
@@ -280,6 +311,10 @@
   .license-list i { color: var(--green); width: 14px; text-align: center; }
   .license-list i.warn { color: var(--red); }
 
+  .hint.warn {
+    color: var(--orange);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
   .disclaimer-card { border-color: var(--orange); }
   .disclaimer-card h3 { color: var(--orange); }
   .disclaimer-short {

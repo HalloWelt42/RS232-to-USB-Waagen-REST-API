@@ -38,6 +38,7 @@
   import HelpLayer from './components/HelpLayer.svelte';
   import Toast from './components/Toast.svelte';
   import SearchPalette from './components/SearchPalette.svelte';
+  import SimulatorBanner from './components/SimulatorBanner.svelte';
 
   let health = $state<HealthInfo | null>(null);
   let messlog = $state<MesslogEntry[]>([]);
@@ -96,6 +97,7 @@
 
 <div class="layout">
   <Topbar />
+  <SimulatorBanner {health} />
 
   <main class="body" data-mode={route.mode}>
     <div class="sidebar-wrap"><Sidebar {messlog} /></div>

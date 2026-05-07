@@ -32,6 +32,7 @@ import type {
   SampleStats,
   ScaleConfig,
   ScaleModel,
+  SourceState,
   ToleranceState,
 } from './types';
 
@@ -105,6 +106,11 @@ export class ScaleApi extends HttpBase {
   config(): Promise<ScaleConfig>      { return this.request('/scale/config'); }
   setConfig(modelId: string): Promise<ScaleConfig> {
     return this.put('/scale/config', { model_id: modelId });
+  }
+
+  source(): Promise<SourceState>      { return this.request('/scale/source'); }
+  setSource(mode: 'live' | 'simulate'): Promise<SourceState> {
+    return this.put('/scale/source', { mode });
   }
 
   /** WebSocket-URL für /scale/stream (Browser-Side) */

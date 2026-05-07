@@ -23,6 +23,14 @@ export interface HealthInfo {
   baudrate: number;
   uptime_seconds: number;
   version: string;
+  source_mode: 'live' | 'simulate';
+  simulated: boolean;
+}
+
+export interface SourceState {
+  mode: 'live' | 'simulate';
+  port: string;
+  simulated: boolean;
 }
 
 export interface ApiInfo {
