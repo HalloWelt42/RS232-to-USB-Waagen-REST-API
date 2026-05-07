@@ -110,30 +110,18 @@ describe('buildStableSegments — EN locale', () => {
   });
 });
 
-describe('formatGramsCompact — modell-eindeutige Schreibweise', () => {
-  it('zeigt ganze kg ohne Dezimaltrenner', () => {
+describe('formatGramsCompact — Modell-Werte immer in Grundeinheit', () => {
+  it('zeigt ganze Gramm ohne Tausender-Trenner — locale-unabhängig', () => {
     i18n.set('de');
-    expect(formatGramsCompact(6000)).toBe('6 kg');
-    expect(formatGramsCompact(30000)).toBe('30 kg');
-    expect(formatGramsCompact(1000)).toBe('1 kg');
-  });
-
-  it('zeigt krumme Werte ab 1 kg in Gramm mit Tausender-Trenner (DE)', () => {
-    i18n.set('de');
-    expect(formatGramsCompact(6500)).toBe('6.500 g');
-    expect(formatGramsCompact(1234)).toBe('1.234 g');
-  });
-
-  it('zeigt krumme Werte ab 1 kg in Gramm mit Tausender-Trenner (EN)', () => {
-    i18n.set('en');
-    expect(formatGramsCompact(6500)).toBe('6,500 g');
-    i18n.set('de');
-  });
-
-  it('Werte unter 1 kg ohne Tausender-Trenner', () => {
-    i18n.set('de');
+    expect(formatGramsCompact(6000)).toBe('6000 g');
+    expect(formatGramsCompact(30000)).toBe('30000 g');
     expect(formatGramsCompact(220)).toBe('220 g');
-    expect(formatGramsCompact(999)).toBe('999 g');
+    expect(formatGramsCompact(1)).toBe('1 g');
+
+    i18n.set('en');
+    expect(formatGramsCompact(6000)).toBe('6000 g');
+    expect(formatGramsCompact(30000)).toBe('30000 g');
+    i18n.set('de');
   });
 
   it('Sub-Gramm-Werte mit Locale-Dezimaltrenner', () => {
@@ -141,8 +129,10 @@ describe('formatGramsCompact — modell-eindeutige Schreibweise', () => {
     expect(formatGramsCompact(0.1)).toBe('0,1 g');
     expect(formatGramsCompact(0.001)).toBe('0,001 g');
     expect(formatGramsCompact(0.0001)).toBe('0,0001 g');
+
     i18n.set('en');
     expect(formatGramsCompact(0.1)).toBe('0.1 g');
+    expect(formatGramsCompact(0.0001)).toBe('0.0001 g');
     i18n.set('de');
   });
 

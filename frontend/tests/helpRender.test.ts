@@ -24,12 +24,8 @@ describe('buildHelpVars', () => {
     expect(v.modelName).toBe('G&G PLC-PLC-6000');
   });
 
-  it('formats whole kg without decimal separator (eindeutig)', () => {
-    // war früher „6 kg" mit Doppelpunkt-Logik — jetzt explizit ohne Dezimal
-    expect(buildHelpVars(PLC).maxG).toBe('6 kg');
-  });
-
-  it('formats grams below 1 kg', () => {
+  it('immer in Grundeinheit Gramm — keine kg-Umrechnung', () => {
+    expect(buildHelpVars(PLC).maxG).toBe('6000 g');
     expect(buildHelpVars(ANALYTICAL).maxG).toBe('220 g');
   });
 
@@ -50,7 +46,7 @@ describe('renderHelpBody', () => {
 
   it('replaces placeholders', () => {
     expect(renderHelpBody('Auflösung {{resolutionG}}', vars)).toContain('0,1 g');
-    expect(renderHelpBody('Maximal {{maxG}}', vars)).toContain('6 kg');
+    expect(renderHelpBody('Maximal {{maxG}}', vars)).toContain('6000 g');
   });
 
   it('keeps unknown placeholders intact', () => {

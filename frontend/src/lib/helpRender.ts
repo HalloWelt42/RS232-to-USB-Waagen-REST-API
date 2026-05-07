@@ -26,19 +26,13 @@ function minPiecesUnder1g(resolutionG: number): number {
 }
 
 /**
- * Identische Schreibweise wie `formatGramsCompact` — aber ohne
- * Locale-Lookup (Hilfe-Texte sind oft DE-zentriert), damit Tests
- * eine reine Funktion testen können. Nutzt das deutsche Komma.
+ * Modell-Werte in Grundeinheit Gramm — keine Umrechnung, kein Tausender-
+ * Trenner. Sub-Gramm mit deutschem Komma als Dezimaltrenner (Hilfe-
+ * Texte sind DE-zentriert; bei englischer Locale wird der Lookup
+ * dann doch nochmal übersetzt).
  */
 function formatGramsForHelp(g: number): string {
-  // Ganze kg → ohne Dezimaltrenner (vermeidet „6,000 kg")
-  if (g >= 1000 && g % 1000 === 0) return `${g / 1000} kg`;
-  // Krumme Werte ab 1 kg in g mit Tausender-Punkt
-  if (g >= 1000) {
-    const intPart = Math.trunc(g);
-    const grouped = String(intPart).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return g % 1 === 0 ? `${grouped} g` : `${grouped},${String(g).split('.')[1]} g`;
-  }
+  if (g % 1 === 0) return `${g} g`;
   return `${g.toString().replace('.', ',')} g`;
 }
 
