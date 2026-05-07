@@ -1,14 +1,17 @@
 # RS232-to-USB-Waagen-REST-API — Top-Level Compose
 #
 # Ein-Befehl-Start auf dem Pi:
-#   docker compose up -d
+#   docker compose up -d --build
 #
-# Frontend: http://<pi-ip>:8201/         (Svelte UI + nginx Proxy)
-# Backend:  http://<pi-ip>:8200/         (FastAPI direkt)
-# Backend Docs: http://<pi-ip>:8200/docs
-# Daten:    ./data                       (CSV + SQLite Logs)
+# Frontend:     http://<pi-ip>:8201/        (Svelte UI + nginx Proxy)
+# Backend:      http://<pi-ip>:8200/        (FastAPI direkt)
+# Backend Docs: http://<pi-ip>:8200/docs    (Swagger / OpenAPI 3.1)
+# Daten:        ./data                      (alle SQLite-DBs + config.json)
 #
 # Voraussetzung: FTDI-Adapter auf /dev/ttyUSB0 (siehe README).
+#
+# Simulationsmodus (kein Adapter angeschlossen):
+#   WAAGE_SIMULATE=1 docker compose up -d --build
 
 services:
   waage-backend:
@@ -22,17 +25,23 @@ services:
     volumes:
       - ./data:/data
     environment:
-      - WAAGE_PORT=/dev/ttyUSB0
-      - WAAGE_BAUD=9600
+      - WAAGE_PORT=${WAAGE_PORT:-/dev/ttyUSB0}
+      - WAAGE_BAUD=${WAAGE_BAUD:-9600}
       - WAAGE_HOST=0.0.0.0
       - WAAGE_API_PORT=8200
-      - WAAGE_CSV=/data/waage.csv
-      - WAAGE_SQLITE=/data/waage.db
-      - WAAGE_HISTORY=2000
-      - WAAGE_CORS=*
+      - WAAGE_HISTORY=${WAAGE_HISTORY:-2000}
+      - WAAGE_CORS=${WAAGE_CORS:-*}
+      - WAAGE_SIMULATE=${WAAGE_SIMULATE:-}
+      # Persistente Datenbanken — ohne Pfad laufen sie in :memory:
+      # und gehen beim Neustart verloren.
+      - WAAGE_SAMPLES_DB=/data/samples.db
+      - WAAGE_MESSLOG_DB=/data/messlog.db
+      - WAAGE_CONTAINERS_DB=/data/containers.db
+      - WAAGE_COUNT_TEMPLATES_DB=/data/count_templates.db
+      - WAAGE_DATA_DIR=/data
       - TZ=Europe/Berlin
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8200/health"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8200/scale/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -47,4 +56,5 @@ services:
     environment:
       - TZ=Europe/Berlin
     depends_on:
-      - waage-backend
+      waage-backend:
+        condition: service_healthy

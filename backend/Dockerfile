@@ -1,6 +1,6 @@
-# Backend für G&G PLC Waage — FastAPI + pyserial
+# Backend für G&G und kompatible Präzisionswaagen — FastAPI + pyserial
 # Build:  docker build -t waage-backend ./backend
-# Run:    docker run --rm -p 8200:8200 --device=/dev/ttyUSB0 waage-backend
+# Run:    docker run --rm -p 8200:8200 --device=/dev/ttyUSB0 -v $PWD/data:/data waage-backend
 FROM python:3.13-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -26,17 +26,21 @@ RUN pip install --upgrade pip && pip install \
 
 # Quellen
 COPY src/ ./src/
+COPY VERSION ./
 COPY README.md* ./
 RUN pip install -e .
 
-# Daten-Volume
+# Daten-Volume — alle SQLite-DBs und config.json landen hier
 RUN mkdir -p /data
-ENV WAAGE_CSV=/data/waage.csv \
-    WAAGE_SQLITE=/data/waage.db
+ENV WAAGE_DATA_DIR=/data \
+    WAAGE_SAMPLES_DB=/data/samples.db \
+    WAAGE_MESSLOG_DB=/data/messlog.db \
+    WAAGE_CONTAINERS_DB=/data/containers.db \
+    WAAGE_COUNT_TEMPLATES_DB=/data/count_templates.db
 
 EXPOSE 8200
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -fsS http://localhost:8200/health || exit 1
+    CMD curl -fsS http://localhost:8200/scale/health || exit 1
 
 CMD ["python", "-m", "waage.api"]
