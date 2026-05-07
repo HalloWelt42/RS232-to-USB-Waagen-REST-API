@@ -37,7 +37,7 @@ from typing import Any, AsyncIterator, Optional
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from pydantic import BaseModel, Field
 
 from .logger import CsvSink, MultiSink, SqliteSink
@@ -50,6 +50,7 @@ from .reader import (
     DEFAULT_PORT,
     Waage,
 )
+from .samples import Sample, SampleStore, SampleStats
 from .simulator import SimulatedWaage
 
 log = logging.getLogger(__name__)
@@ -101,6 +102,65 @@ class ApiInfo(BaseModel):
 class CountCalibrateIn(BaseModel):
     reference_count: int = Field(..., ge=1, le=100000,
                                  description="Anzahl der aktuell aufliegenden Teile")
+
+
+class SampleIn(BaseModel):
+    label: str = Field("", max_length=120, description="Kurze Beschriftung")
+    note: str = Field("", max_length=1000, description="Längere Notiz")
+    session: str = Field("default", max_length=80, description="Session-Name zum Gruppieren")
+
+
+class SampleOut(BaseModel):
+    id: int
+    ts: str
+    weight_g: float
+    unit: str
+    stable: bool
+    label: str
+    note: str
+    session: str
+
+    @classmethod
+    def from_sample(cls, s: Sample) -> "SampleOut":
+        return cls(
+            id=s.id,
+            ts=s.ts.isoformat(timespec="milliseconds"),
+            weight_g=round(s.weight_g, 4),
+            unit=s.unit,
+            stable=s.stable,
+            label=s.label,
+            note=s.note,
+            session=s.session,
+        )
+
+
+class SampleListOut(BaseModel):
+    count: int
+    items: list[SampleOut]
+
+
+class StatsOut(BaseModel):
+    count: int
+    min_g: Optional[float]
+    max_g: Optional[float]
+    mean_g: Optional[float]
+    stdev_g: Optional[float]
+    sum_g: Optional[float]
+    session: Optional[str]
+
+    @classmethod
+    def from_stats(cls, s: SampleStats) -> "StatsOut":
+        def r(x: Optional[float]) -> Optional[float]:
+            return None if x is None else round(x, 4)
+        return cls(
+            count=s.count,
+            min_g=r(s.min_g),
+            max_g=r(s.max_g),
+            mean_g=r(s.mean_g),
+            stdev_g=r(s.stdev_g),
+            sum_g=r(s.sum_g),
+            session=s.session,
+        )
 
 
 class CountOut(BaseModel):
@@ -229,10 +289,12 @@ def create_app(
     baudrate: int = DEFAULT_BAUD,
     history_size: int = 1000,
     simulate: bool = False,
+    samples_path: Optional[str] = None,
 ) -> FastAPI:
 
     state = _State(history=history_size)
     reader_factory = _make_reader_factory(port, baudrate, simulate)
+    samples_db = SampleStore(samples_path or ":memory:")
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -248,6 +310,7 @@ def create_app(
                 await task
             if sinks is not None:
                 sinks.close()
+            samples_db.close()
 
     app = FastAPI(
         title="G&G PLC Waagen-API",
@@ -459,6 +522,78 @@ def create_app(
         """Schaltet die Display-Beleuchtung um (ESC u / 1B 75)."""
         return await _send_to_scale(COMMAND_LIGHT, "light")
 
+    # --------------------- Samples / Mess-Sessions -------------------
+    @app.post(
+        "/samples",
+        response_model=SampleOut,
+        tags=["samples"],
+        responses={503: {"description": "Noch kein Reading verfügbar"}},
+    )
+    def post_sample(payload: SampleIn) -> SampleOut:
+        """Hält den aktuellen Wägewert mit Label/Notiz fest."""
+        if state.latest is None:
+            raise HTTPException(503, detail="Waage hat noch nichts gesendet")
+        sample = samples_db.add(
+            state.latest,
+            label=payload.label,
+            note=payload.note,
+            session=payload.session,
+        )
+        return SampleOut.from_sample(sample)
+
+    @app.get("/samples", response_model=SampleListOut, tags=["samples"])
+    def get_samples(
+        session: Optional[str] = Query(None, description="Session-Filter"),
+        limit: int = Query(500, ge=1, le=10000),
+    ) -> SampleListOut:
+        items = samples_db.list(session=session, limit=limit)
+        return SampleListOut(
+            count=len(items),
+            items=[SampleOut.from_sample(s) for s in items],
+        )
+
+    @app.delete(
+        "/samples/{sample_id}",
+        tags=["samples"],
+        responses={404: {"description": "Sample nicht gefunden"}},
+    )
+    def delete_sample(sample_id: int) -> dict:
+        if not samples_db.delete(sample_id):
+            raise HTTPException(404, detail="Sample nicht gefunden")
+        return {"ok": True, "id": sample_id}
+
+    @app.delete("/samples", tags=["samples"])
+    def clear_samples(
+        session: Optional[str] = Query(None, description="nur diese Session löschen"),
+    ) -> dict:
+        n = samples_db.clear(session=session)
+        return {"ok": True, "deleted": n, "session": session}
+
+    @app.get("/samples/stats", response_model=StatsOut, tags=["samples"])
+    def get_sample_stats(
+        session: Optional[str] = Query(None),
+    ) -> StatsOut:
+        return StatsOut.from_stats(samples_db.stats(session=session))
+
+    @app.get(
+        "/samples/export.csv",
+        tags=["samples"],
+        responses={200: {"content": {"text/csv": {}}}},
+    )
+    def export_samples_csv(
+        session: Optional[str] = Query(None),
+    ) -> Response:
+        items = samples_db.list(session=session, limit=1_000_000)
+        # Reihenfolge umdrehen, damit der CSV-Export chronologisch ist
+        items_chronological = list(reversed(items))
+        csv_text = samples_db.to_csv(items_chronological)
+        filename = f"waage-samples{'-' + session if session else ''}.csv"
+        return Response(
+            content=csv_text,
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
     @app.websocket("/stream")
     async def stream(ws: WebSocket) -> None:
         """Live-Stream aller Readings als JSON-Messages.
@@ -493,6 +628,7 @@ app = create_app(
     baudrate=int(os.getenv("WAAGE_BAUD", DEFAULT_BAUD)),
     history_size=int(os.getenv("WAAGE_HISTORY", 1000)),
     simulate=_env_flag("WAAGE_SIMULATE"),
+    samples_path=os.getenv("WAAGE_SAMPLES_DB"),
 )
 
 

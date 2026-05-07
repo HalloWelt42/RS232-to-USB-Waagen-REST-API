@@ -249,6 +249,70 @@ def test_command_endpoints_503_without_reader() -> None:
             assert client.post("/command/light").status_code == 503
 
 
+def test_sample_post_get_delete_stats(stubbed_app: TestClient) -> None:
+    # Snapshot des aktuellen Werts (200 g aus dem Stub)
+    r = stubbed_app.post("/samples", json={"label": "Probe-1", "note": "erste"})
+    assert r.status_code == 200
+    body = r.json()
+    sample_id = body["id"]
+    assert body["weight_g"] == pytest.approx(200.0)
+    assert body["label"] == "Probe-1"
+    assert body["session"] == "default"
+
+    # Liste enthält den Sample
+    r = stubbed_app.get("/samples")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["count"] == 1
+    assert body["items"][0]["id"] == sample_id
+
+    # Stats über alle Samples
+    r = stubbed_app.get("/samples/stats")
+    body = r.json()
+    assert body["count"] == 1
+    assert body["mean_g"] == pytest.approx(200.0)
+
+    # Löschen
+    r = stubbed_app.delete(f"/samples/{sample_id}")
+    assert r.status_code == 200
+    r = stubbed_app.get("/samples")
+    assert r.json()["count"] == 0
+
+
+def test_sample_clear_session(stubbed_app: TestClient) -> None:
+    stubbed_app.post("/samples", json={"label": "a", "session": "alpha"})
+    stubbed_app.post("/samples", json={"label": "b", "session": "alpha"})
+    stubbed_app.post("/samples", json={"label": "c", "session": "beta"})
+    r = stubbed_app.delete("/samples?session=alpha")
+    assert r.status_code == 200
+    assert r.json()["deleted"] == 2
+    r = stubbed_app.get("/samples?session=beta")
+    assert r.json()["count"] == 1
+
+
+def test_sample_csv_export(stubbed_app: TestClient) -> None:
+    stubbed_app.post("/samples", json={"label": "X"})
+    r = stubbed_app.get("/samples/export.csv")
+    assert r.status_code == 200
+    assert "text/csv" in r.headers["content-type"]
+    text = r.text
+    assert text.startswith("id,ts,weight_g,unit,stable,label,note,session")
+    assert "X" in text
+
+
+def test_sample_post_503_without_data() -> None:
+    """Ohne Reading darf nichts gespeichert werden."""
+
+    async def silent_reader(reader_factory, state, sinks):
+        await asyncio.sleep(3600)
+
+    with patch.object(api_module, "_reader_loop", silent_reader):
+        app = api_module.create_app(port="/dev/null", baudrate=9600)
+        with TestClient(app) as client:
+            r = client.post("/samples", json={"label": "X"})
+            assert r.status_code == 503
+
+
 def test_docs_page_renders(stubbed_app: TestClient) -> None:
     r = stubbed_app.get("/docs")
     assert r.status_code == 200
