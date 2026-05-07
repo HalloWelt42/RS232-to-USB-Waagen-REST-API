@@ -9,8 +9,25 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.6] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben (schwerwiegend)
+- **Backend-Version stimmt jetzt zentral** — die Anzeige in
+  `/scale/health` und damit in der Settings-Karte „Anschluss"
+  zeigte dauerhaft eine alte Version (z.B. 0.4.5), während die
+  zentrale `VERSION`-Datei längst auf 0.5.x gebumpt war.
+- Ursache: `_load_version()` befragte zuerst
+  `importlib.metadata.version("waage")`. setuptools schreibt diese
+  bei `pip install -e .` einmalig in die egg-info; spätere
+  `bump.sh`-Aufrufe aktualisieren `VERSION` synchron mit
+  `backend/VERSION` und `package.json`, lassen die egg-info aber
+  unangetastet — das Backend lebte mit der Build-Zeit-Version weiter.
+- Reihenfolge in `_load_version()` umgedreht: VERSION-Datei (Repo-
+  Tree, walk-up vom Modul-Pfad aus gesucht) hat jetzt Vorrang;
+  `importlib.metadata` greift nur noch in fertig gepackten Wheels
+  ohne Repo-Kontext.
+- Zwei neue Backend-Tests (`tests/test_version_loader.py`):
+  geladene `__version__` muss mit der VERSION-Datei übereinstimmen,
+  und das Format muss SemVer-artig sein.
+- 175 Backend-Tests grün.
 
 ## [0.5.5] — 2026-05-07
 
