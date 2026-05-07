@@ -198,3 +198,143 @@ def test_messlog_clear(stubbed_app: TestClient) -> None:
     assert r.json()["ok"] is True
     r = stubbed_app.get("/app/messlog")
     assert r.json()["count"] == 0
+
+
+# ---------------- 404-Verhalten der Single-Delete-Routes ----------------
+# Die Frontend-Bereiche (MessLog, SamplesPanel, DifferenzPanel) rufen die
+# Single-Delete-Endpunkte direkt auf — ohne Bestätigungs-Popup.
+# Ein versehentlicher 404 (z.B. weil das laufende Backend hinter dem
+# Frontend zurückbleibt) muss als klarer Fehler kommen, damit die UI
+# einen Toast zeigt statt stillschweigend zu schweigen.
+
+def test_messlog_single_delete_existing(stubbed_app: TestClient) -> None:
+    """Frontend ruft DELETE /app/messlog/{id} mit existierender ID."""
+    items = stubbed_app.get("/app/messlog").json()["items"]
+    assert items, "Test-Setup hat keinen Initial-Eintrag erzeugt"
+    eid = items[0]["id"]
+    r = stubbed_app.delete(f"/app/messlog/{eid}")
+    assert r.status_code == 200
+    assert r.json() == {"ok": True, "id": eid}
+
+
+def test_messlog_single_delete_404(stubbed_app: TestClient) -> None:
+    """Existiert die Messlog-ID nicht, kommt sauberer 404 statt 500."""
+    r = stubbed_app.delete("/app/messlog/999999")
+    assert r.status_code == 404
+
+
+def test_sample_delete_404(stubbed_app: TestClient) -> None:
+    r = stubbed_app.delete("/app/samples/999999")
+    assert r.status_code == 404
+
+
+def test_differenz_remove_404(stubbed_app: TestClient) -> None:
+    r = stubbed_app.delete("/app/differenz/999999")
+    assert r.status_code == 404
+
+
+# ---------------- Multi-Format-Export (0.5.0+) ----------------
+def test_samples_export_csv(stubbed_app: TestClient) -> None:
+    stubbed_app.post("/app/samples", json={"label": "csv-test"})
+    r = stubbed_app.get("/app/samples/export?fmt=csv")
+    assert r.status_code == 200
+    assert "text/csv" in r.headers["content-type"]
+    assert "csv-test" in r.text
+
+
+def test_samples_export_tsv(stubbed_app: TestClient) -> None:
+    stubbed_app.post("/app/samples", json={"label": "tsv-test"})
+    r = stubbed_app.get("/app/samples/export?fmt=tsv")
+    assert r.status_code == 200
+    assert "tab-separated" in r.headers["content-type"]
+    assert "tsv-test" in r.text
+
+
+def test_samples_export_json(stubbed_app: TestClient) -> None:
+    stubbed_app.post("/app/samples", json={"label": "json-test"})
+    r = stubbed_app.get("/app/samples/export?fmt=json")
+    assert r.status_code == 200
+    assert "application/json" in r.headers["content-type"]
+    assert "json-test" in r.text
+
+
+def test_samples_export_markdown(stubbed_app: TestClient) -> None:
+    stubbed_app.post("/app/samples", json={"label": "md-test"})
+    r = stubbed_app.get("/app/samples/export?fmt=md")
+    assert r.status_code == 200
+    assert "markdown" in r.headers["content-type"]
+    assert "md-test" in r.text
+
+
+def test_samples_export_invalid_format(stubbed_app: TestClient) -> None:
+    r = stubbed_app.get("/app/samples/export?fmt=xml")
+    # FastAPI lehnt das Pattern direkt ab → 422 (Validation)
+    assert r.status_code == 422
+
+
+# ---------------- Konsistenz Frontend ↔ Backend ----------------
+# Letztes Loch im Audit von 0.5.x: keine Garantie, dass jeder vom
+# Frontend-Client genutzte DELETE-Pfad im OpenAPI-Schema des Backends
+# tatsächlich existiert. Ein vergessener Bump des laufenden Backends
+# fällt sonst erst dem Anwender beim Klick auf 404 auf.
+
+def _frontend_delete_paths() -> list[str]:
+    """Holt alle aufgerufenen DELETE-Pfade aus `frontend/src/lib/api.ts`.
+
+    Wir suchen nach `this.del('...')` und `this.del(`...`)`-Aufrufen
+    in der Datei und normalisieren `${id}`-Template-Literale auf den
+    OpenAPI-Style `{name}`. Nicht-`/app/`-Pfade ignorieren wir, sie
+    treffen Scale-Endpoints und werden nicht über DELETE genutzt.
+    """
+    import re
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    api_ts = repo_root / "frontend" / "src" / "lib" / "api.ts"
+    if not api_ts.is_file():
+        return []
+    src = api_ts.read_text(encoding="utf-8")
+    paths: list[str] = []
+    # this.del('/literal') und this.del("/literal")
+    for m in re.finditer(r"this\.del\(\s*['\"]([^'\"`]+?)(\?[^'\"`]*)?['\"]\s*\)", src):
+        paths.append(m.group(1))
+    # this.del(`/template/${var}`) — Variablen zu {name} normalisieren.
+    # Wichtig: nur ${...}, dem ein '/' vorangeht, ist ein Path-Param;
+    # ${...} ohne führendes '/' (z.B. `/app/samples${q}` mit q='?...')
+    # baut nur einen Querystring an und gehört nicht in den Pfad.
+    for m in re.finditer(r"this\.del\(\s*`([^`]+)`\s*\)", src):
+        path = m.group(1)
+        path = re.sub(r"/\$\{[^}]+\}", "/{id}", path)   # Path-Param
+        path = re.sub(r"(?<!/)\$\{[^}]+\}", "", path)   # Querystring-Reste
+        paths.append(path)
+    return paths
+
+
+def test_all_frontend_delete_routes_exist_in_backend(stubbed_app: TestClient) -> None:
+    """Jeder DELETE-Pfad in api.ts muss im OpenAPI-Schema des Backends
+    als DELETE-Route registriert sein. Schützt vor stale Backends, die
+    hinter dem Frontend zurückbleiben (Symptom: 404 beim Löschen)."""
+    schema = stubbed_app.get("/openapi.json").json()
+    backend_delete_paths = {
+        p for p, methods in schema["paths"].items()
+        if "delete" in {m.lower() for m in methods}
+    }
+    # OpenAPI verwendet konkrete Param-Namen wie {sample_id}, {entry_id} …
+    # Frontend-Audit normalisiert auf {id}; wir akzeptieren den Match,
+    # wenn die Pfad-Struktur (Anzahl Segmente, statische Teile) gleich ist.
+    def normalize(p: str) -> str:
+        import re
+        return re.sub(r"\{[^}]+\}", "{*}", p)
+
+    backend_norm = {normalize(p) for p in backend_delete_paths}
+    missing: list[str] = []
+    for fe_path in _frontend_delete_paths():
+        # API-Client hat Prefix /api → wegnehmen
+        clean = fe_path.split("?", 1)[0]
+        if normalize(clean) not in backend_norm:
+            missing.append(clean)
+
+    assert not missing, (
+        "DELETE-Pfade im Frontend-Client ohne Backend-Pendant: "
+        f"{missing}\nBackend kennt: {sorted(backend_delete_paths)}"
+    )
