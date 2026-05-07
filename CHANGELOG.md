@@ -9,8 +9,26 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.4.1] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Neu
+- **Genauigkeits-Toleranzen pro Modell** — ScaleModel um sechs
+  neue Felder erweitert: Mindest-Auflage, Linearität, Wieder-
+  holbarkeit, Beruhigungs- und Aufwärmzeit, Betriebstemperatur.
+  Werte gepflegt für PLC-6000, JJ-B 220, JJ-BC 224 (andere
+  Modelle „nicht im Datenblatt").
+- **ModelTolerances-Komponente** im Settings-Tab zeigt alle
+  Toleranzen als kompakte Schlüssel/Wert-Tabelle.
+- **Live-Mindestlast-Warnung** im WiegenPanel — orange Hinweis,
+  wenn die Auflage unter der Mindest-Auflage des Modells liegt.
+- **Mono-Schrift JetBrains Mono** ausschließlich für die
+  StableValue-Display-Anzeige — pixelgenaue Stellen-Position,
+  jede Ziffer gleich breit. Übrige App nutzt weiter Chakra Petch.
+- Hilfe-Eintrag „Genauigkeits-Toleranzen" mit acht Blöcken
+  (DE+EN) inkl. Cross-Links zu Erfassen und Qualitätskontrolle.
+
+### Geändert
+- FontAwesome-Icon `fa-arrow-down-to-bracket` (Pro-only, nicht
+  in der Free-Auslieferung enthalten) durch `fa-circle-down`
+  ersetzt — sieben Stellen quer durch die Werkzeug-Panels.
 
 ## [0.4.0] — 2026-05-07
 
