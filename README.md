@@ -28,20 +28,41 @@ Frontend eine eigenständige Svelte-5-SPA, die das Backend ausschließlich
 
 ## Schnellstart
 
+Plattform-unabhängiges Setup-Skript erledigt venv, npm install und
+zeigt erkannte Hardware:
+
 ```bash
 git clone git@github.com:HalloWelt42/RS232-to-USB-Waagen-REST-API.git
 cd RS232-to-USB-Waagen-REST-API
+./scripts/setup.sh
+```
 
-# Adapter prüfen
-ls /dev/ttyUSB0
+Funktioniert auf **macOS, Linux, Raspberry Pi OS** — die richtigen
+Treiber-Hinweise und Port-Erkennung kommen automatisch.
 
-# alles bauen und starten
+### Variante 1: Docker Compose (Linux / Raspberry Pi)
+
+```bash
 docker compose up -d --build
+# Frontend  http://<host>:8201
+# Backend   http://<host>:8200
+# API-Docs  http://<host>:8200/docs
+```
 
-# fertig:
-#   Frontend  http://<pi-ip>:8201
-#   Backend   http://<pi-ip>:8200
-#   API-Docs  http://<pi-ip>:8200/docs
+### Variante 2: Native (macOS, Linux, Pi)
+
+Auf macOS ist das die empfohlene Variante, da Docker Desktop für Mac
+keine USB-Devices durchreichen kann.
+
+```bash
+# Backend
+cd backend
+source .venv/bin/activate
+python -m waage.api          # liest WAAGE_PORT=auto, findet Adapter selbst
+
+# Frontend (zweites Terminal)
+cd frontend
+npm run dev                  # http://localhost:5184
 ```
 
 ## Endpoints
@@ -141,15 +162,15 @@ Das Output (mit sichtbaren `\r\n` etc.) hilft, den Parser-Regex in
 | `WAAGE_HISTORY` | `1000` | Größe des In-Memory-Ringpuffers |
 | `WAAGE_CORS` | `*` | Allowed-Origins |
 
-## Hardware und Treiber
+## Hardware und Plattform-Hinweise
 
 - **Waage:** G&G PLC 6000g/0,1g (DB9 RS232, 9600 Baud, 8N1)
-- **Adapter:** FTDI FT232RL USB-RS232 (USB-VID:PID `0403:6001`)
-- **Host:** Raspberry Pi 5 oder Pi Zero 2 W (Linux)
+- **Adapter:** FTDI FT232RL USB-RS232 (USB-VID:PID `0403:6001`),
+  zwingend mit **Nullmodem-Adapter / Crossover-Kabel** dazwischen
+- **Host:** Raspberry Pi 5 / Pi Zero 2 W, beliebiges Linux-System,
+  oder macOS
 
-Der Treiber `ftdi_sio` ist bei Raspberry Pi OS, Debian und Ubuntu fest
-im Kernel enthalten. **Kein manueller Treiber-Install nötig**, sobald
-der Adapter eingesteckt ist, taucht `/dev/ttyUSB0` automatisch auf:
+### Linux / Raspberry Pi
 
 ```bash
 lsmod | grep ftdi          # ftdi_sio und usbserial sollten geladen sein
@@ -162,6 +183,32 @@ User-Zugriffsrechte einrichten (einmalig):
 ```bash
 sudo usermod -aG dialout,plugdev $USER
 newgrp dialout
+```
+
+### macOS
+
+Treiber für FTDI sind ab macOS 10.15 im System enthalten (Apple-VCP).
+Falls nicht: VCP-Treiber von ftdichip.com oder
+`brew install --cask ftdi-vcp-driver`. Der Port erscheint unter
+
+```
+/dev/cu.usbserial-FTxxxxxx
+```
+
+Die Auto-Erkennung im Backend (`WAAGE_PORT=auto`, Default) findet
+diesen Pfad selbst — kein manuelles Setzen nötig. **Achtung:** Docker
+Desktop für Mac reicht USB-Geräte nicht durch — auf macOS bitte das
+Backend nativ starten (siehe Schnellstart Variante 2).
+
+### Auto-Port-Erkennung
+
+Das Backend startet im Default mit `WAAGE_PORT=auto` und sucht selbst
+nach FTDI-, CP210x-, PL2303- oder CH340-Adaptern. Manueller Override
+über die Umgebungsvariable:
+
+```bash
+WAAGE_PORT=/dev/ttyUSB1 python -m waage.api
+WAAGE_PORT=/dev/cu.usbserial-FTEQZ0TS python -m waage.api
 ```
 
 ## Simulationsmodus (ohne Hardware)
