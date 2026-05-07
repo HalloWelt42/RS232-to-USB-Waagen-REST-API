@@ -9,8 +9,23 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.5] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben (i18n)
+- **Letzte hardcoded Strings übersetzt** — drei Toast-Texte in der
+  LiveWaage („Tara gesetzt" / „Einheit gewechselt" / „Beleuchtung
+  umgeschaltet") waren noch fix in Deutsch hinterlegt; ebenso der
+  Display-Tooltip „Wert in die Zwischenablage kopieren", der
+  Schließen-Knopf am Hilfe-Fenster und der Email-Knopf im
+  ContactStrip. Alle laufen jetzt über neue `commands.*`-Keys
+  (tareDone / unitDone / lightDone / copyValueTitle / copyValueAria
+  / closeWindow / closeHelpWindow / contactMailTitle /
+  contactMailAria), DE und EN parallel gepflegt.
+
+### Behoben
+- **Modell-Anzeigename ohne Doppel-Prefix** — bei Modellen, deren
+  Name selbst schon den Serien-Prefix trägt (z.B. series=„PLC",
+  name=„PLC-6000"), erschien das aktive Modell als „G&G PLC-PLC-6000".
+  `displayName` in modelStore prüft jetzt `name.split(' ')[0]` auf
+  den Serien-Prefix und setzt ihn nicht erneut voran.
 
 ## [0.5.4] — 2026-05-07
 
