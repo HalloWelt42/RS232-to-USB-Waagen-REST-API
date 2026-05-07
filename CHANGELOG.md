@@ -9,8 +9,35 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.3.2] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Geändert
+- **Industrial-Look eckiger:** `--radius` von 10 px auf 0 px,
+  Buttons leicht gerundet (`--radius-sm` 4 px), spezielle Anzeigen
+  wie Live-Display und Toleranz-Lampe behalten 6 px (`--radius-soft`).
+  Mehr Luft zwischen Topbar und Body — der Fokus-Ring der TabBar
+  rutscht nicht mehr in den Header-Bereich.
+- **Modell-bewusst:** alle Texte und Anzeige-Präzisionen folgen
+  jetzt dem aktiven Waagen-Modell. `formatGrams` zeigt 0 / 1 / 3 / 4
+  Nachkommastellen je nach `resolution_g`. Topbar zeigt das aktive
+  Modell als Klick zu Einstellungen statt hardcoded „G&G PLC 6000g".
+- **Hilfe-Texte modell-neutral** mit Platzhaltern `{{modelName}}`,
+  `{{maxG}}`, `{{resolutionG}}`, `{{minPiecesUnder1g}}`. Englische
+  und deutsche Variante komplett synchronisiert.
+
+### Neu
+- `lib/modelStore.svelte.ts` — reaktiver Speicher für das aktive
+  Modell, lädt `/scale/config` beim Start, App-Root setzt darüber
+  die Default-Auflösung der Format-Funktionen.
+- **Hilfe-Cross-Links** als `[[tool:KEY|Label]]` und
+  `[[help:KEY|Label]]`. HelpLayer rendert sie zu Buttons mit
+  `data-route-*` Attributen und navigiert via `route.go()` /
+  `route.openHelp()` — kein Page-Reload, sauberes PWA-Verhalten.
+- TabBar mit Akzent-Strich am unteren Rand statt umlaufender Box;
+  Fokus-Ring nun innerhalb der Klick-Fläche.
+
+### Tests
+- 18 neue Cases (decimalsForResolution, modell-aware formatGrams,
+  buildHelpVars, renderHelpBody Platzhalter und Cross-Links) — 40
+  Tests gesamt grün.
 
 ## [0.3.1] — 2026-05-07
 
