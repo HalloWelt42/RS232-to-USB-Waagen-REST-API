@@ -9,6 +9,7 @@
   import { toast } from '../../lib/toast.svelte';
   import { theme as themeManager, type Theme } from '../../lib/theme';
   import { t } from '../../lib/i18n';
+  import { modelStore } from '../../lib/modelStore.svelte';
   import HelpButton from '../HelpButton.svelte';
   import type { ScaleConfig, ScaleModel, HealthInfo } from '../../lib/types';
 
@@ -28,7 +29,11 @@
 
   async function pickModel(id: string): Promise<void> {
     busy = true;
-    try { cfg = await api.scale.setConfig(id); toast.show(t('toast.settingSaved'), 'ok'); }
+    try {
+      cfg = await api.scale.setConfig(id);
+      modelStore.setActive(cfg.active_model);
+      toast.show(t('toast.settingSaved'), 'ok');
+    }
     catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
   }

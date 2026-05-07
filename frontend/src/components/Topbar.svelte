@@ -2,6 +2,7 @@
   import { route } from '../lib/routing.svelte';
   import { t } from '../lib/i18n';
   import { searchStore } from '../lib/searchStore.svelte';
+  import { modelStore } from '../lib/modelStore.svelte';
   import ThemeToggle from './ThemeToggle.svelte';
   import LanguageToggle from './LanguageToggle.svelte';
   import HelpButton from './HelpButton.svelte';
@@ -10,12 +11,14 @@
   function openDonate(): void { route.go('donate'); }
   function openGlossary(): void { route.openHelp('glossary'); }
   function openSearch(): void { searchStore.show(); }
+  function openSettings(): void { route.go('settings'); }
 
   let isTool = $derived(route.mode === 'tool');
   let activeTitle = $derived.by(() => {
     if (route.activeTool) return t(`tools.${route.activeTool}`);
     return '';
   });
+  let modelLabel = $derived(modelStore.compactLabel);
 </script>
 
 <header class="topbar">
@@ -30,7 +33,11 @@
     {#if isTool}
       <span class="model">› {activeTitle}</span>
     {:else}
-      <span class="model">G&amp;G PLC 6000g/0,1g</span>
+      <button class="model-btn" onclick={openSettings}
+              title={t('topbar.openSettings')}>
+        {modelLabel}
+        <i class="fa-solid fa-gear" aria-hidden="true"></i>
+      </button>
     {/if}
   </div>
 
@@ -78,6 +85,21 @@
     color: var(--fg-dim); font-size: var(--fs-sm);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  .model-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--fg-dim);
+    font-family: var(--sans);
+    font-size: var(--fs-sm);
+    cursor: pointer;
+    display: inline-flex; align-items: baseline; gap: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .model-btn i { font-size: 11px; opacity: 0.6; }
+  .model-btn:hover { color: var(--accent); }
+  .model-btn:hover i { opacity: 1; }
   .actions { display: flex; align-items: center; gap: var(--sp-2); }
   .search-btn { gap: 6px; }
   .kbd {

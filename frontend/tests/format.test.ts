@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { formatGrams, formatDiff, formatTime, formatDuration } from '../src/lib/format';
+import { formatGrams, formatDiff, formatTime, formatDuration,
+         decimalsForResolution, setDefaultResolution } from '../src/lib/format';
 
 describe('formatGrams', () => {
   it('formats grams below 1 kg with one decimal', () => {
@@ -48,6 +49,37 @@ describe('formatTime', () => {
   it('returns dash for falsy input', () => {
     expect(formatTime(null)).toBe('—');
     expect(formatTime('')).toBe('—');
+  });
+});
+
+describe('decimalsForResolution', () => {
+  it('returns 0 for whole-gram resolutions', () => {
+    expect(decimalsForResolution(1)).toBe(0);
+    expect(decimalsForResolution(10)).toBe(0);
+  });
+  it('returns 1 for 0.1 g', () => { expect(decimalsForResolution(0.1)).toBe(1); });
+  it('returns 2 for 0.01 g', () => { expect(decimalsForResolution(0.01)).toBe(2); });
+  it('returns 3 for 0.001 g', () => { expect(decimalsForResolution(0.001)).toBe(3); });
+  it('returns 4 for 0.0001 g', () => { expect(decimalsForResolution(0.0001)).toBe(4); });
+  it('falls back to 1 for invalid', () => {
+    expect(decimalsForResolution(0)).toBe(1);
+    expect(decimalsForResolution(-0.1)).toBe(1);
+    expect(decimalsForResolution(NaN)).toBe(1);
+  });
+});
+
+describe('formatGrams with model resolution', () => {
+  it('respects per-call resolution argument', () => {
+    expect(formatGrams(12.345, 0.001)).toBe('12.345 g');
+    expect(formatGrams(12.345, 0.01)).toBe('12.35 g');
+    expect(formatGrams(12.345, 1)).toBe('12 g');
+  });
+
+  it('uses default resolution after setDefaultResolution', () => {
+    setDefaultResolution(0.001);
+    expect(formatGrams(1.234567)).toBe('1.235 g');
+    setDefaultResolution(0.1);     // restore default
+    expect(formatGrams(1.234567)).toBe('1.2 g');
   });
 });
 
