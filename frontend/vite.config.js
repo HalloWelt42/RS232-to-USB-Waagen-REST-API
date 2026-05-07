@@ -49,7 +49,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['tests/**/*.test.js', 'src/**/*.test.js'],
+    include: ['tests/**/*.test.{js,ts}', 'src/**/*.test.{js,ts}'],
   },
   build: {
     outDir: 'dist',
