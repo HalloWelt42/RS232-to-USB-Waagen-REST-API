@@ -48,3 +48,33 @@ def test_put_source_invalid_mode_rejected() -> None:
     with _client_simulating() as client:
         r = client.put("/scale/source", json={"mode": "wat"})
         assert r.status_code == 422
+
+
+def test_round_trip_simulate_to_live_to_simulate() -> None:
+    """End-to-End-Lebenszyklus: Backend boots im Simulator, schaltet auf
+    Live (was offline scheitern darf), und dann zurück auf Simulator —
+    state.source_mode muss in jedem Schritt korrekt sein."""
+    with _client_simulating() as client:
+        assert client.get("/scale/health").json()["source_mode"] == "simulate"
+
+        client.put("/scale/source", json={"mode": "live"})
+        # Im Test gibt's keine Hardware — der Reader-Loop wird in einer
+        # Reconnect-Schleife landen, aber state.source_mode steht auf "live"
+        assert client.get("/scale/source").json()["mode"] == "live"
+
+        client.put("/scale/source", json={"mode": "simulate"})
+        assert client.get("/scale/source").json()["mode"] == "simulate"
+        assert client.get("/scale/health").json()["simulated"] is True
+
+
+def test_setting_same_source_is_no_op() -> None:
+    """Wer den aktiven Modus nochmal setzt, soll keinen Reader-Wechsel
+    triggern — nur idempotent zurückbestätigen."""
+    with _client_simulating() as client:
+        before = client.get("/scale/health").json()
+        r = client.put("/scale/source", json={"mode": "simulate"})
+        assert r.status_code == 200
+        after = client.get("/scale/health").json()
+        # Uptime läuft monoton; reader_alive bleibt
+        assert after["reader_alive"] == before["reader_alive"]
+        assert after["source_mode"] == "simulate"

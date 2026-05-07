@@ -183,7 +183,17 @@ class SampleStore(AbstractContextManager["SampleStore"]):
         )
 
     def to_csv(self, samples: Iterable[Sample]) -> str:
+        """CSV-Export im UTF-8-Format mit Byte-Order-Mark (BOM).
+
+        Das BOM (\\ufeff) ist für Excel notwendig, damit Umlaute in
+        Labels und Notizen nicht als „ä" / „ö" / „ü" auftauchen.
+        Andere Tools (LibreOffice, pandas, Python-csv) ignorieren das
+        BOM korrekt.
+        """
         buf = io.StringIO()
+        # UTF-8-BOM voranstellen — ohne, würde Excel die Umlaute als
+        # Latin-1 fehlinterpretieren („Münzen" → „Münzen").
+        buf.write("\ufeff")
         writer = csv.writer(buf)
         writer.writerow(("id", "ts", "weight_g", "unit", "stable", "label", "note", "session"))
         for s in samples:

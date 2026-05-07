@@ -30,6 +30,45 @@ def test_read_one_returns_reading(fast_sim: SimulatedWaage) -> None:
     assert isinstance(r.weight, float)
 
 
+def test_close_marks_simulator_closed(fast_sim: SimulatedWaage) -> None:
+    """Source-Switch ruft close() auf — anschließend muss read_one()
+    eine Exception werfen, damit der Reader-Loop reconnectet."""
+    with fast_sim as w:
+        # Frischer Simulator liefert Werte
+        assert w.read_one() is not None
+        # Schließen — auch ohne Exit-Block
+        w.close()
+        # Nach close() muss read_one() abbrechen
+        with pytest.raises(RuntimeError):
+            w.read_one()
+
+
+def test_exit_closes_simulator(fast_sim: SimulatedWaage) -> None:
+    sim = fast_sim
+    with sim:
+        pass
+    # Nach __exit__ müssen Aufrufe von read_one() ebenfalls abbrechen
+    with pytest.raises(RuntimeError):
+        sim.read_one()
+
+
+def test_reopen_with_fresh_instance() -> None:
+    """Lifecycle: close → neue Instanz öffnen funktioniert (wie im
+    Reader-Loop nach einem Source-Switch)."""
+    sim1 = SimulatedWaage(frame_rate_hz=1000.0, seed=1)
+    sim1._sleep = lambda s: None
+    with sim1 as w:
+        assert w.read_one() is not None
+    with pytest.raises(RuntimeError):
+        sim1.read_one()
+
+    # Neue Instanz simuliert das, was die Reader-Factory tut
+    sim2 = SimulatedWaage(frame_rate_hz=1000.0, seed=2)
+    sim2._sleep = lambda s: None
+    with sim2 as w:
+        assert w.read_one() is not None
+
+
 def test_first_frame_is_at_zero_and_stable(fast_sim: SimulatedWaage) -> None:
     """Direkt nach Start: Waage ist leer und stable."""
     with fast_sim as w:

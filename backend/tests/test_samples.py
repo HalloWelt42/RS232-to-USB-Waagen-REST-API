@@ -86,10 +86,27 @@ def test_csv_export() -> None:
         store.add(_r(1.5), label="L1", note="hi")
         store.add(_r(-2.5), label="L2")
         csv_str = store.to_csv(store.list())
-        lines = csv_str.strip().splitlines()
+        # BOM überspringen für die Header-Prüfung
+        lines = csv_str.lstrip("﻿").strip().splitlines()
         assert lines[0] == "id,ts,weight_g,unit,stable,label,note,session"
         assert "1.5000" in csv_str
         assert "-2.5000" in csv_str
+
+
+def test_csv_starts_with_utf8_bom() -> None:
+    """Excel erkennt UTF-8 nur über das BOM — Umlaute in Labels und
+    Notizen müssen sonst Latin-1-decodiert werden („Münzen → Münzen")."""
+    with SampleStore(":memory:") as store:
+        store.add(_r(10.0), label="Münzen", note="Größe S")
+        csv_str = store.to_csv(store.list())
+        # Erstes Byte muss das BOM sein
+        assert csv_str.startswith("﻿")
+        # Inhalt enthält Umlaute korrekt
+        assert "Münzen" in csv_str
+        assert "Größe" in csv_str
+        # Roundtrip: als UTF-8-Bytes serialisierbar, BOM kommt rein
+        encoded = csv_str.encode("utf-8")
+        assert encoded.startswith(b"\xef\xbb\xbf")
 
 
 def test_concurrent_writes(tmp_path: Path) -> None:

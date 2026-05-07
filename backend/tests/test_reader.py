@@ -102,6 +102,32 @@ def test_context_manager_closes_serial() -> None:
     assert fake.is_open is False
 
 
+def test_explicit_close_makes_read_raise() -> None:
+    """`Waage.close()` ist die public API für den Live↔Simulator-Switch.
+
+    Nach close() darf read_one() nicht mehr lesen, sondern muss eine
+    Exception werfen, damit der Reader-Loop reconnected.
+    """
+    patcher, fake = _patch_serial([b"ST,+ 10.0 g\r\n"])
+    with patcher:
+        w = Waage("/dev/ttyUSB0")
+        with w:
+            assert w.read_one() is not None
+            w.close()
+            assert fake.is_open is False
+            with pytest.raises(RuntimeError):
+                w.read_one()
+
+
+def test_close_is_idempotent() -> None:
+    """Doppelter close()-Aufruf darf nicht crashen."""
+    patcher, fake = _patch_serial([b"ST,+ 10.0 g\r\n"])
+    with patcher:
+        with Waage("/dev/ttyUSB0") as w:
+            w.close()
+            w.close()  # zweiter Aufruf soll still bleiben
+
+
 def test_read_one_without_open_raises() -> None:
     w = Waage("/dev/ttyUSB0")
     with pytest.raises(RuntimeError):
