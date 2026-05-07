@@ -70,6 +70,7 @@ class SimulatedWaage:
         self._next_change_at = self._now() + self._rng.uniform(6.0, 12.0)
         self._next_frame_at = self._now()
         self._stable_count = 0  # wie viele Frames in Folge nahe am Ziel
+        self._closed = False    # set durch close() / Reader-Loop-Reconnect
 
     # In Tests überschreibbar, damit die Simulation deterministisch und
     # ohne echten Sleep abläuft.
@@ -98,10 +99,18 @@ class SimulatedWaage:
             self._stable_count = 0
 
     def __enter__(self) -> "SimulatedWaage":
+        self._closed = False
         return self
 
+    def close(self) -> None:
+        """API-Symmetrie zur echten ``Waage`` — markiert den Simulator
+        als beendet, damit ``read_one()`` aus dem Reader-Loop austritt
+        und die Factory mit dem neuen Source-Mode neu instanziieren kann.
+        """
+        self._closed = True
+
     def __exit__(self, *exc) -> None:
-        return None
+        self.close()
 
     # ------------------------------------------------------------------
     #  Zustands-Transitionen
@@ -192,6 +201,12 @@ class SimulatedWaage:
     #  Öffentliche API (deckungsgleich zu ``waage.reader.Waage``)
     # ------------------------------------------------------------------
     def read_one(self) -> Optional[Reading]:
+        # Wurde `close()` aufgerufen (z.B. durch Source-Wechsel im
+        # laufenden Backend), brechen wir mit RuntimeError ab — der
+        # Reader-Loop fängt die Exception, schließt das `with`-Statement
+        # und reconnectet mit dem neuen Modus.
+        if getattr(self, "_closed", False):
+            raise RuntimeError("Simulator geschlossen — Reader-Loop reconnect")
         # Frame-Rate respektieren, damit der Stream nicht im Stakkato läuft
         now = self._now()
         wait = self._next_frame_at - now

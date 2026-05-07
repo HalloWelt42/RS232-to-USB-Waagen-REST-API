@@ -90,10 +90,21 @@ class Waage(AbstractContextManager["Waage"]):
         )
         return self
 
-    def __exit__(self, *exc) -> None:
+    def close(self) -> None:
+        """Schließt den seriellen Port. Idempotent.
+
+        Wird vom Live/Simulator-Source-Switch aufgerufen, damit der
+        Reader-Loop einen Reconnect mit der neuen Factory ausführt.
+        """
         if self._ser is not None:
-            self._ser.close()
+            try:
+                self._ser.close()
+            except Exception:  # noqa: BLE001
+                log.exception("Serieller Port konnte nicht sauber geschlossen werden")
             self._ser = None
+
+    def __exit__(self, *exc) -> None:
+        self.close()
 
     def _take_frame(self) -> Optional[bytes]:
         """Versucht, ein vollständiges Frame aus dem Puffer zu extrahieren.

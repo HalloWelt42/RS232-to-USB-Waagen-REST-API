@@ -54,8 +54,12 @@ esac
 
 echo "Bump:  $CURRENT  ->  $NEW"
 
-# VERSION aktualisieren
+# VERSION an beiden Stellen aktualisieren — keine Symlinks.
+# - Repo-Wurzel: VERSION (Single Source of Truth, von Vite + bump gelesen)
+# - backend/VERSION: kopierte Datei für setuptools dynamic version
+#   (setuptools liest nur Pfade innerhalb der Paket-Wurzel)
 echo "$NEW" > VERSION
+echo "$NEW" > backend/VERSION
 
 # package.json mit Python sauber rewriten (kein npm-Aufruf nötig)
 python3 - <<PY
@@ -82,7 +86,7 @@ if ! grep -q "^## \[$NEW\]" CHANGELOG.md; then
   echo "CHANGELOG.md: Vorlage für $NEW eingefügt — bitte ergänzen."
 fi
 
-git add VERSION frontend/package.json CHANGELOG.md
+git add VERSION backend/VERSION frontend/package.json CHANGELOG.md
 git commit -m "chore(release): bump auf $NEW"
 git tag -a "v$NEW" -m "Release $NEW"
 
