@@ -53,13 +53,26 @@ class ModelStore {
     this.loaded = true;
   }
 
-  /** Anzeigename in der Form „Hersteller Serie-Name", z.B. „G&G PLC-6000". */
+  /** Anzeigename in der Form „Hersteller Serie-Name", z.B. „G&G PLC-6000".
+   *
+   *  Dedup-Schutz: enthält der Modellname bereits den Serien-Prefix
+   *  (z.B. series="PLC" + name="PLC-6000"), wird er NICHT erneut
+   *  vorangestellt — sonst kommt der Anzeigename als „G&G PLC-PLC-6000"
+   *  raus. */
   get displayName(): string {
     const m = this.active;
     if (!m.series && !m.name) return m.manufacturer || 'Waage';
-    const series = m.series ? `${m.series}` : '';
-    return [m.manufacturer, series && m.name ? `${series}-${m.name.split(' ')[0]}` : (series || m.name)]
-      .filter(Boolean).join(' ');
+    const series = m.series ?? '';
+    const nameFirst = m.name ? m.name.split(' ')[0] : '';
+    let combined: string;
+    if (series && nameFirst) {
+      combined = nameFirst.startsWith(series)
+        ? nameFirst
+        : `${series}-${nameFirst}`;
+    } else {
+      combined = nameFirst || series;
+    }
+    return [m.manufacturer, combined].filter(Boolean).join(' ');
   }
 
   /** Eckdaten-Anhang ohne Name — z.B. „6 kg / 0,1 g".
