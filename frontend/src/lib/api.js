@@ -36,6 +36,32 @@ export const api = {
   cmdTare:  () => request('/command/tare',  { method: 'POST' }),
   cmdUnit:  () => request('/command/unit',  { method: 'POST' }),
   cmdLight: () => request('/command/light', { method: 'POST' }),
+  // Samples (festgehaltene Werte)
+  sampleAdd: (label = '', note = '', session = 'default') =>
+    request('/samples', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label, note, session }),
+    }),
+  sampleList: (session = null, limit = 500) => {
+    const q = new URLSearchParams();
+    if (session) q.set('session', session);
+    q.set('limit', String(limit));
+    return request(`/samples?${q.toString()}`);
+  },
+  sampleDelete: (id) => request(`/samples/${id}`, { method: 'DELETE' }),
+  sampleClear:  (session = null) => {
+    const q = session ? `?session=${encodeURIComponent(session)}` : '';
+    return request(`/samples${q}`, { method: 'DELETE' });
+  },
+  sampleStats:  (session = null) => {
+    const q = session ? `?session=${encodeURIComponent(session)}` : '';
+    return request(`/samples/stats${q}`);
+  },
+  sampleExportUrl: (session = null) => {
+    const q = session ? `?session=${encodeURIComponent(session)}` : '';
+    return `/api/samples/export.csv${q}`;
+  },
 };
 
 /**

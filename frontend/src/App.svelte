@@ -6,6 +6,7 @@
   import HealthPanel from './components/HealthPanel.svelte';
   import CountPanel from './components/CountPanel.svelte';
   import ActionButtons from './components/ActionButtons.svelte';
+  import SamplesPanel from './components/SamplesPanel.svelte';
 
   let reading       = $state(null);
   let history       = $state([]);
@@ -112,6 +113,7 @@
 
     <aside>
       <CountPanel {reading} />
+      <SamplesPanel {reading} />
       <HealthPanel {health} />
       <HistoryList {history} />
     </aside>
