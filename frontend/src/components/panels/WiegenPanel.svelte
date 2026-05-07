@@ -9,8 +9,9 @@
   import { live } from '../../lib/liveStore.svelte';
   import { copyText } from '../../lib/clipboard';
   import { toast } from '../../lib/toast.svelte';
-  import { formatDiff } from '../../lib/format';
+  import { formatDiff, formatGrams } from '../../lib/format';
   import { t } from '../../lib/i18n';
+  import { modelStore } from '../../lib/modelStore.svelte';
   import HelpButton from '../HelpButton.svelte';
   import StableValue from '../StableValue.svelte';
 
@@ -48,6 +49,13 @@
     sollText = weight.toFixed(1);
     toast.show(t('toast.valueTakenOver'), 'ok');
   }
+
+  // Modell-Toleranz-Warnung: Auflage unter Mindestlast
+  let underMinLoad = $derived.by<boolean>(() => {
+    const m = modelStore.active;
+    if (m.min_load_g <= 0 || weight === null) return false;
+    return weight > 0 && weight < m.min_load_g;
+  });
 </script>
 
 <section class="panel">
@@ -69,6 +77,13 @@
     <span class="hint">{r ? (r.stable ? t('status.stable') : t('status.unstable')) : '—'}</span>
   </button>
 
+  {#if underMinLoad}
+    <p class="min-warning">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      {t('tolerances.belowMinWarning').replace('%w', formatGrams(modelStore.active.min_load_g))}
+    </p>
+  {/if}
+
   {#if mode === 'sollwert'}
     <div class="form">
       <label>
@@ -77,7 +92,7 @@
           <input type="text" inputmode="decimal" placeholder="z.B. 250,0"
                  bind:value={sollText} />
           <button class="btn-primary" onclick={takeOver} disabled={weight === null}>
-            <i class="fa-solid fa-arrow-down-to-bracket"></i>
+            <i class="fa-solid fa-circle-down"></i>
             Aktuellen übernehmen
           </button>
         </div>
@@ -195,4 +210,16 @@
   .val { font-size: var(--fs-lg); }
   .val.plus  { color: var(--green); }
   .val.minus { color: var(--orange); }
+
+  .min-warning {
+    max-width: 480px; margin: 0 auto;
+    padding: var(--sp-2) var(--sp-3);
+    background: color-mix(in srgb, var(--orange) 14%, transparent);
+    border: 1px solid var(--orange);
+    border-radius: var(--radius-sm);
+    color: var(--orange);
+    font-size: var(--fs-sm);
+    display: inline-flex; align-items: center; gap: 6px;
+    align-self: center;
+  }
 </style>

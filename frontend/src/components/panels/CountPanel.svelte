@@ -233,7 +233,7 @@
             {#if info?.piece_weight_g}
               <button class="btn-primary small" onclick={takeCurrentPieceWeight}
                       title={t('countTemplates.takeCalibrated')}>
-                <i class="fa-solid fa-arrow-down-to-bracket"></i>
+                <i class="fa-solid fa-circle-down"></i>
               </button>
             {/if}
           </div>

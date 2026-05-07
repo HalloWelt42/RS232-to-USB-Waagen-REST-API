@@ -103,7 +103,7 @@
           <input type="text" inputmode="decimal" bind:value={targetText} />
           <button class="btn-primary small" onclick={takeOver} disabled={liveGross === null}
                   title="Aktuellen Wert übernehmen">
-            <i class="fa-solid fa-arrow-down-to-bracket"></i>
+            <i class="fa-solid fa-circle-down"></i>
           </button>
         </div>
       </label>

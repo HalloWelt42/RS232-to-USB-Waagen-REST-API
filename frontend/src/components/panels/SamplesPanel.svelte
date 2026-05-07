@@ -167,7 +167,7 @@
         </button>
       {:else if mode === 'manual'}
         <button class="btn-primary" onclick={add} disabled={busy || liveGross === null}>
-          <i class="fa-solid fa-arrow-down-to-bracket"></i>
+          <i class="fa-solid fa-circle-down"></i>
           {t('samples.captureNow')}
         </button>
       {/if}

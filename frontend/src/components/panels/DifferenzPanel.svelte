@@ -115,7 +115,7 @@
 
     <div class="actions-row">
       <button class="btn-primary" onclick={pushCurrent} disabled={busy || liveGross === null}>
-        <i class="fa-solid fa-arrow-down-to-bracket"></i>
+        <i class="fa-solid fa-circle-down"></i>
         Aktuelles Gewicht als Tara
       </button>
     </div>

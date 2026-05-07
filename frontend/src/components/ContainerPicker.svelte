@@ -140,7 +140,7 @@
             <button class="btn-primary small" onclick={takeCurrent}
                     disabled={!live.reading}
                     title={t('containers.takeCurrent')}>
-              <i class="fa-solid fa-arrow-down-to-bracket"></i>
+              <i class="fa-solid fa-circle-down"></i>
             </button>
           </div>
         </label>
