@@ -24,6 +24,15 @@ export const api = {
   weight:  ()              => request('/weight'),
   stable:  (timeout = 5)   => request(`/weight/stable?timeout=${timeout}`),
   history: (limit = 100)   => request(`/history?limit=${limit}`),
+  count:   ()              => request('/count'),
+  countCalibrate: (referenceCount) =>
+    request('/count/calibrate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reference_count: referenceCount }),
+    }),
+  countReset: () =>
+    request('/count/reset', { method: 'POST' }),
 };
 
 /**

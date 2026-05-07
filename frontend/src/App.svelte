@@ -4,6 +4,7 @@
   import WeightDisplay from './components/WeightDisplay.svelte';
   import HistoryList from './components/HistoryList.svelte';
   import HealthPanel from './components/HealthPanel.svelte';
+  import CountPanel from './components/CountPanel.svelte';
 
   let reading       = $state(null);
   let history       = $state([]);
@@ -107,6 +108,7 @@
     </div>
 
     <aside>
+      <CountPanel {reading} />
       <HealthPanel {health} />
       <HistoryList {history} />
     </aside>
