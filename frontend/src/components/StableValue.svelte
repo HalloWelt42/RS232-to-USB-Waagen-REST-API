@@ -42,16 +42,26 @@
 </span>
 
 <style>
+  /* Display-Simulation: echte Mono-Schrift mit gleichbreiten Ziffern,
+     damit die Stellen-Position pixelgenau steht und die Anzeige nicht
+     zappelt. Wird nur in dieser Komponente verwendet. */
   .stable-value {
     display: inline-flex;
     align-items: baseline;
-    /* Tabular-Figures sind global an .num gesetzt — explizit hier
-       nochmal, falls die Komponente außerhalb von .num gerendert wird. */
+    font-family: var(--mono-display);
+    font-weight: 700;
     font-variant-numeric: tabular-nums lining-nums slashed-zero;
-    font-feature-settings: 'tnum' 1, 'lnum' 1, 'zero' 1;
-    letter-spacing: 0.04em;
+    font-feature-settings: 'tnum' 1, 'lnum' 1, 'zero' 1, 'cv01' 1, 'cv02' 1;
+    letter-spacing: 0.02em;
   }
+  /* Ziffern und Trenner als gleichbreite Zellen — selbst bei
+     Schriftarten ohne perfekt feste Glyph-Breite. */
   .seg { display: inline-block; }
-  .seg-unit { padding-left: 0.25em; }
+  .seg-digit, .seg-sep, .seg-decimal {
+    text-align: center;
+    min-width: 0.65em;
+  }
+  .seg-sign { min-width: 0.5em; text-align: right; }
+  .seg-unit { padding-left: 0.4em; min-width: 1.6em; text-align: left; }
   .ghost { opacity: 0.1; }       /* 90 % transparent */
 </style>

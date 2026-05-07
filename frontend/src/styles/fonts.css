@@ -14,6 +14,11 @@
 @import '@fontsource/chakra-petch/600.css';
 @import '@fontsource/chakra-petch/700.css';
 
+/* JetBrains Mono — ausschließlich für die Display-Simulation der Waage,
+   damit jede Ziffer pixelgenau gleich breit dargestellt wird. */
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
 @import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
 @import '@fortawesome/fontawesome-free/css/solid.min.css';
 @import '@fortawesome/fontawesome-free/css/regular.min.css';

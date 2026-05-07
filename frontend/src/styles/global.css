@@ -34,6 +34,9 @@
   /* Schriften */
   --sans: 'Barlow', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --num:  'Chakra Petch', 'Barlow', monospace;
+  /* Mono-Stack ausschließlich für die Display-Simulation der Waage —
+     echte Mono-Schrift, damit die Stellen-Position pixelgenau steht. */
+  --mono-display: 'JetBrains Mono', 'Fira Code', 'IBM Plex Mono', 'Cascadia Code', 'Source Code Pro', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
   /* Info-Blau industriell, theme-unabhängig */
   --info-blue:        #1976d2;
