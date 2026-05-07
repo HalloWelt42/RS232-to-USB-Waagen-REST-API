@@ -9,8 +9,22 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.8] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Revertiert
+- **Die HTML-Struktur-„Fixes" aus 0.5.7 sind zurückgenommen.** Die
+  zugrundeliegenden IDE-Meldungen („Element div is not allowed here")
+  stammten aus einem veralteten/defekten Svelte-4-Plugin und sind
+  in der offiziellen Svelte-5-Doku (`svelte.dev/llms.txt` und
+  Folgedokumente) nicht als Fehler markiert; `svelte-check 4.x`
+  meldet das Projekt mit 0/0 ohnehin sauber. Der laufende Betrieb
+  war zu jeder Zeit fehlerfrei.
+- Konkret zurückgenommen:
+  - `<h3>`/`<p>` in `<button>` (ActionCard, HelpPanel) — wieder
+    Original-Markup mit semantischer Heading-/Paragraph-Auszeichnung.
+  - `<div class="row-flex">`/`<div class="row">` in `<label>` in
+    NettoPanel, TolerancePanel, CountPanel, DifferenzPanel,
+    WiegenPanel und ContainerPicker — wieder als `<div>`-Wrapper.
+- Die übrigen Fixes seit 0.5.6 (Backend-Version-Loader, i18n-Lücken,
+  Modell-Anzeigename) bleiben unverändert in Kraft.
 
 ## [0.5.7] — 2026-05-08
 
