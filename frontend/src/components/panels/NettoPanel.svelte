@@ -41,23 +41,23 @@
   async function tareCurrent(): Promise<void> {
     if (busy) return;
     busy = true;
-    try { info = await api.app.nettoTareCurrent(); toast.show('Tara gesetzt', 'ok'); }
+    try { info = await api.app.nettoTareCurrent(); toast.show(t('panels.taraSet'), 'ok'); }
     catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
   }
 
   async function tareValue(): Promise<void> {
     const v = parseFloat(tareText.replace(',', '.'));
-    if (!Number.isFinite(v)) { toast.show('Ungültige Zahl', 'error'); return; }
+    if (!Number.isFinite(v)) { toast.show(t('panels.invalidNumber'), 'error'); return; }
     busy = true;
-    try { info = await api.app.nettoTareValue(v); toast.show('Tara gesetzt', 'ok'); }
+    try { info = await api.app.nettoTareValue(v); toast.show(t('panels.taraSet'), 'ok'); }
     catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
   }
 
   async function clear(): Promise<void> {
     busy = true;
-    try { info = await api.app.nettoTareClear(); toast.show('Tara entfernt', 'ok'); }
+    try { info = await api.app.nettoTareClear(); toast.show(t('panels.taraRemoved'), 'ok'); }
     catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
   }
@@ -81,42 +81,42 @@
   <div class="form">
     <div class="display">
       <div class="row">
-        <span class="lbl">Brutto</span>
+        <span class="lbl">{t('panels.brutto')}</span>
         <span class="num val">{formatGrams(liveGross)}</span>
       </div>
       <div class="row">
-        <span class="lbl">Tara</span>
+        <span class="lbl">{t('panels.tara')}</span>
         <span class="num val">{formatGrams(info?.tare_g ?? null)}</span>
       </div>
       <div class="row big">
-        <span class="lbl">Netto</span>
+        <span class="lbl">{t('panels.netto')}</span>
         <span class="num val big" class:active={info?.active}>{formatGrams(liveNetto)}</span>
       </div>
       {#if info?.tare_set_at}
-        <div class="meta">Tara gesetzt {formatTime(info.tare_set_at)}</div>
+        <div class="meta">{t('panels.taraSetAt').replace('%t', formatTime(info.tare_set_at))}</div>
       {/if}
     </div>
 
     <div class="actions-row">
       <button class="btn-primary" onclick={tareCurrent} disabled={busy || liveGross === null}>
         <i class="fa-solid fa-circle-down"></i>
-        Aktuelles Gewicht als Tara
+        {t('panels.currentAsTara')}
       </button>
       {#if info?.active}
         <button class="btn-warn" onclick={clear} disabled={busy}>
           <i class="fa-solid fa-eraser"></i>
-          Tara entfernen
+          {t('panels.removeTara')}
         </button>
       {/if}
     </div>
 
     <div class="manual">
       <label>
-        Oder Tara als Zahl eintragen (Gramm)
+        {t('panels.manualTaraGrams')}
         <div class="row-flex">
-          <input type="text" inputmode="decimal" placeholder="z.B. 23,4"
+          <input type="text" inputmode="decimal" placeholder={t('panels.manualPlaceholder')}
                  bind:value={tareText} />
-          <button class="btn-primary" onclick={tareValue} disabled={busy}>Setzen</button>
+          <button class="btn-primary" onclick={tareValue} disabled={busy}>{t('panels.setBtn')}</button>
         </div>
       </label>
     </div>

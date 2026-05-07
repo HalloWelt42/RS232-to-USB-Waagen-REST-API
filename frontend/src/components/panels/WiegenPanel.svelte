@@ -65,12 +65,12 @@
   </header>
 
   <div class="modes">
-    <button class:active={mode==='frei'}     onclick={() => mode='frei'}>Frei</button>
-    <button class:active={mode==='sollwert'} onclick={() => mode='sollwert'}>Sollwert</button>
+    <button class:active={mode==='frei'}     onclick={() => mode='frei'}>{t('panels.modeFree')}</button>
+    <button class:active={mode==='sollwert'} onclick={() => mode='sollwert'}>{t('panels.modeTarget')}</button>
   </div>
 
   <button class="display" onclick={copyValue} disabled={weight === null}
-          title="Wert kopieren" aria-label="Wert kopieren">
+          title={t('panels.copyValue')} aria-label={t('panels.copyValue')}>
     <span class="value">
       <StableValue g={weight} />
     </span>
@@ -87,23 +87,23 @@
   {#if mode === 'sollwert'}
     <div class="form">
       <label>
-        Sollwert in Gramm
+        {t('panels.targetGrams')}
         <div class="row">
-          <input type="text" inputmode="decimal" placeholder="z.B. 250,0"
+          <input type="text" inputmode="decimal" placeholder={t('panels.targetPlaceholder')}
                  bind:value={sollText} />
           <button class="btn-primary" onclick={takeOver} disabled={weight === null}>
             <i class="fa-solid fa-circle-down"></i>
-            Aktuellen übernehmen
+            {t('panels.takeOverCurrent')}
           </button>
         </div>
       </label>
 
       {#if soll !== null && diff !== null}
         <div class="info">
-          <div class="info-row"><span class="key">Differenz</span>
+          <div class="info-row"><span class="key">{t('panels.difference')}</span>
             <span class="num val" class:plus={diff >= 0} class:minus={diff < 0}>{formatDiff(diff)}</span></div>
           {#if percent !== null}
-            <div class="info-row"><span class="key">Anteil</span>
+            <div class="info-row"><span class="key">{t('panels.share')}</span>
               <span class="num val">{percent.toFixed(1)} %</span></div>
           {/if}
         </div>

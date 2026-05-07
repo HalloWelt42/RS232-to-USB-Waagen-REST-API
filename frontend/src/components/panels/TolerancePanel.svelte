@@ -31,17 +31,17 @@
     const minus  = parseFloat(minusText.replace(',', '.'));
     const plus   = parseFloat(plusText.replace(',', '.'));
     if (![target, minus, plus].every(Number.isFinite)) {
-      toast.show('Werte ungültig', 'error'); return;
+      toast.show(t('panels.invalidValues'), 'error'); return;
     }
     busy = true;
-    try { info = await api.app.toleranceSet(target, minus, plus); toast.show('Toleranz aktiv', 'ok'); }
+    try { info = await api.app.toleranceSet(target, minus, plus); toast.show(t('panels.toleranceActive'), 'ok'); }
     catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
   }
 
   async function clear(): Promise<void> {
     busy = true;
-    try { info = await api.app.toleranceClear(); toast.show('Toleranz aus', 'ok'); }
+    try { info = await api.app.toleranceClear(); toast.show(t('panels.toleranceOff'), 'ok'); }
     catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
   }
@@ -85,12 +85,12 @@
           {formatDiff(liveDeviation)}
         </span>
         <span class="status-text">
-          {liveStatus === 'ok'   ? 'INNERHALB TOLERANZ' :
-           liveStatus === 'low'  ? 'UNTER MINIMUM'      :
-           liveStatus === 'high' ? 'ÜBER MAXIMUM'       : 'NICHT AKTIV'}
+          {liveStatus === 'ok'   ? t('panels.statusInRange') :
+           liveStatus === 'low'  ? t('panels.statusBelow')   :
+           liveStatus === 'high' ? t('panels.statusAbove')   : t('panels.statusToleranceOff')}
         </span>
       {:else}
-        <span class="status-text idle">TOLERANZ NICHT AKTIV</span>
+        <span class="status-text idle">{t('panels.statusToleranceOff')}</span>
       {/if}
     </div>
   </div>
@@ -98,42 +98,42 @@
   <div class="form">
     <div class="grid">
       <label>
-        Sollwert (g)
+        {t('panels.targetG')}
         <div class="row-flex">
           <input type="text" inputmode="decimal" bind:value={targetText} />
           <button class="btn-primary small" onclick={takeOver} disabled={liveGross === null}
-                  title="Aktuellen Wert übernehmen">
+                  title={t('panels.takeOverCurrentTitle')}>
             <i class="fa-solid fa-circle-down"></i>
           </button>
         </div>
       </label>
       <label>
-        Toleranz minus (g)
+        {t('panels.tolMinusG')}
         <input type="text" inputmode="decimal" bind:value={minusText} />
       </label>
       <label>
-        Toleranz plus (g)
+        {t('panels.tolPlusG')}
         <input type="text" inputmode="decimal" bind:value={plusText} />
       </label>
     </div>
 
     {#if info?.active}
       <div class="info">
-        <div class="i-row"><span class="key">Min</span><span class="num val">{formatGrams(info.min_g)}</span></div>
-        <div class="i-row"><span class="key">Soll</span><span class="num val">{formatGrams(info.target_g)}</span></div>
-        <div class="i-row"><span class="key">Max</span><span class="num val">{formatGrams(info.max_g)}</span></div>
+        <div class="i-row"><span class="key">{t('panels.toleranceMin')}</span><span class="num val">{formatGrams(info.min_g)}</span></div>
+        <div class="i-row"><span class="key">{t('panels.toleranceTarget')}</span><span class="num val">{formatGrams(info.target_g)}</span></div>
+        <div class="i-row"><span class="key">{t('panels.toleranceMax')}</span><span class="num val">{formatGrams(info.max_g)}</span></div>
       </div>
     {/if}
 
     <div class="actions-row">
       <button class="btn-primary" onclick={activate} disabled={busy}>
         <i class="fa-solid fa-bullseye"></i>
-        {info?.active ? 'Aktualisieren' : 'Aktivieren'}
+        {info?.active ? t('panels.update') : t('general.activate')}
       </button>
       {#if info?.active}
         <button class="btn-warn" onclick={clear} disabled={busy}>
           <i class="fa-solid fa-power-off"></i>
-          Deaktivieren
+          {t('general.deactivate')}
         </button>
       {/if}
     </div>

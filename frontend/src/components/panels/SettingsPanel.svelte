@@ -25,10 +25,13 @@
    * Messprotokoll, Behälter-Bibliothek, Stückzähl-Vorlagen, Differenz-
    * Schichten und Toleranz/Netto/Count-Zustände. Modell-Wahl und
    * Theme bleiben erhalten.
+   *
+   * Direkt — kein Bestätigungsdialog (Vorgabe Anwender: Löschen ist
+   * Löschen). Der rote Karten-Stil und die Beschriftung „Alles
+   * zurücksetzen" sind die einzige Warnstufe; ein versehentlicher
+   * Klick lässt sich über die Tools schnell wieder aufbauen.
    */
   async function resetAllData(): Promise<void> {
-    if (!confirm(t('settings.resetAllConfirm1'))) return;
-    if (!confirm(t('settings.resetAllConfirm2'))) return;
     busy = true;
     try {
       await Promise.all([
@@ -110,31 +113,31 @@
 
   <div class="form">
     <div class="card">
-      <h3>Anzeigemodus</h3>
+      <h3>{t('settingsPanel.themeMode')}</h3>
       <div class="theme-row">
         <button class:active={currentTheme==='auto'}  onclick={() => setTheme('auto')}>
-          <i class="fa-solid fa-circle-half-stroke"></i> Automatisch
+          <i class="fa-solid fa-circle-half-stroke"></i> {t('settingsPanel.themeAuto')}
         </button>
         <button class:active={currentTheme==='light'} onclick={() => setTheme('light')}>
-          <i class="fa-solid fa-sun"></i> Hell
+          <i class="fa-solid fa-sun"></i> {t('settingsPanel.themeLight')}
         </button>
         <button class:active={currentTheme==='dark'}  onclick={() => setTheme('dark')}>
-          <i class="fa-solid fa-moon"></i> Dunkel
+          <i class="fa-solid fa-moon"></i> {t('settingsPanel.themeDark')}
         </button>
       </div>
     </div>
 
     <div class="card">
-      <h3>Aktives Modell</h3>
+      <h3>{t('settingsPanel.activeModel')}</h3>
       {#if cfg}
         <p class="active">
           <span class="num">{cfg.active_model.manufacturer} {cfg.active_model.series}-{cfg.active_model.name}</span>
           <span class="meta">
-            max {cfg.active_model.max_g} g · Auflösung {cfg.active_model.resolution_g} g
+            {t('settingsPanel.modelMax')} {cfg.active_model.max_g} g · {t('settingsPanel.modelResolution')} {cfg.active_model.resolution_g} g
           </span>
         </p>
       {:else}
-        <p>Wird geladen …</p>
+        <p>{t('settingsPanel.modelLoading')}</p>
       {/if}
 
       <ModelTolerances />
@@ -151,7 +154,7 @@
                           onclick={() => pickModel(m.id)}
                           disabled={busy}>
                     <span class="m-name">{m.name}</span>
-                    <span class="num m-max">max {m.max_g} g</span>
+                    <span class="num m-max">{t('settingsPanel.modelMax')} {m.max_g} g</span>
                     <span class="num m-res">±{m.resolution_g} g</span>
                   </button>
                 </li>
@@ -163,7 +166,7 @@
     </div>
 
     <div class="card source">
-      <h3>Quelle</h3>
+      <h3>{t('settingsPanel.source')}</h3>
       <div class="theme-row">
         <button class:active={health?.source_mode === 'live'}
                 onclick={() => setSource('live')} disabled={busy}>
@@ -181,19 +184,16 @@
     </div>
 
     <div class="card">
-      <h3>Anschluss</h3>
+      <h3>{t('settingsPanel.connection')}</h3>
       {#if health}
         <ul class="kv">
-          <li><span class="k">Port</span>          <span class="num v">{health.port}</span></li>
-          <li><span class="k">Baudrate</span>      <span class="num v">{health.baudrate}</span></li>
-          <li><span class="k">Reader</span>        <span class="num v">{health.reader_alive ? 'aktiv' : 'aus'}</span></li>
-          <li><span class="k">Backend-Version</span><span class="num v">{health.version}</span></li>
+          <li><span class="k">{t('settingsPanel.port')}</span>          <span class="num v">{health.port}</span></li>
+          <li><span class="k">{t('settingsPanel.baudrate')}</span>      <span class="num v">{health.baudrate}</span></li>
+          <li><span class="k">{t('settingsPanel.reader')}</span>        <span class="num v">{health.reader_alive ? t('settingsPanel.readerActive') : t('settingsPanel.readerInactive')}</span></li>
+          <li><span class="k">{t('settingsPanel.backendVersion')}</span><span class="num v">{health.version}</span></li>
         </ul>
       {/if}
-      <p class="hint">
-        Anschluss und Baudrate sind aktuell server-seitig konfiguriert. Das
-        Backend findet den FTDI-Adapter automatisch.
-      </p>
+      <p class="hint">{t('settingsPanel.connectionInfo')}</p>
     </div>
 
     <div class="card reset-card">
@@ -216,19 +216,19 @@
     </div>
 
     <div class="card license">
-      <h3>Lizenz</h3>
+      <h3>{t('settingsPanel.licenseTitle')}</h3>
       <p class="license-line">{t('contact.license')}</p>
       <ul class="license-list">
-        <li><i class="fa-solid fa-check"></i> Private, nicht-kommerzielle Nutzung</li>
-        <li><i class="fa-solid fa-check"></i> Private Modifikation für eigenen Gebrauch</li>
-        <li><i class="fa-solid fa-check"></i> Pull Requests willkommen</li>
-        <li><i class="fa-solid fa-xmark warn"></i> Keine kommerzielle Nutzung</li>
-        <li><i class="fa-solid fa-xmark warn"></i> Keine Veröffentlichung modifizierter Versionen</li>
+        <li><i class="fa-solid fa-check"></i> {t('settingsPanel.licenseRule_privateUse')}</li>
+        <li><i class="fa-solid fa-check"></i> {t('settingsPanel.licenseRule_privateMod')}</li>
+        <li><i class="fa-solid fa-check"></i> {t('settingsPanel.licenseRule_pullRequests')}</li>
+        <li><i class="fa-solid fa-xmark warn"></i> {t('settingsPanel.licenseRule_noCommercial')}</li>
+        <li><i class="fa-solid fa-xmark warn"></i> {t('settingsPanel.licenseRule_noPublish')}</li>
       </ul>
       <p class="hint">
-        Volltext im Repository: <a href="https://github.com/HalloWelt42/RS232-to-USB-Waagen-REST-API/blob/main/LICENSE"
+        {t('settingsPanel.licenseFulltext')} <a href="https://github.com/HalloWelt42/RS232-to-USB-Waagen-REST-API/blob/main/LICENSE"
                                     target="_blank" rel="noopener">LICENSE</a>
-        · Quellcode: <a href="https://github.com/HalloWelt42/RS232-to-USB-Waagen-REST-API"
+        · {t('settingsPanel.sourceCode')} <a href="https://github.com/HalloWelt42/RS232-to-USB-Waagen-REST-API"
                         target="_blank" rel="noopener">github.com/HalloWelt42</a>
       </p>
     </div>

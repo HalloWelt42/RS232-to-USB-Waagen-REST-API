@@ -44,7 +44,7 @@
     busy = true;
     try {
       info = await api.app.differenzPushCurrent(label);
-      toast.show('Tara hinzugefügt', 'ok');
+      toast.show(t('panels.taraAdded'), 'ok');
       label = '';
     } catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
@@ -52,11 +52,11 @@
 
   async function pushManual(): Promise<void> {
     const v = parseFloat(manualText.replace(',', '.'));
-    if (!Number.isFinite(v)) { toast.show('Ungültige Zahl', 'error'); return; }
+    if (!Number.isFinite(v)) { toast.show(t('panels.invalidNumber'), 'error'); return; }
     busy = true;
     try {
       info = await api.app.differenzPushValue(v, label);
-      toast.show('Tara hinzugefügt', 'ok');
+      toast.show(t('panels.taraAdded'), 'ok');
       label = ''; manualText = '';
     } catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
@@ -69,10 +69,13 @@
     finally { busy = false; }
   }
 
+  /** Stapel komplett leeren — direkt, ohne Bestätigungsdialog.
+   *  Vorgabe vom Anwender: Löschen ist Löschen. Versehentliches Klicken
+   *  würde im Worst Case alle Tara-Schichten entfernen, das Brutto bleibt
+   *  unverändert; ein neuer Tara-Stapel ist mit wenigen Klicks wieder da. */
   async function clear(): Promise<void> {
-    if (!confirm('Alle Tara-Schichten entfernen?')) return;
     busy = true;
-    try { info = await api.app.differenzClear(); toast.show('Stapel geleert', 'ok'); }
+    try { info = await api.app.differenzClear(); toast.show(t('panels.stackCleared'), 'ok'); }
     catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
   }
@@ -94,45 +97,45 @@
 
   <div class="display">
     <div class="row">
-      <span class="lbl">Brutto</span>
+      <span class="lbl">{t('panels.brutto')}</span>
       <span class="num val">{formatGrams(liveGross)}</span>
     </div>
     <div class="row">
-      <span class="lbl">Σ Tara</span>
+      <span class="lbl">{t('panels.sumTara')}</span>
       <span class="num val">{formatGrams(info?.total_tare_g ?? null)}</span>
     </div>
     <div class="row big">
-      <span class="lbl">Netto</span>
+      <span class="lbl">{t('panels.netto')}</span>
       <span class="num val big" class:active={liveNetto !== null}>{formatGrams(liveNetto)}</span>
     </div>
   </div>
 
   <div class="form">
     <label class="full">
-      Label für nächste Tara (optional)
-      <input type="text" placeholder="z.B. Schale, Beutel, Träger ..." bind:value={label} />
+      {t('panels.taraLabelOpt')}
+      <input type="text" placeholder={t('panels.taraLabelPlaceholder')} bind:value={label} />
     </label>
 
     <div class="actions-row">
       <button class="btn-primary" onclick={pushCurrent} disabled={busy || liveGross === null}>
         <i class="fa-solid fa-circle-down"></i>
-        Aktuelles Gewicht als Tara
+        {t('panels.currentAsTara')}
       </button>
     </div>
 
     <div class="manual">
       <label>
-        Oder Tara als Zahl eintragen (Gramm)
+        {t('panels.manualTaraGrams')}
         <div class="row-flex">
-          <input type="text" inputmode="decimal" placeholder="z.B. 23,4" bind:value={manualText} />
-          <button class="btn-primary" onclick={pushManual} disabled={busy}>Hinzufügen</button>
+          <input type="text" inputmode="decimal" placeholder={t('panels.manualPlaceholder')} bind:value={manualText} />
+          <button class="btn-primary" onclick={pushManual} disabled={busy}>{t('panels.addBtn')}</button>
         </div>
       </label>
     </div>
 
     <div class="manual">
       <label>
-        Aus {t('containers.title')} wählen — wird als neue Schicht gestapelt
+        {t('panels.pickFromContainerLib').replace('%s', t('containers.title'))}
         <ContainerPicker selectedId={pickedContainerId} onPick={pickContainer} />
       </label>
     </div>
@@ -140,7 +143,7 @@
 
   <ul class="layers">
     {#if !info || info.layers.length === 0}
-      <li class="empty">Keine Tara-Schicht im Stapel</li>
+      <li class="empty">{t('panels.layerEmpty')}</li>
     {:else}
       {#each info.layers as l (l.id)}
         <li class="layer">
@@ -149,7 +152,7 @@
           <span class="lab">{l.label || '—'}</span>
           <span class="ts num">{formatTime(l.set_at)}</span>
           <button class="x" onclick={() => remove(l.id)} disabled={busy}
-                  title="Schicht entfernen" aria-label="Schicht entfernen">
+                  title={t('panels.removeLayer')} aria-label={t('panels.removeLayer')}>
             <i class="fa-regular fa-circle-xmark"></i>
           </button>
         </li>
@@ -160,7 +163,7 @@
   {#if info && info.layers.length > 0}
     <button class="btn-warn full" onclick={clear} disabled={busy}>
       <i class="fa-solid fa-trash"></i>
-      Stapel leeren
+      {t('panels.clearStack')}
     </button>
   {/if}
 </section>

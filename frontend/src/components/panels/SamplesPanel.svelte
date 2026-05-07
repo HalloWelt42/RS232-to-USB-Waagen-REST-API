@@ -103,12 +103,15 @@
     finally { busy = false; }
   }
 
+  /** Direkt leeren — kein nativer Bestätigungsdialog (Vorgabe Anwender:
+   *  Löschen ist Löschen). Versehentlich gelöschte Sessions sind über
+   *  den Verlauf der Snapshots nicht wiederherstellbar; im Tausch
+   *  arbeitet der Erfassen-Workflow ohne Reibungsverlust. */
   async function clearAll(): Promise<void> {
-    if (!confirm(`Alle Werte der Session „${session}" wirklich löschen?`)) return;
     busy = true;
     try {
       await api.app.samplesClear(session);
-      toast.show('Session geleert', 'ok');
+      toast.show(t('panels.sessionCleared'), 'ok');
       await refresh();
     } catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
@@ -129,17 +132,17 @@
   <div class="form">
     <div class="grid">
       <label>
-        Session
+        {t('panels.session')}
         <input type="text" bind:value={session} onchange={refresh} />
       </label>
       <label>
-        Label (optional)
-        <input type="text" placeholder="z.B. Probe A1" bind:value={label} />
+        {t('panels.sessionLabel')}
+        <input type="text" placeholder={t('panels.sessionLabelPlaceholder')} bind:value={label} />
       </label>
     </div>
     <label class="full">
-      Notiz (optional)
-      <input type="text" placeholder="kurze Bemerkung" bind:value={note} />
+      {t('panels.sessionNote')}
+      <input type="text" placeholder={t('panels.sessionNotePlaceholder')} bind:value={note} />
     </label>
 
     <div class="modes" role="radiogroup" aria-label={t('samples.modeLabel')}>
@@ -179,12 +182,12 @@
 
   {#if stats && stats.count > 0}
     <div class="stats">
-      <div class="s-cell"><span class="key">Anzahl</span><span class="num val">{stats.count}</span></div>
-      <div class="s-cell"><span class="key">Min</span><span class="num val">{formatGrams(stats.min_g)}</span></div>
-      <div class="s-cell"><span class="key">Max</span><span class="num val">{formatGrams(stats.max_g)}</span></div>
-      <div class="s-cell"><span class="key">Mittel</span><span class="num val">{formatGrams(stats.mean_g)}</span></div>
-      <div class="s-cell"><span class="key">σ</span><span class="num val">{formatGrams(stats.stdev_g)}</span></div>
-      <div class="s-cell"><span class="key">Summe</span><span class="num val">{formatGrams(stats.sum_g)}</span></div>
+      <div class="s-cell"><span class="key">{t('panels.statCount')}</span><span class="num val">{stats.count}</span></div>
+      <div class="s-cell"><span class="key">{t('panels.statMin')}</span><span class="num val">{formatGrams(stats.min_g)}</span></div>
+      <div class="s-cell"><span class="key">{t('panels.statMax')}</span><span class="num val">{formatGrams(stats.max_g)}</span></div>
+      <div class="s-cell"><span class="key">{t('panels.statMean')}</span><span class="num val">{formatGrams(stats.mean_g)}</span></div>
+      <div class="s-cell"><span class="key">{t('panels.statSigma')}</span><span class="num val">{formatGrams(stats.stdev_g)}</span></div>
+      <div class="s-cell"><span class="key">{t('panels.statSum')}</span><span class="num val">{formatGrams(stats.sum_g)}</span></div>
     </div>
 
     <div class="bulk">
@@ -205,7 +208,7 @@
 
   <ul class="list">
     {#if samples.length === 0}
-      <li class="empty">Noch keine Werte erfasst</li>
+      <li class="empty">{t('panels.sessionEmpty')}</li>
     {:else}
       {#each samples as s (s.id)}
         <li class="row">
@@ -214,7 +217,7 @@
           <span class="lbl">{s.label || '—'}</span>
           <span class="note">{s.note || ''}</span>
           <button class="x" onclick={() => del(s.id)} disabled={busy}
-                  title="Eintrag löschen" aria-label="Eintrag löschen">
+                  title={t('panels.deleteEntry')} aria-label={t('panels.deleteEntry')}>
             <i class="fa-regular fa-circle-xmark"></i>
           </button>
         </li>
