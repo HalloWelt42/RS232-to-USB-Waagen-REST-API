@@ -128,8 +128,9 @@ const helpDe: HelpTree = {
     id: 'count', title: 'Stückzählung',
     blocks: [
       { heading: 'Funktionsweise', body: 'Mit bekannter Anzahl gleicher Teile kalibrieren. Die App rechnet das Stückgewicht aus und zeigt für jedes neue Gewicht die Anzahl.' },
-      { heading: 'Vorlagen', body: 'Schrauben, Tabletten, Münzen, Briefe — Vorlagen mit typischen Stückgewichten als Schnell-Start.' },
-      { heading: 'Beispiel Werkstatt', body: '<strong>10</strong> Schrauben auflegen, <strong>10</strong> eingeben, kalibrieren. Beim weiteren Auflegen sieht man live die Stückzahl.' },
+      { heading: 'Vorlagen verwalten', body: 'Vorlagen sind frei verwaltbar — anlegen, bearbeiten, löschen. Hover auf einer Vorlage blendet die kleinen Symbole zum Bearbeiten und Löschen ein. Eine Vorlage wendet ein gespeichertes Stückgewicht an, ohne dass man neu kalibrieren muss.' },
+      { heading: 'Wiederkehrendes', body: 'Nach dem Kalibrieren erscheint <strong>„Als Vorlage speichern"</strong> — wer regelmäßig dieselbe Schrauben-Sorte oder Tabletten-Charge zählt, hält das Stückgewicht so dauerhaft fest. Beim nächsten Mal reicht ein Klick auf die Vorlage.' },
+      { heading: 'Beispiel Werkstatt', body: '<strong>10</strong> Schrauben auflegen, <strong>10</strong> eingeben, kalibrieren. Beim weiteren Auflegen sieht man live die Stückzahl. Mit „Als Vorlage speichern" landet die Sorte in der Liste.' },
       { heading: 'Beispiel Apotheke', body: '<strong>50</strong> Tabletten als Referenz. Beim Befüllen einer Bestellung zeigt die App die aktuelle Anzahl.' },
       { heading: 'Genauigkeit', body: 'Mehr Referenzteile = genauer. Bei Teilen unter <strong>1 g</strong> mindestens <strong>{{minPiecesUnder1g}}</strong> Stück, sonst kippt die Anzeige wegen der Auflösung von <strong>{{resolutionG}}</strong>.' },
     ],
@@ -312,8 +313,9 @@ const helpEn: HelpTree = {
     id: 'count', title: 'Piece counting',
     blocks: [
       { heading: 'How it works', body: 'Calibrate with a known number of identical parts. The app computes the piece weight and shows the count for every new weight.' },
-      { heading: 'Templates', body: 'Screws, tablets, coins, letters — templates with typical piece weights as a quick start.' },
-      { heading: 'Workshop example', body: 'Place <strong>10</strong> screws, enter <strong>10</strong>, calibrate. Loading more parts shows the live count.' },
+      { heading: 'Manage templates', body: 'Templates are fully manageable — add, edit, delete. Hover a template to reveal the small edit and delete icons. Picking a template applies a stored piece weight without re-calibrating.' },
+      { heading: 'Recurring items', body: 'After calibration, <strong>„Save as template"</strong> appears — for those who regularly count the same screw type or tablet batch, this stores the piece weight permanently. Next time, one click on the template is enough.' },
+      { heading: 'Workshop example', body: 'Place <strong>10</strong> screws, enter <strong>10</strong>, calibrate. Loading more parts shows the live count. „Save as template" puts the variant into the list.' },
       { heading: 'Pharmacy example', body: '<strong>50</strong> tablets as reference. While filling an order the app shows the current count.' },
       { heading: 'Accuracy', body: 'More reference parts = more accurate. For parts below <strong>1 g</strong>, use at least <strong>{{minPiecesUnder1g}}</strong> pieces — otherwise the display jumps because of the <strong>{{resolutionG}}</strong> resolution.' },
     ],

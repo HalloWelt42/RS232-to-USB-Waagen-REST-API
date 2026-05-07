@@ -173,3 +173,32 @@ export interface ContainerPatch {
   weight_g?: number;
   note?: string;
 }
+
+export interface CountTemplateRecord {
+  id: number;
+  name: string;
+  icon_class: string;
+  piece_weight_g: number;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CountTemplateListResponse {
+  count: number;
+  items: CountTemplateRecord[];
+}
+
+export interface CountTemplateInput {
+  name: string;
+  piece_weight_g: number;
+  icon_class?: string;
+  description?: string;
+}
+
+export interface CountTemplatePatch {
+  name?: string;
+  piece_weight_g?: number;
+  icon_class?: string;
+  description?: string;
+}

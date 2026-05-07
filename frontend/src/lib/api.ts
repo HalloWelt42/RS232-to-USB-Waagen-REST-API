@@ -17,6 +17,10 @@ import type {
   ContainerListResponse,
   ContainerPatch,
   CountState,
+  CountTemplateRecord,
+  CountTemplateInput,
+  CountTemplateListResponse,
+  CountTemplatePatch,
   DifferenzState,
   HealthInfo,
   HistoryResponse,
@@ -200,6 +204,23 @@ export class AppApi extends HttpBase {
   }
   containersClear(): Promise<{ ok: boolean; deleted: number }> {
     return this.del('/app/containers');
+  }
+
+  // Stückzähl-Vorlagen
+  countTemplatesList(): Promise<CountTemplateListResponse> {
+    return this.request('/app/count/templates');
+  }
+  countTemplatesAdd(payload: CountTemplateInput): Promise<CountTemplateRecord> {
+    return this.post('/app/count/templates', payload);
+  }
+  countTemplatesUpdate(id: number, patch: CountTemplatePatch): Promise<CountTemplateRecord> {
+    return this.put(`/app/count/templates/${id}`, patch);
+  }
+  countTemplatesDelete(id: number): Promise<{ ok: boolean; id: number }> {
+    return this.del(`/app/count/templates/${id}`);
+  }
+  countTemplatesClear(): Promise<{ ok: boolean; deleted: number }> {
+    return this.del('/app/count/templates');
   }
 }
 
