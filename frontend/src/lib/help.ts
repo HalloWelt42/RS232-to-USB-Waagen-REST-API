@@ -20,7 +20,7 @@
 
 export type HelpId =
   | 'overview' | 'glossary' | 'wiegen' | 'netto' | 'count' | 'tolerance'
-  | 'samples' | 'differenz' | 'sparkline' | 'history'
+  | 'samples' | 'differenz' | 'sparkline' | 'history' | 'containers'
   | 'tare' | 'unit' | 'light' | 'copy' | 'settings' | 'donate'
   | 'architecture' | 'disclaimer';
 
@@ -120,6 +120,7 @@ const helpDe: HelpTree = {
       { heading: 'Variante 2: Tara als Zahl', body: 'Behältergewicht direkt eintragen, z.B. <strong>23,4 g</strong>. „Setzen" speichert es.' },
       { heading: 'Beispiel Bäckerei', body: 'Schüssel auflegen, Tara — Mehl bis <strong>500 g</strong>, Wasser bis <strong>250 g</strong>. Alles im selben Gefäß abgewogen, ohne zu rechnen.' },
       { heading: 'Mehrfach-Tara?', body: 'Wenn Sie Schichten stapeln möchten (mehrere Behälter übereinander), nutzen Sie [[tool:differenz|Differenz-Wiegen]].' },
+      { heading: 'Behälter-Bibliothek', body: 'Häufig verwendete Gefäße einmal anlegen und beim Wiegen aus einer Liste auswählen. Siehe [[help:containers|Behälter-Bibliothek]].' },
     ],
   },
 
@@ -162,6 +163,7 @@ const helpDe: HelpTree = {
       { heading: 'Beispiel', body: 'Behälter auflegen, „als Tara" — <strong>53 g</strong>. Trägermedium auflegen, „als Tara" — weitere <strong>20 g</strong>. Der eigentliche Inhalt erscheint als Netto, ohne dass die Behälter mitgewogen werden.' },
       { heading: 'Schichten verwalten', body: 'Jede Schicht in einer Liste — einzelne Tarae lassen sich entfernen, ohne den Rest zu verlieren.' },
       { heading: 'Einfache Tara?', body: 'Wenn Sie nur eine Schicht brauchen, ist [[tool:netto|Behälter wiegen]] schneller.' },
+      { heading: 'Behälter-Bibliothek', body: 'Häufig benutzte Gefäße einmal anlegen — siehe [[help:containers|Behälter-Bibliothek]]. Auswahl stapelt das Gewicht direkt als neue Schicht.' },
     ],
   },
 
@@ -247,6 +249,16 @@ const helpDe: HelpTree = {
       { heading: 'Nicht eichfähig', body: 'Die Software ist <strong>kein eichfähiges Mess-System</strong>. Für Verkauf nach Gewicht, amtliche Mengenangaben, medizinische Dosierungen mit gesetzlichen Toleranzen, Zoll- oder Steuer­relevanz ist sie <strong>nicht zulässig</strong>.' },
       { heading: 'Keine Haftung', body: 'Soweit gesetzlich zulässig, ist jede Haftung für mittelbare Schäden, entgangenen Gewinn, Datenverlust oder Folgeschäden ausgeschlossen. Haftung bei Verletzung von Leben/Körper/Gesundheit oder bei Vorsatz/grober Fahrlässigkeit bleibt unberührt.' },
       { heading: 'Verantwortung beim Anwender', body: 'Die Verantwortung für richtige Anwendung, regelmäßige Kontrolle mit geeichten Prüfgewichten und Plausibilität der Werte liegt allein beim Anwender. Volltext: <code>DISCLAIMER.md</code> im Repo.' },
+    ],
+  },
+
+  containers: {
+    id: 'containers', title: 'Behälter-Bibliothek',
+    blocks: [
+      { heading: 'Wofür?', body: 'Häufig benutzte Gefäße einmal anlegen — Name plus Gewicht. Bei [[tool:netto|Behälter wiegen]] oder [[tool:differenz|Differenz-Wiegen]] wählt man sie aus einer Liste, statt jedes Mal den Tara-Wert neu einzutragen.' },
+      { heading: 'Anlegen', body: 'Gefäß auf die Waage stellen, „Aktuelles Gewicht übernehmen" — der Wert landet im Eingabefeld. Name vergeben (z.B. „Erlenmeyer 100 ml"), optional eine Notiz, „Anlegen". Default-Gewicht ist <strong>0 g</strong>.' },
+      { heading: 'Bearbeiten und Löschen', body: 'Klick auf das Stift-Symbol bei einem Eintrag öffnet das Formular mit den vorhandenen Werten. Das Mülleimer-Symbol löscht den Behälter nach einer Sicherheitsabfrage.' },
+      { heading: 'Beispiel Labor', body: 'Fünf Standardgefäße — Becher S, M, L, Kolben 100 ml, Kolben 250 ml. Einmal angelegt, beim nächsten Wiegen aus dem Drop-down wählen. Die App zieht das Behältergewicht automatisch ab.' },
     ],
   },
 };
@@ -407,6 +419,15 @@ const helpEn: HelpTree = {
       { heading: 'Not legal-for-trade', body: 'The software is <strong>not a legal-for-trade measurement system</strong>. For sale by weight, official quantity declarations, medical dosing with statutory tolerances, customs or tax-relevant data it <strong>may not be used</strong>.' },
       { heading: 'No liability', body: 'To the extent permitted by law, any liability for indirect damages, lost profits, loss of data or consequential damages is excluded. Liability for injury to life, body or health, or for gross negligence or wilful misconduct, remains unaffected.' },
       { heading: 'User responsibility', body: 'The user alone is responsible for proper use, regular verification with calibrated reference weights and plausibility-checking the values. Full text: <code>DISCLAIMER.md</code> in the repo.' },
+    ],
+  },
+  containers: {
+    id: 'containers', title: 'Container library',
+    blocks: [
+      { heading: 'What is this?', body: 'Pre-define frequently used vessels — name plus weight. In [[tool:netto|Tare / Net]] or [[tool:differenz|Differential weighing]] you pick them from a list instead of entering the tare value every time.' },
+      { heading: 'Add', body: 'Place the vessel on the scale, hit „take current weight" — the value lands in the form. Give it a name (e.g. „Erlenmeyer 100 ml"), an optional note, „Add". Default weight is <strong>0 g</strong>.' },
+      { heading: 'Edit and delete', body: 'Click the pen icon on an entry to open the form with current values. The trash icon deletes after a confirmation prompt.' },
+      { heading: 'Lab example', body: 'Five standard vessels — beaker S/M/L, flask 100 ml, flask 250 ml. Defined once, picked from the drop-down for every following weighing. The app subtracts the container weight automatically.' },
     ],
   },
 };

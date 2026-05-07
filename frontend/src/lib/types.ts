@@ -147,3 +147,29 @@ export interface MesslogResponse {
   count: number;
   items: MesslogEntry[];
 }
+
+export interface Container {
+  id: number;
+  name: string;
+  weight_g: number;
+  note: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContainerListResponse {
+  count: number;
+  items: Container[];
+}
+
+export interface ContainerInput {
+  name: string;
+  weight_g: number;
+  note?: string;
+}
+
+export interface ContainerPatch {
+  name?: string;
+  weight_g?: number;
+  note?: string;
+}

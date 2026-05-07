@@ -10,11 +10,28 @@
   import { formatGrams, formatTime } from '../../lib/format';
   import { t } from '../../lib/i18n';
   import HelpButton from '../HelpButton.svelte';
-  import type { NettoState } from '../../lib/types';
+  import ContainerPicker from '../ContainerPicker.svelte';
+  import type { NettoState, Container } from '../../lib/types';
 
   let info = $state<NettoState | null>(null);
   let busy = $state(false);
   let tareText = $state('');
+  let pickedContainerId = $state<number | null>(null);
+
+  async function pickContainer(c: Container | null): Promise<void> {
+    pickedContainerId = c?.id ?? null;
+    busy = true;
+    try {
+      // Default 0 g — bei „Kein Behälter" wird die Tara entfernt.
+      info = c === null
+        ? await api.app.nettoTareClear()
+        : await api.app.nettoTareValue(c.weight_g);
+    } catch (e) {
+      toast.show((e as Error).message, 'error');
+    } finally {
+      busy = false;
+    }
+  }
 
   async function refresh(): Promise<void> {
     try { info = await api.app.netto(); }
@@ -101,6 +118,13 @@
                  bind:value={tareText} />
           <button class="btn-primary" onclick={tareValue} disabled={busy}>Setzen</button>
         </div>
+      </label>
+    </div>
+
+    <div class="manual">
+      <label>
+        {t('containers.title')}
+        <ContainerPicker selectedId={pickedContainerId} onPick={pickContainer} />
       </label>
     </div>
   </div>

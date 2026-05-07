@@ -12,6 +12,10 @@
 import type {
   ApiInfo,
   CommandResult,
+  Container,
+  ContainerInput,
+  ContainerListResponse,
+  ContainerPatch,
   CountState,
   DifferenzState,
   HealthInfo,
@@ -179,6 +183,23 @@ export class AppApi extends HttpBase {
   }
   messlogClear(): Promise<{ ok: boolean; deleted: number }> {
     return this.del('/app/messlog');
+  }
+
+  // Behälter-Bibliothek
+  containersList(): Promise<ContainerListResponse> {
+    return this.request('/app/containers');
+  }
+  containersAdd(payload: ContainerInput): Promise<Container> {
+    return this.post('/app/containers', payload);
+  }
+  containersUpdate(id: number, patch: ContainerPatch): Promise<Container> {
+    return this.put(`/app/containers/${id}`, patch);
+  }
+  containersDelete(id: number): Promise<{ ok: boolean; id: number }> {
+    return this.del(`/app/containers/${id}`);
+  }
+  containersClear(): Promise<{ ok: boolean; deleted: number }> {
+    return this.del('/app/containers');
   }
 }
 

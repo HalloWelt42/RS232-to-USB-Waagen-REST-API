@@ -11,12 +11,29 @@
   import { formatGrams, formatTime } from '../../lib/format';
   import { t } from '../../lib/i18n';
   import HelpButton from '../HelpButton.svelte';
-  import type { DifferenzState } from '../../lib/types';
+  import ContainerPicker from '../ContainerPicker.svelte';
+  import type { DifferenzState, Container } from '../../lib/types';
 
   let info = $state<DifferenzState | null>(null);
   let busy = $state(false);
   let label = $state('');
   let manualText = $state('');
+  let pickedContainerId = $state<number | null>(null);
+
+  async function pickContainer(c: Container | null): Promise<void> {
+    pickedContainerId = c?.id ?? null;
+    if (c === null) return;
+    busy = true;
+    try {
+      info = await api.app.differenzPushValue(c.weight_g, c.name);
+      toast.show(t('toast.containerSelected'), 'ok');
+    } catch (e) {
+      toast.show((e as Error).message, 'error');
+    } finally {
+      busy = false;
+      pickedContainerId = null;       // direkt nach dem Stapeln zurücksetzen
+    }
+  }
 
   async function refresh(): Promise<void> {
     try { info = await api.app.differenz(); }
@@ -110,6 +127,13 @@
           <input type="text" inputmode="decimal" placeholder="z.B. 23,4" bind:value={manualText} />
           <button class="btn-primary" onclick={pushManual} disabled={busy}>Hinzufügen</button>
         </div>
+      </label>
+    </div>
+
+    <div class="manual">
+      <label>
+        Aus {t('containers.title')} wählen — wird als neue Schicht gestapelt
+        <ContainerPicker selectedId={pickedContainerId} onPick={pickContainer} />
       </label>
     </div>
   </div>
