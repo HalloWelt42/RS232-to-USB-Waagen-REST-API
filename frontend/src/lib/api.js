@@ -62,6 +62,30 @@ export const api = {
     const q = session ? `?session=${encodeURIComponent(session)}` : '';
     return `/api/samples/export.csv${q}`;
   },
+  // QC-Toleranz
+  tolerance:    () => request('/tolerance'),
+  toleranceSet: (target_g, tolerance_minus_g, tolerance_plus_g) =>
+    request('/tolerance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target_g, tolerance_minus_g, tolerance_plus_g }),
+    }),
+  toleranceClear: () => request('/tolerance', { method: 'DELETE' }),
+  // Netto / Software-Tara
+  netto:        () => request('/netto'),
+  nettoTareCurrent: () =>
+    request('/netto/tare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    }),
+  nettoTareValue: (tare_g) =>
+    request('/netto/tare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tare_g }),
+    }),
+  nettoTareClear: () => request('/netto/tare', { method: 'DELETE' }),
 };
 
 /**

@@ -7,6 +7,9 @@
   import CountPanel from './components/CountPanel.svelte';
   import ActionButtons from './components/ActionButtons.svelte';
   import SamplesPanel from './components/SamplesPanel.svelte';
+  import TolerancePanel from './components/TolerancePanel.svelte';
+  import NettoPanel from './components/NettoPanel.svelte';
+  import Sparkline from './components/Sparkline.svelte';
 
   let reading       = $state(null);
   let history       = $state([]);
@@ -95,6 +98,8 @@
     <div class="primary">
       <WeightDisplay {reading} {connection} />
 
+      <Sparkline {history} windowSeconds={60} />
+
       <ActionButtons />
 
       <div class="actions">
@@ -112,6 +117,8 @@
     </div>
 
     <aside>
+      <TolerancePanel {reading} />
+      <NettoPanel {reading} />
       <CountPanel {reading} />
       <SamplesPanel {reading} />
       <HealthPanel {health} />
