@@ -1,0 +1,20 @@
+/*
+ * Lokale Schriften via @fontsource. Keine externen CDNs.
+ * Barlow für UI-Text in fünf Gewichten, Chakra Petch nur Bold (700) für
+ * Zahlen.
+ */
+
+@import '@fontsource/barlow/300.css';
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow/700.css';
+
+@import '@fontsource/chakra-petch/500.css';
+@import '@fontsource/chakra-petch/600.css';
+@import '@fontsource/chakra-petch/700.css';
+
+@import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
+@import '@fortawesome/fontawesome-free/css/solid.min.css';
+@import '@fortawesome/fontawesome-free/css/regular.min.css';
+@import '@fortawesome/fontawesome-free/css/brands.min.css';

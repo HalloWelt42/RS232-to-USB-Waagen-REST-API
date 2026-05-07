@@ -1,11 +1,10 @@
 import { mount } from 'svelte';
 import App from './App.svelte';
+import './styles/fonts.css';
 import './styles/global.css';
 
 const target = document.getElementById('app');
-if (!target) {
-  throw new Error('app root not found');
-}
+if (!target) throw new Error('app root not found');
 
 const app = mount(App, { target });
 export default app;
