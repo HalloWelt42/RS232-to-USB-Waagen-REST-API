@@ -1,6 +1,8 @@
 <script lang="ts">
   import { api } from '../lib/api';
   import { formatGrams } from '../lib/format';
+  import { copyText } from '../lib/clipboard';
+  import { toast } from '../lib/toast.svelte';
   import type { Reading, Status, ToleranceState } from '../lib/types';
   import PanelHeader from './PanelHeader.svelte';
 
@@ -51,6 +53,12 @@
     try { cfg = await api.toleranceClear(); } finally { busy = false; }
   }
 
+  function takeCurrentAsTarget(): void {
+    if (!reading) return;
+    target = Math.round(reading.weight_g * 100) / 100;
+    toast.show(`Soll auf ${target.toFixed(2)} g gesetzt`, 'ok');
+  }
+
   let liveStatus = $derived.by<Status>(() => {
     if (!cfg?.active || !reading || cfg.min_g === null || cfg.max_g === null) {
       return cfg?.status ?? 'idle';
@@ -64,6 +72,12 @@
     if (!cfg?.active || !reading || cfg.target_g === null) return null;
     return reading.weight_g - cfg.target_g;
   });
+
+  async function copyDeviation(): Promise<void> {
+    if (liveDeviation === null) return;
+    const ok = await copyText(liveDeviation.toFixed(2));
+    toast.show(ok ? 'Abweichung kopiert' : 'Kopieren nicht möglich', ok ? 'ok' : 'error');
+  }
 </script>
 
 <section class="panel">
@@ -76,17 +90,21 @@
       <label><span>Tol- [g]</span><input type="number" step="0.01" min="0" bind:value={tolMin} /></label>
       <label><span>Tol+ [g]</span><input type="number" step="0.01" min="0" bind:value={tolPlus} /></label>
     </div>
+    <button class="take" onclick={takeCurrentAsTarget} disabled={!reading} title="Aktuellen Wägewert als Sollwert übernehmen">
+      Aktuellen Wert als Soll übernehmen
+    </button>
     <button class="primary" onclick={setTolerance} disabled={busy}>
       {busy ? 'Speichere' : 'Aktivieren'}
     </button>
   {:else}
-    <div class="lamp" data-status={liveStatus}>
+    <button class="lamp" data-status={liveStatus} onclick={copyDeviation}
+            title="Klicken kopiert die Abweichung">
       <span class="num">{
         liveStatus === 'ok'   ? 'IN ORDNUNG'
       : liveStatus === 'low'  ? 'ZU LEICHT'
       : liveStatus === 'high' ? 'ZU SCHWER'
       : '...'}</span>
-    </div>
+    </button>
     <dl>
       <div><dt>Soll</dt><dd class="num">{formatGrams(cfg.target_g)}</dd></div>
       <div><dt>Bereich</dt><dd class="num">{formatGrams(cfg.min_g)} … {formatGrams(cfg.max_g)}</dd></div>
@@ -100,6 +118,9 @@
       <label><span>Tol- [g]</span><input type="number" step="0.01" min="0" bind:value={tolMin} /></label>
       <label><span>Tol+ [g]</span><input type="number" step="0.01" min="0" bind:value={tolPlus} /></label>
     </div>
+    <button class="take" onclick={takeCurrentAsTarget} disabled={!reading}>
+      Aktuellen Wert als Soll übernehmen
+    </button>
     <div class="row">
       <button onclick={setTolerance} disabled={busy}>Übernehmen</button>
       <button class="warn-btn" onclick={clearTolerance} disabled={busy}>Deaktivieren</button>
@@ -123,12 +144,20 @@
     font-size: var(--fs-xs);
     color: var(--fg-dim);
   }
-  input[type="number"] { width: 100%; }
+  input[type="number"] { width: 100%; min-height: 44px; }
   .row { display: flex; gap: var(--sp-2); }
-  .row button { flex: 1; }
+  .row button { flex: 1; min-height: 44px; }
+  button { min-height: 40px; }
   button.primary { background: var(--bg-card-2); border-color: var(--accent); color: var(--accent); }
   button.warn-btn { color: var(--orange); }
-  .lamp {
+  button.take {
+    background: transparent;
+    color: var(--accent);
+    font-size: var(--fs-xs);
+    padding: 6px 10px;
+    align-self: flex-start;
+  }
+  button.lamp {
     border-radius: var(--radius);
     padding: var(--sp-5) var(--sp-3);
     text-align: center;
@@ -138,11 +167,13 @@
     letter-spacing: 0.1em;
     border: 2px solid var(--border);
     background: var(--bg);
+    cursor: copy;
+    width: 100%;
   }
-  .lamp[data-status="ok"]   { border-color: var(--green);  background: color-mix(in srgb, var(--green)  18%, transparent); color: var(--green); }
-  .lamp[data-status="low"]  { border-color: var(--orange); background: color-mix(in srgb, var(--orange) 18%, transparent); color: var(--orange); }
-  .lamp[data-status="high"] { border-color: var(--red);    background: color-mix(in srgb, var(--red)    18%, transparent); color: var(--red); }
-  .lamp[data-status="idle"] { color: var(--fg-dim); }
+  button.lamp[data-status="ok"]   { border-color: var(--green);  background: color-mix(in srgb, var(--green)  18%, transparent); color: var(--green); }
+  button.lamp[data-status="low"]  { border-color: var(--orange); background: color-mix(in srgb, var(--orange) 18%, transparent); color: var(--orange); }
+  button.lamp[data-status="high"] { border-color: var(--red);    background: color-mix(in srgb, var(--red)    18%, transparent); color: var(--red); }
+  button.lamp[data-status="idle"] { color: var(--fg-dim); }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--sp-1) var(--sp-3); margin: 0; font-size: var(--fs-sm); }
   dl div { display: contents; }
   dt { color: var(--fg-dim); }

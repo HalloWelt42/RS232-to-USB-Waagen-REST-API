@@ -1,5 +1,7 @@
 <script lang="ts">
   import { formatGrams, formatTime } from '../lib/format';
+  import { copyText } from '../lib/clipboard';
+  import { toast } from '../lib/toast.svelte';
   import type { ConnectionState, Reading } from '../lib/types';
 
   interface Props {
@@ -20,6 +22,25 @@
     if (!reading) return 'idle';
     return reading.stable ? 'stable' : 'unstable';
   });
+
+  async function copyValue(): Promise<void> {
+    if (!reading) return;
+    const text = reading.weight_g.toFixed(1);
+    const ok = await copyText(text);
+    toast.show(ok ? `${text} kopiert` : 'Kopieren nicht möglich', ok ? 'ok' : 'error');
+  }
+
+  async function copyJson(): Promise<void> {
+    if (!reading) return;
+    const text = JSON.stringify({
+      weight_g: reading.weight_g,
+      unit: reading.unit,
+      stable: reading.stable,
+      timestamp: reading.timestamp,
+    });
+    const ok = await copyText(text);
+    toast.show(ok ? 'JSON kopiert' : 'Kopieren nicht möglich', ok ? 'ok' : 'error');
+  }
 </script>
 
 <section class="display {stateClass}">
@@ -28,15 +49,25 @@
     <span class="conn-label">{connectionLabel[connection]}</span>
   </div>
 
-  <div class="weight num" class:stable={reading?.stable}>
+  <button
+    class="weight num"
+    class:stable={reading?.stable}
+    onclick={copyValue}
+    disabled={!reading}
+    title={reading ? 'Wert kopieren' : 'Wartet auf Reading'}
+    aria-label="Wert kopieren"
+  >
     {reading ? formatGrams(reading.weight_g) : '—'}
-  </div>
+  </button>
 
   <div class="status-line">
     {#if reading}
       <span class="badge {reading.stable ? 'ok' : 'warn'}">
         {reading.stable ? 'STABIL' : 'INSTABIL'}
       </span>
+      <button class="copy-json" onclick={copyJson} title="Als JSON kopieren">
+        JSON
+      </button>
       <span class="ts num">{formatTime(reading.timestamp)}</span>
     {:else}
       <span class="ts">Warte auf erstes Reading</span>
@@ -78,22 +109,32 @@
   .dot.connecting { background: var(--orange); animation: pulse 1.2s infinite; }
   .dot.closed, .dot.error { background: var(--red); }
 
-  .weight {
-    /* goldener Schnitt: knapp unter --fs-xxxl */
+  /* Wert ist ein Knopf — Klick kopiert in die Zwischenablage */
+  button.weight {
+    background: transparent;
+    border: none;
+    padding: var(--sp-1) var(--sp-2);
+    border-radius: var(--radius-sm);
+    cursor: copy;
     font-size: clamp(2.6rem, 7vw, 4.2rem);
     font-weight: 600;
     color: var(--fg-dim);
     line-height: 1.05;
-    transition: color 0.25s;
+    transition: color 0.25s, background 0.15s;
     letter-spacing: -0.02em;
   }
-  .weight.stable { color: var(--green); }
+  button.weight.stable { color: var(--green); }
+  button.weight:hover:not(:disabled) {
+    background: var(--bg-card-2);
+  }
+  button.weight:disabled { cursor: default; }
 
   .status-line {
     width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--sp-2);
     font-size: var(--fs-xs);
   }
   .badge {
@@ -107,6 +148,17 @@
   .badge.ok   { background: color-mix(in srgb, var(--green)  20%, transparent); color: var(--green); }
   .badge.warn { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
 
+  button.copy-json {
+    font-size: 10px;
+    padding: 3px 8px;
+    color: var(--fg-mute);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-family: var(--mono);
+  }
+  button.copy-json:hover { color: var(--accent); border-color: var(--accent); }
+
   .ts {
     color: var(--fg-dim);
     font-size: var(--fs-xs);
@@ -115,5 +167,13 @@
   @keyframes pulse {
     0%, 100% { opacity: 1; }
     50%      { opacity: 0.4; }
+  }
+
+  /* Mobile: noch größerer Wägewert */
+  @media (max-width: 800px) {
+    button.weight {
+      font-size: clamp(3.2rem, 14vw, 5rem);
+    }
+    .display { padding: var(--sp-2) var(--sp-3); }
   }
 </style>

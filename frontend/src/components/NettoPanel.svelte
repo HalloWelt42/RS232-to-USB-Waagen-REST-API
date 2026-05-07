@@ -44,6 +44,11 @@
     finally { busy = false; }
   }
 
+  function takeCurrentToInput(): void {
+    if (!reading) return;
+    manualTare = reading.weight_g.toFixed(2);
+  }
+
   async function clearTare(): Promise<void> {
     busy = true;
     try { cfg = await api.nettoTareClear(); }
@@ -70,6 +75,7 @@
     </button>
     <div class="manual-row">
       <input type="number" step="0.01" placeholder="Tara [g]" bind:value={manualTare} disabled={busy} />
+      <button onclick={takeCurrentToInput} disabled={!reading} title="Aktuellen Wägewert ins Feld übernehmen">↑</button>
       <button onclick={tareManual} disabled={busy || manualTare === ''}>Setzen</button>
     </div>
     {#if reading}
@@ -99,7 +105,10 @@
   button.primary { background: var(--bg-card-2); border-color: var(--accent); color: var(--accent); }
   button.warn-btn { color: var(--orange); }
   .manual-row { display: flex; gap: var(--sp-2); }
-  .manual-row input { flex: 1; }
+  .manual-row input { flex: 1; min-height: 44px; }
+  .manual-row button { min-height: 44px; min-width: 44px; }
+  button.primary { min-height: 44px; }
+  .row button { min-height: 44px; }
   .row { display: flex; gap: var(--sp-2); }
   .row button { flex: 1; }
   .current { margin: 0; color: var(--fg-dim); font-size: var(--fs-sm); }
