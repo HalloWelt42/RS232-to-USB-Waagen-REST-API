@@ -55,6 +55,37 @@ class ScaleModel:
     note: str = ""
     """Optionaler Zusatzhinweis (z.B. Stream-Mode, Besonderheiten)."""
 
+    # ----- Genauigkeits-Toleranzen aus dem Datenblatt --------------------
+    # Diese Werte stammen aus den G&G-Datenblättern und sind hilfreich,
+    # damit die App den Anwender warnen kann, bevor er Mess-Reihen
+    # außerhalb des Spezifikationsbereichs aufnimmt.
+
+    min_load_g: float = 0.0
+    """Empfohlene Mindest-Auflage. Werte unter diesem Schwellwert sind
+    laut Hersteller nicht spezifiziert; viele Waagen zeigen unterhalb
+    dieser Last keine reproduzierbaren Werte. 0 bedeutet „nicht
+    angegeben — keine Warnung erzeugen"."""
+
+    linearity_g: float = 0.0
+    """Maximale Linearitäts-Abweichung über den ganzen Wägebereich
+    (typisch ±n×Ablesbarkeit). 0 = nicht angegeben."""
+
+    repeatability_g: float = 0.0
+    """Standardabweichung der Wiederholmessungen (typisch =
+    Ablesbarkeit). 0 = nicht angegeben."""
+
+    stabilization_s: float = 0.0
+    """Typische Beruhigungszeit nach Auflage in Sekunden. 0 = nicht
+    angegeben."""
+
+    warmup_min: int = 0
+    """Empfohlene Aufwärmzeit nach dem Einschalten in Minuten,
+    bevor genau gewogen wird. 0 = nicht angegeben."""
+
+    operating_temp_c: tuple[float, float] | None = None
+    """Erlaubter Betriebstemperatur-Bereich in °C, z.B. (10, 30).
+    None = nicht angegeben."""
+
 
 # Bekannte Modelle, von feiner zu gröber, sortiert nach Baureihe.
 KNOWN_MODELS: tuple[ScaleModel, ...] = (
@@ -68,6 +99,12 @@ KNOWN_MODELS: tuple[ScaleModel, ...] = (
         max_g=220.0,
         resolution_g=0.001,
         note="Analysewaage; Ablesbarkeit je nach konkretem Modell 0,01-0,001 g",
+        min_load_g=0.02,             # 20 mg laut Datenblatt
+        linearity_g=0.002,
+        repeatability_g=0.001,
+        stabilization_s=4.0,
+        warmup_min=60,
+        operating_temp_c=(10.0, 30.0),
     ),
     ScaleModel(
         id="gg.jjbc.224",
@@ -78,6 +115,12 @@ KNOWN_MODELS: tuple[ScaleModel, ...] = (
         max_g=220.0,
         resolution_g=0.0001,
         note="Hochpräzise Analysewaage mit Kraftkompensation",
+        min_load_g=0.01,             # 10 mg
+        linearity_g=0.0002,
+        repeatability_g=0.0001,
+        stabilization_s=5.0,
+        warmup_min=60,
+        operating_temp_c=(15.0, 25.0),
     ),
     ScaleModel(
         id="gg.jjbf.220",
@@ -135,6 +178,12 @@ KNOWN_MODELS: tuple[ScaleModel, ...] = (
         max_g=6000.0,
         resolution_g=0.1,
         note="Standard-Tischwaage, weit verbreitet",
+        min_load_g=5.0,              # 50× Ablesbarkeit, Datenblatt G&G PLC
+        linearity_g=0.2,
+        repeatability_g=0.1,
+        stabilization_s=3.0,
+        warmup_min=30,
+        operating_temp_c=(10.0, 30.0),
     ),
     ScaleModel(
         id="gg.plc.30000",

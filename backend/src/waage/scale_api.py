@@ -103,6 +103,13 @@ class ScaleModelOut(BaseModel):
     default_baudrate: int
     rs232: bool
     note: str
+    # Genauigkeits-Toleranzen aus dem Datenblatt (0 / None = nicht angegeben)
+    min_load_g: float = 0.0
+    linearity_g: float = 0.0
+    repeatability_g: float = 0.0
+    stabilization_s: float = 0.0
+    warmup_min: int = 0
+    operating_temp_c: Optional[tuple[float, float]] = None
 
     @classmethod
     def from_model(cls, m: ScaleModel) -> "ScaleModelOut":
