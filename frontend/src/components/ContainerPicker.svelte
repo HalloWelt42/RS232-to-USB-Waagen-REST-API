@@ -80,9 +80,10 @@
     }
   }
 
+  /** Behälter direkt löschen — kein nativer Bestätigungsdialog
+   *  (Vorgabe Anwender: Löschen ist Löschen). Behälter lassen sich
+   *  über „Anlegen" mit zwei, drei Eingaben sofort wieder erfassen. */
   async function remove(c: Container): Promise<void> {
-    const msg = t('containers.deleteConfirm').replace('%s', c.name);
-    if (!confirm(msg)) return;
     try {
       await containerStore.remove(c.id);
       if (selectedId === c.id) onPick(null);

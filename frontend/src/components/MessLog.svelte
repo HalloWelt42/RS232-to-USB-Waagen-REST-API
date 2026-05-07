@@ -26,8 +26,10 @@
     }
   }
 
+  /** Komplettes Messprotokoll direkt leeren — kein nativer Bestätigungs-
+   *  dialog (Vorgabe Anwender: Löschen ist Löschen). Das Protokoll baut
+   *  sich aus dem Live-Stream binnen Sekunden neu auf. */
   async function clearAll(): Promise<void> {
-    if (!confirm(t('messlog.clearConfirm'))) return;
     try {
       await api.app.messlogClear();
       toast.show(t('messlog.cleared'), 'ok');

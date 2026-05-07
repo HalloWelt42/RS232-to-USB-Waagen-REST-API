@@ -139,9 +139,10 @@
     }
   }
 
+  /** Vorlage direkt löschen — kein nativer Bestätigungsdialog (Vorgabe
+   *  Anwender: Löschen ist Löschen). Vorlagen sind in Sekunden über
+   *  „Neue Vorlage" wieder neu anlegbar. */
   async function removeTemplate(tpl: CountTemplateRecord): Promise<void> {
-    const msg = t('countTemplates.deleteConfirm').replace('%s', tpl.name);
-    if (!confirm(msg)) return;
     try {
       await countTemplateStore.remove(tpl.id);
       toast.show(t('toast.templateDeleted'), 'ok');
