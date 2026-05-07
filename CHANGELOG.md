@@ -9,8 +9,28 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.4.3] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Geändert
+- **Display-Grün auf reines #00ff00** (Hellmodus #008f1a) plus
+  subtiler text-shadow für leichten Glow — die Wäge-Anzeige wirkt
+  jetzt wie eine echte 7-Segment-LED-Anzeige.
+- **Topline der LiveWaage in zwei getrennte Status-LEDs aufgeteilt:**
+  „BACKEND" (REST/WS) und „WAAGE" (Hardware-Reader). Die WAAGE-LED
+  ist im Simulator-Modus **niemals grün** — stattdessen orange mit
+  Label „SIMULATION", auch wenn Werte fließen. So ist auf einen Blick
+  klar, ob gerade echte Hardware gemessen wird oder nur simuliert.
+- **Minus-Slot im Display ist immer reserviert** — bei positivem Wert
+  ghost (10 % Opazität), bei negativem Wert opak. Beim Wechsel
+  zwischen + und − springt die Stellen-Position nicht mehr.
+
+### Neu
+- `lib/healthStore.svelte.ts` — zentraler Reactive-Store für den
+  Backend-Health-Status, mit getrennten Aussagen `backendOk` und
+  `scaleOk` (letzteres immer false bei Simulator-Modus).
+- i18n `live.*` Schlüssel in DE und EN (BACKEND, WAAGE, SIMULATION,
+  WAAGE AUS) — kompakte Großbuchstaben für die Status-Zeile.
+
+### Tests
+- 54 Frontend-Tests (Minus-Slot-Logik) und 157 Backend-Tests grün.
 
 ## [0.4.2] — 2026-05-07
 
