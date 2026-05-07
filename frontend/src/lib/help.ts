@@ -74,7 +74,7 @@ const helpDe: HelpTree = {
         body:
           'In jedem Bereich gibt es einen <strong>blauen Info-Knopf</strong>. ' +
           'Das Hilfe-Fenster lässt sich frei verschieben und in der Größe ändern. ' +
-          'Mehrere Fenster können parallel offen sein.',
+          'Beim Öffnen einer anderen Hilfe wird das aktuelle Fenster ersetzt.',
       },
       {
         heading: 'Wichtig',
@@ -285,7 +285,7 @@ const helpEn: HelpTree = {
       { heading: 'What is this?', body: 'A live display for your precision scale with tools for [[tool:tolerance|quality control]], [[tool:count|piece counting]], [[tool:netto|tare-and-net weighing]] and a measurement log. The scale is read out via RS232 and its values appear instantly in the display.' },
       { heading: 'Active model', body: 'Currently <strong>{{modelName}}</strong> with a maximum of <strong>{{maxG}}</strong> and a resolution of <strong>{{resolutionG}}</strong>. To choose a different scale, see [[tool:settings|Settings]].' },
       { heading: 'Layout', body: 'The live display sits permanently on the left, the available tools as cards on the right. Click a card to open the tool — the live value stays visible. A tab bar at the top lets you switch between tools.' },
-      { heading: 'Help is always there', body: 'Each section has a <strong>blue info button</strong>. Help windows can be moved freely and resized. Several windows can be open at the same time.' },
+      { heading: 'Help is always there', body: 'Each section has a <strong>blue info button</strong>. The help window can be moved freely and resized. Opening another help entry replaces the current window.' },
       { heading: 'Important', body: 'The software is <strong>not legal-for-trade</strong> — see [[help:disclaimer|Disclaimer]].' },
     ],
   },

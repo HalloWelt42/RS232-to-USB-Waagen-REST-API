@@ -6,10 +6,13 @@
  *   /                   Dashboard
  *   /<tool>             Tool-Modus (wiegen, netto, count, tolerance, ...)
  *
- * Hilfe als Querystring-Liste (orthogonal zur Tool-Auswahl):
- *   ?help=wiegen,glossary    öffnet zwei Hilfe-Fenster
+ * Hilfe als Querystring (orthogonal zur Tool-Auswahl):
+ *   ?help=wiegen    öffnet das Hilfe-Fenster „Wiegen"
  *
- * Damit lassen sich aus E-Mails / Chats Deeplinks setzen wie
+ * Aus Konsistenzgründen ist immer nur eine Hilfe gleichzeitig offen —
+ * jeder neue Klick auf einen Info-Knopf oder einen Cross-Link
+ * überschreibt das aktuelle Fenster. Damit lassen sich aus E-Mails /
+ * Chats Deeplinks setzen wie
  *   https://waage.example/count?help=count
  *   https://waage.example/?help=disclaimer
  *
@@ -57,23 +60,28 @@ class RouteState {
     this.write(tool, this.helpOpen);
   }
 
-  /** Eine Hilfe öffnen (URL + Store synchronisieren). */
+  /**
+   * Eine Hilfe öffnen — ersetzt eine bereits offene Hilfe.
+   *
+   * Es ist immer höchstens ein Hilfe-Fenster gleichzeitig sichtbar:
+   * der Klick auf einen Info-Knopf oder einen Cross-Link überschreibt
+   * den aktuellen Hilfe-Inhalt. Ist die ID schon offen, passiert nichts.
+   */
   openHelp(id: HelpId): void {
-    if (!this.helpOpen.includes(id)) {
-      this.write(this.activeTool, [...this.helpOpen, id]);
-    }
+    if (this.helpOpen.length === 1 && this.helpOpen[0] === id) return;
+    this.write(this.activeTool, [id]);
   }
 
-  /** Eine Hilfe schließen. */
+  /** Die aktuelle Hilfe schließen. */
   closeHelp(id: HelpId): void {
     if (this.helpOpen.includes(id)) {
-      this.write(this.activeTool, this.helpOpen.filter(h => h !== id));
+      this.write(this.activeTool, []);
     }
   }
 
-  /** Den vollen Hilfe-Stack der URL überschreiben. */
+  /** Hilfe-Stack der URL überschreiben — auf maximal eine ID begrenzt. */
   setHelp(ids: HelpId[]): void {
-    this.write(this.activeTool, ids);
+    this.write(this.activeTool, ids.slice(0, 1));
   }
 
   // ------------------------------------------------------------------
@@ -106,7 +114,9 @@ class RouteState {
       .split(',')
       .map(s => s.trim())
       .filter((s): s is HelpId => (HELP_IDS as readonly string[]).includes(s));
-    this.helpOpen = ids;
+    // Es ist immer höchstens eine Hilfe gleichzeitig offen — älterer
+    // Deeplink mit mehreren IDs wird auf die erste reduziert.
+    this.helpOpen = ids.slice(0, 1);
   }
 }
 

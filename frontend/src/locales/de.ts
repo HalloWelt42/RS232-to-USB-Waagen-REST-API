@@ -235,7 +235,7 @@ const de = {
     intro:
       'Klicken Sie auf einen Eintrag — die Hilfe öffnet sich in einem ' +
       'Fenster, das sich frei verschieben und in der Größe verändern lässt. ' +
-      'Mehrere Fenster können gleichzeitig offen sein.',
+      'Beim Öffnen einer anderen Hilfe wird das aktuelle Fenster ersetzt.',
     open: 'Öffnen',
   },
   tolerances: {

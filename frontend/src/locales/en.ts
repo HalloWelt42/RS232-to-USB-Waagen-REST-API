@@ -234,7 +234,7 @@ const en = {
   helpPanel: {
     intro:
       'Click an entry — the help opens in a window that you can move freely ' +
-      'and resize. Several windows can be open at the same time.',
+      'and resize. Opening another entry replaces the current window.',
     open: 'Open',
   },
   tolerances: {
