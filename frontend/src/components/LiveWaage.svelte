@@ -1,10 +1,11 @@
 <script lang="ts">
   import { api } from '../lib/api';
   import { copyText } from '../lib/clipboard';
-  import { formatGrams, formatTime } from '../lib/format';
+  import { formatTime } from '../lib/format';
   import { toast } from '../lib/toast.svelte';
   import { live } from '../lib/liveStore.svelte';
   import { t } from '../lib/i18n';
+  import StableValue from './StableValue.svelte';
 
   type CmdKey = 'tare' | 'unit' | 'light';
 
@@ -14,7 +15,7 @@
   let conn = $derived(live.connection);
 
   let stable = $derived(r?.stable ?? false);
-  let valueText = $derived(r ? formatGrams(r.weight_g) : '—');
+  let weightG = $derived(r?.weight_g ?? null);
   let timeText = $derived(r ? formatTime(r.timestamp) : '—');
 
   async function copyValue(): Promise<void> {
@@ -59,7 +60,9 @@
 
   <button class="display" onclick={copyValue} disabled={!r}
           title="Wert in die Zwischenablage kopieren" aria-label="Wert kopieren">
-    <span class="value num">{valueText}</span>
+    <span class="value">
+      <StableValue g={weightG} />
+    </span>
     <span class="label num">
       {r ? (stable ? t('status.stable') : t('status.unstable')) : '—'}
     </span>
@@ -132,6 +135,7 @@
     line-height: 1;
     letter-spacing: 0.04em;
   }
+  .value :global(.stable-value) { color: inherit; }
   .stable .value { color: var(--green); }
   .live-card:not(.stable) .value { color: var(--fg-dim); }
   .label {

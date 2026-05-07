@@ -11,6 +11,7 @@
   import { formatGrams, formatDiff } from '../../lib/format';
   import { t } from '../../lib/i18n';
   import HelpButton from '../HelpButton.svelte';
+  import StableValue from '../StableValue.svelte';
   import type { ToleranceState } from '../../lib/types';
 
   let info = $state<ToleranceState | null>(null);
@@ -76,7 +77,7 @@
 
   <div class="lamp-area" data-status={liveStatus}>
     <div class="lamp">
-      <span class="num main">{formatGrams(liveGross)}</span>
+      <span class="main"><StableValue g={liveGross} /></span>
       {#if info?.active}
         <span class="num dev"
               class:plus={liveDeviation !== null && liveDeviation >= 0}
@@ -167,6 +168,7 @@
     line-height: 1;
     color: var(--fg-dim);
   }
+  .lamp .main :global(.stable-value) { color: inherit; }
   .lamp .dev {
     display: block;
     margin-top: var(--sp-2);

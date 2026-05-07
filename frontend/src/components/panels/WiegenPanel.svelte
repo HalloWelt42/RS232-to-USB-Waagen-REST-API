@@ -9,9 +9,10 @@
   import { live } from '../../lib/liveStore.svelte';
   import { copyText } from '../../lib/clipboard';
   import { toast } from '../../lib/toast.svelte';
-  import { formatGrams, formatDiff } from '../../lib/format';
+  import { formatDiff } from '../../lib/format';
   import { t } from '../../lib/i18n';
   import HelpButton from '../HelpButton.svelte';
+  import StableValue from '../StableValue.svelte';
 
   type Mode = 'frei' | 'sollwert';
   let mode = $state<Mode>('frei');
@@ -62,7 +63,9 @@
 
   <button class="display" onclick={copyValue} disabled={weight === null}
           title="Wert kopieren" aria-label="Wert kopieren">
-    <span class="value num">{formatGrams(weight)}</span>
+    <span class="value">
+      <StableValue g={weight} />
+    </span>
     <span class="hint">{r ? (r.stable ? t('status.stable') : t('status.unstable')) : '—'}</span>
   </button>
 
@@ -148,6 +151,7 @@
     line-height: 1;
     letter-spacing: 0.04em;
   }
+  .value :global(.stable-value) { color: inherit; }
   .hint {
     display: block; margin-top: var(--sp-2);
     font-size: var(--fs-sm);
