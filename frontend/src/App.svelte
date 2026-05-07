@@ -105,7 +105,7 @@
   <SimulatorBanner {health} />
 
   <main class="body" data-mode={route.mode}>
-    <div class="sidebar-wrap"><Sidebar {messlog} /></div>
+    <div class="sidebar-wrap"><Sidebar {messlog} onMesslogChanged={refreshMesslog} /></div>
     <section class="right">
       {#if route.mode === 'tool'}
         <ToolView />

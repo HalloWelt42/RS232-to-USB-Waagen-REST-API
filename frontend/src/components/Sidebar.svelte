@@ -7,13 +7,16 @@
   import MessLog from './MessLog.svelte';
   import type { MesslogEntry } from '../lib/types';
 
-  interface Props { messlog: MesslogEntry[]; }
-  let { messlog = [] }: Props = $props();
+  interface Props {
+    messlog: MesslogEntry[];
+    onMesslogChanged?: () => void;
+  }
+  let { messlog = [], onMesslogChanged }: Props = $props();
 </script>
 
 <aside class="sidebar">
   <LiveWaage />
-  <MessLog entries={messlog} />
+  <MessLog entries={messlog} onChanged={onMesslogChanged} />
 </aside>
 
 <style>

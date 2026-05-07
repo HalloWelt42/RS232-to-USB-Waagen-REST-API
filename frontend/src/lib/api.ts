@@ -191,8 +191,34 @@ export class AppApi extends HttpBase {
   messlog(limit = 200): Promise<MesslogResponse>   {
     return this.request(`/app/messlog?limit=${limit}`);
   }
+  messlogDelete(id: number): Promise<{ ok: boolean; id: number }> {
+    return this.del(`/app/messlog/${id}`);
+  }
   messlogClear(): Promise<{ ok: boolean; deleted: number }> {
     return this.del('/app/messlog');
+  }
+
+  /** URL für den Multi-Format-Export — Frontend baut die Querystring-
+   *  Optionen selbst zusammen. */
+  samplesExportFormatUrl(opts: {
+    session?: string | null;
+    fmt: 'csv' | 'tsv' | 'json' | 'md';
+    delim?: 'comma' | 'semicolon';
+    cols?: string[];
+    labels?: Record<string, string>;
+  }): string {
+    const q = new URLSearchParams();
+    if (opts.session) q.set('session', opts.session);
+    q.set('fmt', opts.fmt);
+    if (opts.delim) q.set('delim', opts.delim);
+    if (opts.cols && opts.cols.length) q.set('cols', opts.cols.join(','));
+    if (opts.labels) {
+      const pairs = Object.entries(opts.labels)
+        .filter(([, v]) => v && v.trim().length)
+        .map(([k, v]) => `${k}=${v}`);
+      if (pairs.length) q.set('labels', pairs.join(','));
+    }
+    return `${this.base}/app/samples/export?${q.toString()}`;
   }
 
   // Behälter-Bibliothek

@@ -10,7 +10,10 @@
   import { formatGrams, formatTime } from '../../lib/format';
   import { t } from '../../lib/i18n';
   import HelpButton from '../HelpButton.svelte';
+  import ExportDialog from '../ExportDialog.svelte';
   import type { Sample, SampleStats } from '../../lib/types';
+
+  let exportOpen = $state(false);
 
   let samples = $state<Sample[]>([]);
   let stats = $state<SampleStats | null>(null);
@@ -185,16 +188,20 @@
     </div>
 
     <div class="bulk">
-      <a class="btn-primary" href={exportUrl} target="_blank" rel="noopener">
-        <i class="fa-solid fa-file-csv"></i>
-        CSV exportieren
-      </a>
+      <button class="btn-primary" onclick={() => exportOpen = true}>
+        <i class="fa-solid fa-file-export"></i>
+        {t('samples.exportOpen')}
+      </button>
       <button class="btn-warn" onclick={clearAll} disabled={busy}>
         <i class="fa-solid fa-trash"></i>
-        Session leeren
+        {t('samples.clearSession')}
       </button>
     </div>
   {/if}
+
+  <ExportDialog open={exportOpen}
+                {session}
+                onClose={() => exportOpen = false} />
 
   <ul class="list">
     {#if samples.length === 0}

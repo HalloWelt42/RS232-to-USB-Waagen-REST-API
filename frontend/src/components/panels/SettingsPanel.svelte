@@ -20,6 +20,35 @@
   let busy = $state(false);
   let currentTheme = $state<Theme>(themeManager.get());
 
+  /**
+   * „Alles zurücksetzen": leert alle persistenten Daten — Mess-Snapshots,
+   * Messprotokoll, Behälter-Bibliothek, Stückzähl-Vorlagen, Differenz-
+   * Schichten und Toleranz/Netto/Count-Zustände. Modell-Wahl und
+   * Theme bleiben erhalten.
+   */
+  async function resetAllData(): Promise<void> {
+    if (!confirm(t('settings.resetAllConfirm1'))) return;
+    if (!confirm(t('settings.resetAllConfirm2'))) return;
+    busy = true;
+    try {
+      await Promise.all([
+        api.app.samplesClear(null),
+        api.app.messlogClear(),
+        api.app.containersClear(),
+        api.app.countTemplatesClear(),
+        api.app.differenzClear(),
+        api.app.toleranceClear(),
+        api.app.nettoTareClear(),
+        api.app.countReset(),
+      ]);
+      toast.show(t('settings.resetAllDone'), 'ok');
+    } catch (e) {
+      toast.show((e as Error).message, 'error');
+    } finally {
+      busy = false;
+    }
+  }
+
   async function setSource(mode: 'live' | 'simulate'): Promise<void> {
     busy = true;
     try {
@@ -165,6 +194,15 @@
         Anschluss und Baudrate sind aktuell server-seitig konfiguriert. Das
         Backend findet den FTDI-Adapter automatisch.
       </p>
+    </div>
+
+    <div class="card reset-card">
+      <h3>{t('settings.resetAllTitle')}</h3>
+      <p class="hint">{t('settings.resetAllInfo')}</p>
+      <button class="btn-warn full" onclick={resetAllData} disabled={busy}>
+        <i class="fa-solid fa-eraser"></i>
+        {t('settings.resetAllButton')}
+      </button>
     </div>
 
     <div class="card disclaimer-card">
@@ -318,6 +356,27 @@
     color: var(--orange);
     display: inline-flex; align-items: center; gap: 6px;
   }
+  .reset-card { border-color: var(--red); }
+  .reset-card h3 { color: var(--red); }
+  .reset-card .btn-warn.full {
+    width: 100%;
+    border-color: var(--red);
+    color: var(--red);
+    margin-top: var(--sp-2);
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px;
+    min-height: var(--tap);
+    padding: 0 var(--sp-3);
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-family: var(--sans); font-size: var(--fs-sm); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    cursor: pointer;
+  }
+  .reset-card .btn-warn.full:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--red) 14%, transparent);
+  }
+
   .disclaimer-card { border-color: var(--orange); }
   .disclaimer-card h3 { color: var(--orange); }
   .disclaimer-short {

@@ -170,6 +170,18 @@ const de = {
     open: 'Bibliothek öffnen',
     close: 'Bibliothek schließen',
   },
+  settings: {
+    resetAllTitle: 'Alles zurücksetzen',
+    resetAllInfo:
+      'Leert sämtliche persistenten Daten — Mess-Snapshots, ' +
+      'Messprotokoll, Behälter-Bibliothek, Stückzähl-Vorlagen, ' +
+      'Differenz-Schichten und alle Werkzeug-Zustände. ' +
+      'Modell-Wahl und Theme bleiben erhalten.',
+    resetAllButton: 'Alles zurücksetzen',
+    resetAllConfirm1: 'Alle persistenten Daten wirklich löschen? Das ist nicht rückgängig zu machen.',
+    resetAllConfirm2: 'Letzte Bestätigung — alle Listen werden geleert. Wirklich fortfahren?',
+    resetAllDone: 'Zurückgesetzt — alle Listen sind leer.',
+  },
   countTemplates: {
     title: 'Stückzähl-Vorlagen',
     add: 'Neue Vorlage',
@@ -195,6 +207,37 @@ const de = {
     liveValue: 'Aktueller Live-Wert',
     autoHint: 'Auto-Erfassen aktiv — jeder neue Stable-Wert landet in der Liste',
     waitingForStable: 'Warte auf Stable …',
+    exportOpen: 'Exportieren …',
+    clearSession: 'Session leeren',
+  },
+  messlog: {
+    title: 'Messprotokoll · letzte Änderungen',
+    helpLabel: 'Hilfe zum Messprotokoll',
+    empty: 'Noch keine Werte-Änderungen',
+    tareLabel: 'Tara',
+    startLabel: 'Start',
+    deleteEntry: 'Eintrag löschen',
+    entryDeleted: 'Eintrag gelöscht',
+    clearAll: 'Messprotokoll leeren',
+    clearConfirm: 'Komplettes Messprotokoll wirklich leeren?',
+    cleared: 'Messprotokoll geleert',
+  },
+  export: {
+    title: 'Werte exportieren',
+    format: 'Format',
+    fmt_csv: 'CSV',
+    fmt_tsv: 'TSV',
+    fmt_json: 'JSON',
+    fmt_md: 'Markdown',
+    delimiter: 'Trenner (CSV)',
+    delim_comma: ', (Komma)',
+    delim_semicolon: '; (Semikolon — DE-Excel)',
+    columns: 'Spalten und Bezeichner',
+    allOn: 'alle an',
+    allOff: 'alle aus',
+    resetLabels: 'Bezeichner zurücksetzen',
+    previewHint: 'Klick auf „Herunterladen" startet den Export.',
+    download: 'Herunterladen',
   },
   count: {
     totalWeight: 'Gesamtgewicht',
