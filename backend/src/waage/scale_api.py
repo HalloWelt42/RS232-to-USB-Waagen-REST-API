@@ -33,6 +33,7 @@ from .models import KNOWN_MODELS, ScaleModel, find_model
 from .parser import Reading
 from .reader import COMMAND_LIGHT, COMMAND_TARE, COMMAND_UNIT
 from .state import AppState
+from .tools import find_serial_port
 
 log = logging.getLogger(__name__)
 
@@ -262,8 +263,22 @@ def build_scale_router(state: AppState, app_version: str) -> APIRouter:
             raise HTTPException(400, detail="Modus muss 'live' oder 'simulate' sein")
         if payload.mode != state.source_mode:
             state.source_mode = payload.mode
+            # Wechsel zu Live: physischen Port neu auflösen, falls
+            # `state.resolved_port` aus einer Simulator-Boot-Phase noch
+            # auf "simulator" steht (sonst versucht der Reader den
+            # nicht existierenden Port "auto"/"simulator" zu öffnen).
+            if payload.mode == "live" and state.resolved_port in ("simulator", "auto", ""):
+                if state.port and state.port != "auto":
+                    state.resolved_port = state.port
+                else:
+                    found = find_serial_port()
+                    if found:
+                        state.resolved_port = found
+                        log.info("Live-Port automatisch aufgelöst: %s", found)
+                    else:
+                        log.warning("Live-Modus: kein serieller Adapter gefunden")
             state.persist_config()
-            log.info("Quelle gewechselt: %s", payload.mode)
+            log.info("Quelle gewechselt: %s (Port=%s)", payload.mode, state.resolved_port)
             # Aktuellen Reader schließen — der Reader-Loop reconnectet
             # über die Factory, die das neue source_mode liest.
             try:

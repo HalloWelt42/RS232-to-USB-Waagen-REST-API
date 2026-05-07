@@ -78,13 +78,22 @@ def _make_reader_factory(port: str, baudrate: int, state: AppState):
     Wird bei jedem Reconnect erneut ausgewertet — so kann der Anwender
     zwischen Live und Simulator umschalten, ohne das Backend neu zu
     starten.
+
+    Beim Live-Modus wird der konkrete Port aus `state.resolved_port`
+    gelesen (von ``set_source`` aktualisiert) — sonst würde der Reader
+    auf einen veralteten Port-Wert aus der Boot-Phase zugreifen.
     """
     def factory():
         if state.source_mode == "simulate":
             log.info("Reader: Simulator")
             return SimulatedWaage()
-        log.info("Reader: Live (%s @ %d Baud)", port, baudrate)
-        return Waage(port, baudrate)
+        # Echte Hardware: nimm den aktuell aufgelösten Port, fall back
+        # auf den Boot-Port nur wenn nötig.
+        live_port = state.resolved_port
+        if not live_port or live_port in ("simulator", "auto"):
+            live_port = port
+        log.info("Reader: Live (%s @ %d Baud)", live_port, state.baudrate)
+        return Waage(live_port, state.baudrate)
     return factory
 
 
