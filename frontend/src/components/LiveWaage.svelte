@@ -221,4 +221,17 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
   }
+
+  /* Sticky-Verhalten auf Mobile: das Live-Display klebt am oberen
+     Rand des scrollenden Body-Bereichs, während Messprotokoll und
+     Karten darunter durchscrollen. Höhere z-Achse, damit der
+     Display-Schatten nicht von darunterliegenden Karten überdeckt
+     wird. */
+  @media (max-width: 900px) {
+    .live-card {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+  }
 </style>

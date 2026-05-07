@@ -162,4 +162,15 @@
     padding: var(--sp-4); text-align: center;
     color: var(--fg-mute); font-size: var(--fs-sm);
   }
+
+  /* Auf Mobile soll nur die Liste intern scrollen — die LiveWaage
+     klebt oben sticky, dazwischen die Karten. Wir begrenzen die
+     Messprotokoll-Höhe, damit `.list` ihren Overflow-Scroll greift
+     statt mit der ganzen Seite mitzuwachsen. */
+  @media (max-width: 900px) {
+    .messlog {
+      flex: 0 0 auto;
+      max-height: 35vh;
+    }
+  }
 </style>

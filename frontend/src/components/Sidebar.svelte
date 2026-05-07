@@ -34,9 +34,13 @@
   }
 
   @media (max-width: 900px) {
+    /* Auf Mobile löst sich der Sidebar-Container auf: LiveWaage und
+       MessLog werden direkte Flex-Kinder von `.body`. Damit kann die
+       LiveWaage `position: sticky` zur Body-Scroll-Achse setzen und
+       die MessLog ihre eigene `max-height` für internes Scrollen
+       greifen lassen, ohne den Sidebar-Wrapper als Flex-Vorfahren. */
     .sidebar {
-      width: 100%;
-      flex: 0 0 auto;
+      display: contents;
     }
   }
 </style>

@@ -164,12 +164,11 @@
       overflow-y: auto;
     }
     .right { flex: 1 1 auto; }
-    /* Auf Mobile generell die LiveWaage/MessLog-Sidebar ausblenden:
-       - Im Tool-Modus zeigen die Werkzeug-Panels den Live-Wert eh.
-       - Im Dashboard-Modus würde die Sidebar das Karten-Menü unter
-         die Bildschirmkante drücken — die Karten SIND das Menü und
-         müssen sofort erreichbar sein.
-       Live-Werte bleiben über jedes Tool und Cmd+K erreichbar. */
-    .body .sidebar-wrap { display: none; }
+    /* Im Tool-Modus die Sidebar ausblenden — Werkzeug-Panels zeigen
+       den Live-Wert eh prominent, doppelte Anzeige unnötig. Im
+       Dashboard-Modus bleibt die Sidebar sichtbar, die LiveWaage
+       klebt sticky am oberen Rand und nur die Messprotokoll-Liste
+       scrollt intern (siehe LiveWaage.svelte / MessLog.svelte). */
+    .body[data-mode="tool"] .sidebar-wrap { display: none; }
   }
 </style>
