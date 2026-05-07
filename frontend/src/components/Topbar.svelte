@@ -29,7 +29,7 @@
         <i class="fa-solid fa-arrow-left"></i>
       </button>
     {/if}
-    <span class="name">WAAGE</span>
+    <span class="name only-desktop">WAAGE</span>
     {#if isTool}
       <span class="model">› {activeTitle}</span>
     {:else}
@@ -42,17 +42,17 @@
   </div>
 
   <div class="actions">
-    <button class="hdr-btn search-btn" onclick={openSearch}
+    <button class="hdr-btn search-btn only-desktop" onclick={openSearch}
             title={t('topbar.search')} aria-label={t('topbar.search')}>
       <i class="fa-solid fa-magnifying-glass"></i>
       <span class="kbd">⌘K</span>
     </button>
     <LanguageToggle />
     <ThemeToggle />
-    <a class="hdr-btn" href="/docs" target="_blank" rel="noopener" title={t('app.apiDocs')}>
+    <a class="hdr-btn only-desktop" href="/docs" target="_blank" rel="noopener" title={t('app.apiDocs')}>
       <i class="fa-solid fa-code"></i> {t('app.apiDocs')}
     </a>
-    <button class="hdr-btn icon-only" onclick={openGlossary}
+    <button class="hdr-btn icon-only only-desktop" onclick={openGlossary}
             title={t('topbar.glossary')} aria-label={t('topbar.glossary')}>
       <i class="fa-solid fa-book"></i>
     </button>
@@ -111,7 +111,12 @@
     padding: 1px 5px;
     margin-left: 4px;
   }
-  @media (max-width: 800px) {
+  /* Mobile: Brand-Schriftzug, Suche, API-Doku und Glossar-Knopf
+     ausblenden — diese Funktionen sind über Settings / Cmd+K-Shortcut
+     bzw. Hilfe-Karten alternativ erreichbar und kosten am Handy
+     wertvolle Topbar-Breite. */
+  @media (max-width: 900px) {
     .kbd { display: none; }
+    .only-desktop { display: none !important; }
   }
 </style>
