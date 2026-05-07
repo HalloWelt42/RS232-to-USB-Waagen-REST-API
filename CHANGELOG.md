@@ -9,8 +9,17 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.4.4] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben
+- **Live-Modus liest die echte Waage zuverlässig** auch dann, wenn
+  das Backend mit `WAAGE_SIMULATE=1` gestartet wurde. Bisher blieb
+  `state.resolved_port` permanent „simulator" — beim späteren Wechsel
+  auf Live öffnete der Reader-Loop den nicht existierenden Port und
+  Health zeigte inkonsistent `port:"simulator"` mit `simulated:false`.
+- `set_source('live')` löst den Port jetzt neu auf
+  (`find_serial_port()` aus `tools.py`) und schreibt ihn in
+  `state.resolved_port`. Die Reader-Factory greift bei Live-Modus
+  konsequent auf den aktuellen `state.resolved_port` zurück, nicht
+  mehr auf den unveränderlichen Boot-Wert.
 
 ## [0.4.3] — 2026-05-07
 
