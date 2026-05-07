@@ -129,6 +129,7 @@ def create_app(
     samples_path: Optional[str] = None,
     messlog_path: Optional[str] = None,
     containers_path: Optional[str] = None,
+    count_templates_path: Optional[str] = None,
     config_dir: Optional[str] = None,
 ) -> FastAPI:
 
@@ -142,6 +143,7 @@ def create_app(
         samples_path=samples_path,
         messlog_path=messlog_path,
         containers_path=containers_path,
+        count_templates_path=count_templates_path,
         config_dir=config_dir,
     )
     reader_factory = _make_reader_factory(port, baudrate, simulate)
@@ -201,6 +203,7 @@ def create_app(
             "app_differenz":    "/app/differenz",
             "app_messlog":      "/app/messlog",
             "app_containers":   "/app/containers",
+            "app_count_templates": "/app/count/templates",
             "docs":             "/docs",
             "openapi":          "/openapi.json",
         })
@@ -217,6 +220,7 @@ app = create_app(
     samples_path=os.getenv("WAAGE_SAMPLES_DB"),
     messlog_path=os.getenv("WAAGE_MESSLOG_DB"),
     containers_path=os.getenv("WAAGE_CONTAINERS_DB"),
+    count_templates_path=os.getenv("WAAGE_COUNT_TEMPLATES_DB"),
     config_dir=os.getenv("WAAGE_DATA_DIR"),
 )
 

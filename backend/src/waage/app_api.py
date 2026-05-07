@@ -210,6 +210,35 @@ class ContainerPatchIn(BaseModel):
     note: Optional[str] = Field(default=None, max_length=500)
 
 
+class CountTemplateOut(BaseModel):
+    id: int
+    name: str
+    icon_class: str
+    piece_weight_g: float
+    description: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class CountTemplateListOut(BaseModel):
+    count: int
+    items: list[CountTemplateOut]
+
+
+class CountTemplateIn(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    piece_weight_g: float = Field(..., gt=0)
+    icon_class: str = Field(default="", max_length=120)
+    description: str = Field(default="", max_length=500)
+
+
+class CountTemplatePatchIn(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    piece_weight_g: Optional[float] = Field(default=None, gt=0)
+    icon_class: Optional[str] = Field(default=None, max_length=120)
+    description: Optional[str] = Field(default=None, max_length=500)
+
+
 # ---------------------------------------------------------------------------
 #  Router-Factory
 # ---------------------------------------------------------------------------
@@ -504,6 +533,58 @@ def build_app_router(state: AppState) -> APIRouter:
     @router.delete("/containers")
     def clear_containers() -> dict:
         n = state.containers.clear()
+        return {"ok": True, "deleted": n}
+
+    # ============================ Stückzähl-Vorlagen ============================
+    def _template_to_out(t) -> CountTemplateOut:
+        return CountTemplateOut(
+            id=t.id, name=t.name, icon_class=t.icon_class,
+            piece_weight_g=round(t.piece_weight_g, 6),
+            description=t.description,
+            created_at=t.created_at, updated_at=t.updated_at,
+        )
+
+    @router.get("/count/templates", response_model=CountTemplateListOut)
+    def list_count_templates() -> CountTemplateListOut:
+        items = [_template_to_out(t) for t in state.count_templates.list()]
+        return CountTemplateListOut(count=len(items), items=items)
+
+    @router.post("/count/templates", response_model=CountTemplateOut)
+    def add_count_template(payload: CountTemplateIn) -> CountTemplateOut:
+        try:
+            t = state.count_templates.add(
+                payload.name, payload.piece_weight_g,
+                icon_class=payload.icon_class, description=payload.description,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        return _template_to_out(t)
+
+    @router.put("/count/templates/{template_id}", response_model=CountTemplateOut)
+    def update_count_template(template_id: int, payload: CountTemplatePatchIn) -> CountTemplateOut:
+        if state.count_templates.get(template_id) is None:
+            raise HTTPException(status_code=404, detail="Vorlage nicht gefunden")
+        try:
+            t = state.count_templates.update(
+                template_id,
+                name=payload.name,
+                piece_weight_g=payload.piece_weight_g,
+                icon_class=payload.icon_class,
+                description=payload.description,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        return _template_to_out(t)
+
+    @router.delete("/count/templates/{template_id}")
+    def delete_count_template(template_id: int) -> dict:
+        if not state.count_templates.delete(template_id):
+            raise HTTPException(status_code=404, detail="Vorlage nicht gefunden")
+        return {"ok": True, "id": template_id}
+
+    @router.delete("/count/templates")
+    def clear_count_templates() -> dict:
+        n = state.count_templates.clear()
         return {"ok": True, "deleted": n}
 
     return router

@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from .containers import ContainerStore
+from .count_templates import CountTemplateStore
 from .differenz import DifferenzStore
 from .messlog import MesslogStore
 from .models import DEFAULT_MODEL_ID
@@ -42,6 +43,7 @@ class AppState:
         messlog_path: Optional[str],
         config_dir: Optional[str],
         containers_path: Optional[str] = None,
+        count_templates_path: Optional[str] = None,
     ) -> None:
         # --- Stream / History ---
         self.latest: Optional[Reading] = None
@@ -76,6 +78,7 @@ class AppState:
         self.samples = SampleStore(samples_path or ":memory:")
         self.messlog = MesslogStore(messlog_path or ":memory:")
         self.containers = ContainerStore(containers_path or ":memory:")
+        self.count_templates = CountTemplateStore(count_templates_path or ":memory:")
         self.differenz = DifferenzStore()
 
         # --- Persistenz für Config ---
@@ -158,7 +161,7 @@ class AppState:
             log.exception("Config konnte nicht geschrieben werden: %s", path)
 
     def close(self) -> None:
-        for store_name in ("samples", "messlog", "containers"):
+        for store_name in ("samples", "messlog", "containers", "count_templates"):
             try:
                 getattr(self, store_name).close()
             except Exception:
