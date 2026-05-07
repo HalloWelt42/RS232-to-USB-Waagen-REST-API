@@ -9,8 +9,19 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.3] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben (Mobile-UI)
+- **LiveWaage klebt sticky auf Mobile, nur Liste scrollt intern** —
+  im 0.5.2-Stand war die Sidebar auf Mobile komplett ausgeblendet,
+  der Wägewert war nur indirekt über die Tools sichtbar. Jetzt ist
+  sie im Dashboard-Modus wieder da, aber mit klarem Scroll-Kontrakt:
+  - `<aside class="sidebar">` löst sich auf Mobile zu `display: contents`
+    auf, LiveWaage und MessLog werden direkte Flex-Kinder von `.body`.
+  - LiveWaage bekommt `position: sticky; top: 0; z-index: 5` — der
+    Wägewert bleibt beim Scrollen jederzeit am oberen Rand sichtbar.
+  - MessLog bekommt `flex: 0 0 auto; max-height: 35vh`. Damit greift
+    `overflow-y: auto` auf `.list`: nur die Liste rollt durch ihre
+    Einträge, das Live-Display und die Karten scrollen nicht mit.
+  - Im Tool-Modus bleibt die Sidebar weiterhin ausgeblendet.
 
 ## [0.5.2] — 2026-05-07
 
