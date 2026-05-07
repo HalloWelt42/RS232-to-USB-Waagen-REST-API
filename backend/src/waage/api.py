@@ -139,6 +139,40 @@ class SampleListOut(BaseModel):
     items: list[SampleOut]
 
 
+class ToleranceIn(BaseModel):
+    target_g: float = Field(..., description="Sollwert in Gramm")
+    tolerance_minus_g: float = Field(..., ge=0, description="Erlaubte Unterschreitung (positiv)")
+    tolerance_plus_g: float = Field(..., ge=0, description="Erlaubte Überschreitung (positiv)")
+
+
+class ToleranceOut(BaseModel):
+    active: bool
+    target_g: Optional[float] = None
+    tolerance_minus_g: Optional[float] = None
+    tolerance_plus_g: Optional[float] = None
+    min_g: Optional[float] = None
+    max_g: Optional[float] = None
+    current_g: Optional[float] = None
+    deviation_g: Optional[float] = Field(None, description="current - target")
+    status: str = Field(..., description="ok, low, high oder idle")
+
+
+class TareSetIn(BaseModel):
+    tare_g: Optional[float] = Field(
+        None,
+        description="Wenn None oder weggelassen: aktuelles Gewicht als Tara setzen",
+    )
+
+
+class NettoOut(BaseModel):
+    active: bool
+    tare_g: Optional[float] = None
+    gross_g: Optional[float] = None
+    netto_g: Optional[float] = None
+    tare_set_at: Optional[str] = None
+    stable: Optional[bool] = None
+
+
 class StatsOut(BaseModel):
     count: int
     min_g: Optional[float]
@@ -196,6 +230,15 @@ class _State:
         # Wird vom Reader-Loop gesetzt und genutzt, um aus HTTP-Handlern
         # heraus Kommandos an die Waage zu schicken.
         self.current_reader: Optional[Waage] = None
+        # QC-Toleranzen: Sollwert mit absoluter Toleranz nach oben/unten,
+        # oder klassisch Min/Max-Grenzen.
+        self.target_g: Optional[float] = None
+        self.tolerance_minus_g: Optional[float] = None
+        self.tolerance_plus_g: Optional[float] = None
+        # Differenz-Modus: gespeichertes Tara-Gewicht (z.B. leerer Behälter).
+        # Netto = aktuelles Gewicht - tare_g.
+        self.tare_g: Optional[float] = None
+        self.tare_set_at: Optional[datetime] = None
         self._lock = asyncio.Lock()
 
     async def publish(self, reading: Reading) -> None:
@@ -341,6 +384,12 @@ def create_app(
             "command_tare":  "POST /command/tare",
             "command_unit":  "POST /command/unit",
             "command_light": "POST /command/light",
+            "samples":       "/samples",
+            "samples_stats": "/samples/stats",
+            "samples_csv":   "/samples/export.csv",
+            "tolerance":     "/tolerance",
+            "netto":         "/netto",
+            "netto_tare":    "POST /netto/tare",
             "stream":        "ws://<host>:8200/stream",
             "docs":          "/docs",
             "openapi":       "/openapi.json",
@@ -593,6 +642,127 @@ def create_app(
             media_type="text/csv; charset=utf-8",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
+
+    # --------------------- QC-Toleranz -------------------------------
+    def _tolerance_response() -> ToleranceOut:
+        target = state.target_g
+        tm = state.tolerance_minus_g
+        tp = state.tolerance_plus_g
+        latest = state.latest
+        if target is None or tm is None or tp is None:
+            return ToleranceOut(
+                active=False,
+                current_g=round(latest.weight, 4) if latest else None,
+                status="idle",
+            )
+        min_g = target - tm
+        max_g = target + tp
+        if latest is None:
+            return ToleranceOut(
+                active=True,
+                target_g=round(target, 4),
+                tolerance_minus_g=round(tm, 4),
+                tolerance_plus_g=round(tp, 4),
+                min_g=round(min_g, 4),
+                max_g=round(max_g, 4),
+                status="idle",
+            )
+        deviation = latest.weight - target
+        if latest.weight < min_g:
+            status = "low"
+        elif latest.weight > max_g:
+            status = "high"
+        else:
+            status = "ok"
+        return ToleranceOut(
+            active=True,
+            target_g=round(target, 4),
+            tolerance_minus_g=round(tm, 4),
+            tolerance_plus_g=round(tp, 4),
+            min_g=round(min_g, 4),
+            max_g=round(max_g, 4),
+            current_g=round(latest.weight, 4),
+            deviation_g=round(deviation, 4),
+            status=status,
+        )
+
+    @app.get("/tolerance", response_model=ToleranceOut, tags=["tolerance"])
+    def get_tolerance() -> ToleranceOut:
+        """Aktueller QC-Toleranz-Status (ok/low/high/idle)."""
+        return _tolerance_response()
+
+    @app.post("/tolerance", response_model=ToleranceOut, tags=["tolerance"])
+    def post_tolerance(payload: ToleranceIn) -> ToleranceOut:
+        """Setzt Sollwert und Toleranzgrenzen."""
+        state.target_g = payload.target_g
+        state.tolerance_minus_g = payload.tolerance_minus_g
+        state.tolerance_plus_g = payload.tolerance_plus_g
+        log.info("QC-Toleranz: %.3f g (-%.3f / +%.3f)",
+                 payload.target_g, payload.tolerance_minus_g, payload.tolerance_plus_g)
+        return _tolerance_response()
+
+    @app.delete("/tolerance", response_model=ToleranceOut, tags=["tolerance"])
+    def delete_tolerance() -> ToleranceOut:
+        """Schaltet die QC-Toleranz aus."""
+        state.target_g = None
+        state.tolerance_minus_g = None
+        state.tolerance_plus_g = None
+        return _tolerance_response()
+
+    # --------------------- Software-Tara / Netto ---------------------
+    def _netto_response() -> NettoOut:
+        latest = state.latest
+        if state.tare_g is None:
+            return NettoOut(
+                active=False,
+                gross_g=round(latest.weight, 4) if latest else None,
+                stable=latest.stable if latest else None,
+            )
+        return NettoOut(
+            active=True,
+            tare_g=round(state.tare_g, 4),
+            gross_g=round(latest.weight, 4) if latest else None,
+            netto_g=round(latest.weight - state.tare_g, 4) if latest else None,
+            tare_set_at=state.tare_set_at.isoformat(timespec="seconds")
+                        if state.tare_set_at else None,
+            stable=latest.stable if latest else None,
+        )
+
+    @app.get("/netto", response_model=NettoOut, tags=["netto"])
+    def get_netto() -> NettoOut:
+        """Aktuelles Brutto/Tara/Netto."""
+        return _netto_response()
+
+    @app.post(
+        "/netto/tare",
+        response_model=NettoOut,
+        tags=["netto"],
+        responses={503: {"description": "Noch kein Reading verfügbar"}},
+    )
+    def post_netto_tare(payload: Optional[TareSetIn] = None) -> NettoOut:
+        """Setzt Tara — entweder auf einen festen Wert oder auf das
+        aktuell aufliegende Brutto-Gewicht.
+
+        Ohne Body oder mit ``tare_g=null`` wird der aktuelle Wert
+        eingefroren. Mit ``tare_g=12.5`` wird der angegebene Wert
+        gespeichert (z.B. bekanntes Behältergewicht).
+        """
+        if payload is None or payload.tare_g is None:
+            if state.latest is None:
+                raise HTTPException(503, detail="Waage hat noch nichts gesendet")
+            state.tare_g = state.latest.weight
+        else:
+            state.tare_g = payload.tare_g
+        state.tare_set_at = datetime.now()
+        log.info("Software-Tara gesetzt: %.3f g", state.tare_g)
+        return _netto_response()
+
+    @app.delete("/netto/tare", response_model=NettoOut, tags=["netto"])
+    def delete_netto_tare() -> NettoOut:
+        """Verwirft die Software-Tara."""
+        state.tare_g = None
+        state.tare_set_at = None
+        return _netto_response()
 
     @app.websocket("/stream")
     async def stream(ws: WebSocket) -> None:

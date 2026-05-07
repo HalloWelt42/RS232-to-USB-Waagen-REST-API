@@ -313,6 +313,75 @@ def test_sample_post_503_without_data() -> None:
             assert r.status_code == 503
 
 
+def test_tolerance_idle_without_target(stubbed_app: TestClient) -> None:
+    r = stubbed_app.get("/tolerance")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["active"] is False
+    assert body["status"] == "idle"
+
+
+def test_tolerance_set_and_evaluate(stubbed_app: TestClient) -> None:
+    """Aktueller Wert ist 200 g (aus Stub). Sollwert 200 +/- 5 -> ok."""
+    r = stubbed_app.post(
+        "/tolerance",
+        json={"target_g": 200.0, "tolerance_minus_g": 5.0, "tolerance_plus_g": 5.0},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["active"] is True
+    assert body["status"] == "ok"
+    assert body["min_g"] == pytest.approx(195.0)
+    assert body["max_g"] == pytest.approx(205.0)
+
+
+def test_tolerance_low_high(stubbed_app: TestClient) -> None:
+    # zu hoch
+    r = stubbed_app.post(
+        "/tolerance",
+        json={"target_g": 100.0, "tolerance_minus_g": 1.0, "tolerance_plus_g": 1.0},
+    )
+    assert r.json()["status"] == "high"   # current 200 > max 101
+    # zu niedrig
+    r = stubbed_app.post(
+        "/tolerance",
+        json={"target_g": 1000.0, "tolerance_minus_g": 1.0, "tolerance_plus_g": 1.0},
+    )
+    assert r.json()["status"] == "low"
+
+
+def test_netto_idle_without_tare(stubbed_app: TestClient) -> None:
+    r = stubbed_app.get("/netto")
+    body = r.json()
+    assert body["active"] is False
+    assert body["gross_g"] is not None
+    assert body["netto_g"] is None
+
+
+def test_netto_tare_with_current_weight(stubbed_app: TestClient) -> None:
+    """Tara ohne Wert: aktuelles Gewicht (200 g) wird eingefroren -> Netto = 0."""
+    r = stubbed_app.post("/netto/tare", json={})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["active"] is True
+    assert body["tare_g"] == pytest.approx(200.0)
+    assert body["netto_g"] == pytest.approx(0.0)
+
+
+def test_netto_tare_with_explicit_value(stubbed_app: TestClient) -> None:
+    """Tara mit festem Wert: 50 g -> Netto = 200 - 50 = 150 g."""
+    r = stubbed_app.post("/netto/tare", json={"tare_g": 50.0})
+    body = r.json()
+    assert body["tare_g"] == pytest.approx(50.0)
+    assert body["netto_g"] == pytest.approx(150.0)
+
+
+def test_netto_tare_clear(stubbed_app: TestClient) -> None:
+    stubbed_app.post("/netto/tare", json={"tare_g": 10.0})
+    r = stubbed_app.delete("/netto/tare")
+    assert r.json()["active"] is False
+
+
 def test_docs_page_renders(stubbed_app: TestClient) -> None:
     r = stubbed_app.get("/docs")
     assert r.status_code == 200
