@@ -1,7 +1,8 @@
 <script lang="ts">
   /**
-   * Tool-Modus: oben Tab-Bar (alle Tools), darunter das aktive Werkzeug.
-   * Welches Panel angezeigt wird, entscheidet route.activeTool.
+   * Tool-Modus rechts: Tab-Bar oben, darunter das aktive Werkzeug.
+   * Die LiveWaage steht persistent in der Sidebar links — sie wird
+   * von hier nicht mehr eingeblendet.
    */
   import { route } from '../lib/routing.svelte';
   import TabBar from './TabBar.svelte';
@@ -40,7 +41,6 @@
     min-height: 0;
     display: flex; flex-direction: column;
     gap: var(--sp-3);
-    padding: var(--sp-3);
     overflow: hidden;
   }
   .body {

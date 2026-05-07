@@ -2,12 +2,21 @@
   /**
    * Root-Komponente.
    *
-   * - Routing initialisieren (Hash → mode/activeTool)
-   * - WebSocket /scale/stream verbinden, in liveStore einspeisen
-   * - Health-Polling alle 5 s für den Footer
-   * - Messprotokoll initial vom Backend laden
-   * - Layout: Topbar, Body (Dashboard | ToolView), Footer, ContactStrip
-   * - HelpLayer und Toast als Overlay
+   * Layout:
+   *   ┌──────────────────────────────────────────────┐
+   *   │  Topbar                                      │
+   *   ├──────────────┬───────────────────────────────┤
+   *   │ Sidebar      │ Right: Karten oder ToolView   │
+   *   │ (persistent) │                               │
+   *   ├──────────────┴───────────────────────────────┤
+   *   │  Footer + ContactStrip                       │
+   *   └──────────────────────────────────────────────┘
+   *
+   * Im Tool-Modus wird die Sidebar nicht ausgeblendet — der Anwender
+   * sieht das Live-Gewicht ständig, auch während er Toleranz oder
+   * Netto bedient.
+   *
+   * Mobile (≤ 800 px): Sidebar wird zum kompakten Header oben.
    */
   import { onMount, onDestroy } from 'svelte';
   import { route } from './lib/routing.svelte';
@@ -15,15 +24,18 @@
   import { api } from './lib/api';
   import { WaageStream } from './lib/stream';
   import { theme } from './lib/theme';
+  import { helpStore } from './lib/helpStore.svelte';
   import type { ConnectionState, HealthInfo, MesslogEntry } from './lib/types';
 
   import Topbar from './components/Topbar.svelte';
   import Footer from './components/Footer.svelte';
   import ContactStrip from './components/ContactStrip.svelte';
-  import Dashboard from './components/Dashboard.svelte';
+  import Sidebar from './components/Sidebar.svelte';
+  import CardGrid from './components/CardGrid.svelte';
   import ToolView from './components/ToolView.svelte';
   import HelpLayer from './components/HelpLayer.svelte';
   import Toast from './components/Toast.svelte';
+  import SearchPalette from './components/SearchPalette.svelte';
 
   let health = $state<HealthInfo | null>(null);
   let messlog = $state<MesslogEntry[]>([]);
@@ -44,9 +56,7 @@
   }
 
   onMount(() => {
-    // Theme initialisieren — Konstruktor setzt data-theme bereits
     theme.get();
-
     route.init();
 
     stream = new WaageStream(
@@ -60,6 +70,8 @@
     void refreshMesslog();
     healthTimer = window.setInterval(refreshHealth, 5000);
     messlogTimer = window.setInterval(refreshMesslog, 4000);
+
+    window.addEventListener('resize', () => helpStore.reflow());
   });
 
   onDestroy(() => {
@@ -68,17 +80,26 @@
     if (messlogTimer !== null) clearInterval(messlogTimer);
   });
 
+  // Hilfe-Stack ist URL-getrieben: route.helpOpen ist die Wahrheit,
+  // helpStore folgt; das macht Deeplinks wie ?help=count,glossary möglich.
+  $effect(() => { helpStore.syncOpenIds(route.helpOpen); });
+
   let connection = $derived(live.connection);
 </script>
 
 <div class="layout">
   <Topbar />
 
-  {#if route.mode === 'tool'}
-    <ToolView />
-  {:else}
-    <Dashboard {messlog} />
-  {/if}
+  <main class="body">
+    <Sidebar {messlog} />
+    <section class="right">
+      {#if route.mode === 'tool'}
+        <ToolView />
+      {:else}
+        <CardGrid />
+      {/if}
+    </section>
+  </main>
 
   <Footer {health} {connection} />
   <ContactStrip />
@@ -86,6 +107,7 @@
 
 <HelpLayer />
 <Toast />
+<SearchPalette />
 
 <style>
   .layout {
@@ -94,5 +116,30 @@
     width: 100%; height: 100%;
     min-height: 0;
     overflow: hidden;
+  }
+  .body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    overflow: hidden;
+  }
+  .right {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  @media (max-width: 800px) {
+    .body {
+      flex-direction: column;
+      gap: var(--sp-2);
+      padding: var(--sp-2);
+      overflow-y: auto;
+    }
+    .right { flex: 1 1 auto; }
   }
 </style>
