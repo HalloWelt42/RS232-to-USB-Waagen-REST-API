@@ -29,6 +29,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import sys
 from collections import deque
 from contextlib import asynccontextmanager, suppress
 from dataclasses import asdict
@@ -52,6 +53,7 @@ from .reader import (
 )
 from .samples import Sample, SampleStore, SampleStats
 from .simulator import SimulatedWaage
+from .tools import find_serial_port, list_serial_ports
 
 log = logging.getLogger(__name__)
 
@@ -319,12 +321,34 @@ def _origins() -> list[str]:
     return [o.strip() for o in raw.split(",") if o.strip()]
 
 
+def _resolve_port(name: str) -> str:
+    """Auto-Detection des seriellen Ports.
+
+    ``name='auto'`` (oder leer) sucht den ersten FTDI/USB-Serial-Adapter
+    auf der jeweiligen Plattform. Bei expliziten Pfaden wird der Wert
+    durchgereicht.
+    """
+    if not name or name == "auto":
+        found = find_serial_port()
+        if found:
+            log.info("Serieller Port automatisch erkannt: %s", found)
+            return found
+        log.warning("WAAGE_PORT=auto, aber kein Adapter gefunden — "
+                    "Reader wird in Reconnect-Schleife laufen")
+        # Plattform-Default als Fallback, damit Logmeldungen Sinn ergeben
+        if sys.platform == "darwin":
+            return "/dev/cu.usbserial-AUTO"
+        return "/dev/ttyUSB0"
+    return name
+
+
 def _make_reader_factory(port: str, baudrate: int, simulate: bool):
     """Liefert einen Callable, der den passenden Reader öffnet."""
     if simulate:
         log.info("Simulationsmodus aktiv — keine echte Waage am Port")
         return lambda: SimulatedWaage()
-    return lambda: Waage(port, baudrate)
+    resolved = _resolve_port(port)
+    return lambda: Waage(resolved, baudrate)
 
 
 def create_app(
@@ -336,6 +360,8 @@ def create_app(
 ) -> FastAPI:
 
     state = _State(history=history_size)
+    # Resolved Port für Diagnose-Anzeige (Health, root)
+    resolved_port = "simulator" if simulate else _resolve_port(port)
     reader_factory = _make_reader_factory(port, baudrate, simulate)
     samples_db = SampleStore(samples_path or ":memory:")
 
@@ -403,7 +429,7 @@ def create_app(
             reader_alive=state.reader_alive,
             last_seen=state.last_seen.isoformat(timespec="milliseconds")
                       if state.last_seen else None,
-            port=port,
+            port=resolved_port,
             baudrate=baudrate,
             uptime_seconds=round(uptime, 2),
         )
@@ -794,7 +820,7 @@ def _env_flag(name: str) -> bool:
 
 # Default-App-Instanz (für `uvicorn waage.api:app`)
 app = create_app(
-    port=os.getenv("WAAGE_PORT", DEFAULT_PORT),
+    port=os.getenv("WAAGE_PORT", "auto"),
     baudrate=int(os.getenv("WAAGE_BAUD", DEFAULT_BAUD)),
     history_size=int(os.getenv("WAAGE_HISTORY", 1000)),
     simulate=_env_flag("WAAGE_SIMULATE"),
