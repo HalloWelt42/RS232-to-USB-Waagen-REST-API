@@ -130,10 +130,19 @@
 
     <div class="card license">
       <h3>Lizenz</h3>
-      <p>{t('contact.license')}</p>
+      <p class="license-line">{t('contact.license')}</p>
+      <ul class="license-list">
+        <li><i class="fa-solid fa-check"></i> Private, nicht-kommerzielle Nutzung</li>
+        <li><i class="fa-solid fa-check"></i> Private Modifikation für eigenen Gebrauch</li>
+        <li><i class="fa-solid fa-check"></i> Pull Requests willkommen</li>
+        <li><i class="fa-solid fa-xmark warn"></i> Keine kommerzielle Nutzung</li>
+        <li><i class="fa-solid fa-xmark warn"></i> Keine Veröffentlichung modifizierter Versionen</li>
+      </ul>
       <p class="hint">
-        Quellcode: <a href="https://github.com/HalloWelt42/RS232-to-USB-Waagen-REST-API"
-                       target="_blank" rel="noopener">github.com/HalloWelt42</a>
+        Volltext im Repository: <a href="https://github.com/HalloWelt42/RS232-to-USB-Waagen-REST-API/blob/main/LICENSE"
+                                    target="_blank" rel="noopener">LICENSE</a>
+        · Quellcode: <a href="https://github.com/HalloWelt42/RS232-to-USB-Waagen-REST-API"
+                        target="_blank" rel="noopener">github.com/HalloWelt42</a>
       </p>
     </div>
   </div>
@@ -239,4 +248,20 @@
     margin: 0; font-size: var(--fs-xs); color: var(--fg-mute);
     line-height: 1.5;
   }
+
+  .license-line {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--fg);
+    line-height: 1.5;
+  }
+  .license-list {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: var(--fs-sm);
+    color: var(--fg-dim);
+  }
+  .license-list li { display: flex; align-items: center; gap: 8px; }
+  .license-list i { color: var(--green); width: 14px; text-align: center; }
+  .license-list i.warn { color: var(--red); }
 </style>
