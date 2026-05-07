@@ -65,25 +65,40 @@
   .meta { display: flex; align-items: center; gap: var(--sp-2); }
   .count { font-size: var(--fs-xs); color: var(--fg-mute); }
   .list {
-    list-style: none; margin: 0; padding: 0;
+    list-style: none; margin: 0; padding: 0 var(--sp-2) 0 0;  /* Luft zum Scrollbalken */
     overflow-y: auto;
     flex: 1 1 auto; min-height: 0;
   }
+  /* Tabellarische Ausrichtung mit drei festen Spalten:
+        | Zeit (links)  | Differenz (links)  | → Resultat (rechts) | */
   .row {
     display: grid;
-    grid-template-columns: max-content 1fr max-content;
-    gap: var(--sp-2);
+    grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: var(--sp-3);
     align-items: baseline;
-    padding: 7px 0;
+    padding: 7px var(--sp-2) 7px 4px;
     border-bottom: 1px solid var(--border);
   }
   .row:last-child { border-bottom: none; }
-  .ts { font-size: var(--fs-xs); color: var(--fg-mute); }
-  .diff { font-size: var(--fs-md); text-align: right; letter-spacing: 0.02em; }
+  .ts {
+    font-size: var(--fs-xs);
+    color: var(--fg-mute);
+    text-align: left;
+  }
+  .diff {
+    font-size: var(--fs-md);
+    text-align: left;
+    letter-spacing: 0.02em;
+  }
   .diff.plus { color: var(--green); }
   .diff.minus { color: var(--orange); }
   .diff.tare, .diff.start { color: var(--info-blue); font-size: var(--fs-sm); }
-  .resulting { font-size: var(--fs-xs); color: var(--fg-dim); text-align: right; }
+  .resulting {
+    font-size: var(--fs-xs);
+    color: var(--fg-dim);
+    text-align: right;
+    white-space: nowrap;
+  }
   .empty {
     padding: var(--sp-4); text-align: center;
     color: var(--fg-mute); font-size: var(--fs-sm);
