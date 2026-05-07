@@ -9,8 +9,35 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.9] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Tests (Lücken aus 0.5.0–0.5.7 geschlossen)
+- **11 neue Backend-Cases** in `tests/test_app_api.py`:
+  - `DELETE /app/messlog/{id}` mit existierender ID + 404-Fall.
+  - `DELETE /app/samples/{id}` 404-Fall.
+  - `DELETE /app/differenz/{id}` 404-Fall.
+  - `GET /app/samples/export?fmt={csv,tsv,json,md}` jeweils einzeln.
+  - `GET /app/samples/export?fmt=xml` → 422 (Validation).
+- **Konsistenz-Test Frontend ↔ Backend**: parst
+  `frontend/src/lib/api.ts` und prüft, dass jeder dort genutzte
+  DELETE-Pfad eine passende Route in der Backend-OpenAPI hat.
+  Fängt genau das Symptom „Löschen führt zu 404" ab, das auftritt,
+  wenn das laufende Backend hinter der Frontend-Version zurückbleibt
+  und neuere Endpunkte (z.B. Single-Delete im Messprotokoll, Multi-
+  Format-Export) noch nicht kennt.
+
+### Hintergrund
+Im Live-Betrieb wurde 404 beim Löschen einzelner Messprotokoll-
+Einträge beobachtet. Ursache: das laufende Backend steckte auf
+v0.4.5 fest (Symptom des in 0.5.6 gefixten egg-info-Bugs), während
+das Frontend seit 0.5.0 die neuen Routen aufrief. Die Test-Suite
+konnte das nicht fangen, weil es weder Cases für die Single-Delete-
+Routes noch einen Konsistenz-Check gegen die Frontend-API gab.
+Backend-Tests insgesamt: 175 → 186, alle grün.
+
+### Hinweis für Anwender
+Damit der Fix im Live-Betrieb ankommt, muss der laufende Backend-
+Prozess einmal neu gestartet werden — der seit 0.5.6 korrigierte
+Versions-Loader liest die zentrale VERSION-Datei sonst nicht neu
+aus dem Repo-Tree.
 
 ## [0.5.8] — 2026-05-08
 
