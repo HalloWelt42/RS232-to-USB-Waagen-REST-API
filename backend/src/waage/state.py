@@ -60,6 +60,8 @@ class AppState:
         self.baudrate: int = baudrate
         self.active_model_id: str = DEFAULT_MODEL_ID
         self.poll_interval_s: float = 0.5
+        # Quelle: 'live' liest von der Hardware, 'simulate' nutzt SimulatedWaage
+        self.source_mode: str = "live"
 
         # --- Tool-Module ---
         # Toleranz
@@ -135,6 +137,10 @@ class AppState:
                     self.poll_interval_s = float(data["poll_interval_s"])
                 if "baudrate" in data:
                     self.baudrate = int(data["baudrate"])
+                if "source_mode" in data:
+                    mode = str(data["source_mode"])
+                    if mode in ("live", "simulate"):
+                        self.source_mode = mode
                 log.info("Config geladen: %s", path)
         except Exception:  # noqa: BLE001
             log.exception("Config konnte nicht geladen werden: %s", path)
@@ -151,6 +157,7 @@ class AppState:
                         "active_model_id": self.active_model_id,
                         "poll_interval_s": self.poll_interval_s,
                         "baudrate": self.baudrate,
+                        "source_mode": self.source_mode,
                     },
                     indent=2,
                     ensure_ascii=False,

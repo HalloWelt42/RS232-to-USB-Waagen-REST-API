@@ -72,11 +72,20 @@ def _resolve_port(name: str) -> str:
     return name
 
 
-def _make_reader_factory(port: str, baudrate: int, simulate: bool):
-    if simulate:
-        log.info("Simulationsmodus aktiv — keine echte Waage am Port")
-        return lambda: SimulatedWaage()
-    return lambda: Waage(port, baudrate)
+def _make_reader_factory(port: str, baudrate: int, state: AppState):
+    """Erzeugt einen Reader passend zum aktuellen state.source_mode.
+
+    Wird bei jedem Reconnect erneut ausgewertet — so kann der Anwender
+    zwischen Live und Simulator umschalten, ohne das Backend neu zu
+    starten.
+    """
+    def factory():
+        if state.source_mode == "simulate":
+            log.info("Reader: Simulator")
+            return SimulatedWaage()
+        log.info("Reader: Live (%s @ %d Baud)", port, baudrate)
+        return Waage(port, baudrate)
+    return factory
 
 
 async def _reader_loop(reader_factory, state: AppState) -> None:
@@ -146,7 +155,10 @@ def create_app(
         count_templates_path=count_templates_path,
         config_dir=config_dir,
     )
-    reader_factory = _make_reader_factory(port, baudrate, simulate)
+    # Wenn beim Boot simulate=True übergeben wurde (env), den Mode setzen.
+    if simulate:
+        state.source_mode = "simulate"
+    reader_factory = _make_reader_factory(port, baudrate, state)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -195,6 +207,7 @@ def create_app(
             "scale_health":     "/scale/health",
             "scale_models":     "/scale/models",
             "scale_config":     "/scale/config",
+            "scale_source":     "/scale/source",
             "app_tolerance":    "/app/tolerance",
             "app_netto":        "/app/netto",
             "app_count":        "/app/count",

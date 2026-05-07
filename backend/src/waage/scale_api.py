@@ -67,6 +67,18 @@ class HealthOut(BaseModel):
     baudrate: int
     uptime_seconds: float
     version: str
+    source_mode: str         # 'live' oder 'simulate'
+    simulated: bool          # True wenn aktuell der SimulatedWaage-Reader läuft
+
+
+class SourceIn(BaseModel):
+    mode: str = Field(..., pattern="^(live|simulate)$")
+
+
+class SourceOut(BaseModel):
+    mode: str
+    port: str
+    simulated: bool
 
 
 class HistoryOut(BaseModel):
@@ -213,15 +225,50 @@ def build_scale_router(state: AppState, app_version: str) -> APIRouter:
     @router.get("/health", response_model=HealthOut)
     def health() -> HealthOut:
         uptime = (datetime.now() - state.started_at).total_seconds()
+        simulated = state.source_mode == "simulate"
         return HealthOut(
             ok=state.reader_alive and state.latest is not None,
             reader_alive=state.reader_alive,
             last_seen=state.last_seen.isoformat(timespec="milliseconds")
                       if state.last_seen else None,
-            port=state.resolved_port,
+            port="simulator" if simulated else state.resolved_port,
             baudrate=state.baudrate,
             uptime_seconds=round(uptime, 2),
             version=app_version,
+            source_mode=state.source_mode,
+            simulated=simulated,
+        )
+
+    # ---------------------- Source: Live / Simulate ----------------------
+    @router.get("/source", response_model=SourceOut)
+    def get_source() -> SourceOut:
+        simulated = state.source_mode == "simulate"
+        return SourceOut(
+            mode=state.source_mode,
+            port="simulator" if simulated else state.resolved_port,
+            simulated=simulated,
+        )
+
+    @router.put("/source", response_model=SourceOut)
+    def set_source(payload: SourceIn) -> SourceOut:
+        if payload.mode not in ("live", "simulate"):
+            raise HTTPException(400, detail="Modus muss 'live' oder 'simulate' sein")
+        if payload.mode != state.source_mode:
+            state.source_mode = payload.mode
+            state.persist_config()
+            log.info("Quelle gewechselt: %s", payload.mode)
+            # Aktuellen Reader schließen — der Reader-Loop reconnectet
+            # über die Factory, die das neue source_mode liest.
+            try:
+                if state.current_reader is not None:
+                    state.current_reader.close()
+            except Exception:  # noqa: BLE001
+                log.exception("Reader konnte nicht gewechselt werden")
+        simulated = state.source_mode == "simulate"
+        return SourceOut(
+            mode=state.source_mode,
+            port="simulator" if simulated else state.resolved_port,
+            simulated=simulated,
         )
 
     # ---------------------- Modelle / Konfig ----------------------
