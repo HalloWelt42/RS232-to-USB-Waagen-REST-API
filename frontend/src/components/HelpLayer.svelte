@@ -34,15 +34,23 @@
   // PWA-konformer Cross-Link-Handler: fängt Klicks auf .xlink-Buttons
   // dokumentweit ab, sodass Klicks innerhalb der Help-Fenster (egal in
   // welchem Container) zuverlässig an die Route weitergegeben werden.
+  //
+  // Mobile-Verhalten: das Hilfe-Fenster läuft als Vollbild-Modal. Wenn
+  // der Anwender einen Tool-Cross-Link tippt, blendet das Modal sonst
+  // weiter über dem Werkzeug — wir schließen die offenen Hilfen
+  // deshalb auf Mobile beim Tool-Sprung.
   function onDocumentClick(ev: MouseEvent): void {
-    const t = ev.target as HTMLElement | null;
-    if (!t) return;
-    const btn = t.closest('button.xlink') as HTMLButtonElement | null;
+    const tgt = ev.target as HTMLElement | null;
+    if (!tgt) return;
+    const btn = tgt.closest('button.xlink') as HTMLButtonElement | null;
     if (!btn) return;
     ev.preventDefault();
     const tool = btn.dataset.routeTool;
     const help = btn.dataset.routeHelp;
+    const isMobile = typeof window !== 'undefined'
+      && window.matchMedia('(max-width: 900px)').matches;
     if (tool) {
+      if (isMobile) route.setHelp([]);
       route.go(tool as ToolKey);
     } else if (help) {
       route.openHelp(help as HelpId);
