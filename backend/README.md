@@ -138,6 +138,60 @@ Crossover liefert keine Daten in beide Richtungen — laut G&G-Anleitung
 Kapitel 6: *"Es ist zwingend erforderlich, dass ein überkreuztes
 NULLMODEMKABEL oder ein entsprechender Adapter verwendet wird."*
 
+### Variante A: USB-RS232-Adapter mit Nullmodem-Adapter
+
+```
+Pi USB --> [USB-RS232-Adapter] --> [Nullmodem-Adapter] --> Waage DB9
+```
+
+Standardweg, einfache Beschaffung (3-5 EUR Crossover-Adapter dazu).
+Schnittstelle erscheint als `/dev/ttyUSB0`, `WAAGE_PORT=/dev/ttyUSB0`.
+
+### Variante B: MAX3232-Modul am GPIO
+
+```
+Pi GPIO --> [MAX3232 Pegelwandler] --> Waage DB9
+                  (Crossover frei verkabelt)
+```
+
+Günstiger (3-5 EUR Modul) und löst das Nullmodem-Problem automatisch,
+weil die drei Drähte zwischen MAX3232 und DB9 direkt überkreuzt
+verlötet werden.
+
+**Verkabelung Pi -> MAX3232:**
+
+| Pi-Pin | Funktion | -> | MAX3232 |
+|--------|----------|-----|---------|
+| 1      | 3,3 V    | --> | VCC     |
+| 6      | GND      | --> | GND     |
+| 8      | TXD (GPIO 14) | --> | TIN (T1IN)  |
+| 10     | RXD (GPIO 15) | --> | ROUT (R1OUT) |
+
+**Verkabelung MAX3232 -> Waage DB9 (mit fester Crossover-Verdrahtung):**
+
+| MAX3232 | -> | Waage DB9 |
+|---------|-----|-----------|
+| TOUT (T1OUT) | --> | Pin 2 (RxD) |
+| RIN (R1IN)   | --> | Pin 3 (TxD) |
+| GND          | --> | Pin 5 (GND) |
+
+Pi-Konfiguration einmalig:
+
+```bash
+sudo raspi-config
+# 3 Interface Options -> I6 Serial Port
+# "Login shell over serial?"          -> NEIN
+# "Serial port hardware enabled?"     -> JA
+sudo reboot
+```
+
+Schnittstelle erscheint als `/dev/serial0` (Symlink auf `/dev/ttyAMA0`
+oder `/dev/ttyS0` je nach Pi-Modell). Backend starten mit
+`WAAGE_PORT=/dev/serial0`.
+
+WARNUNG: Niemals direkt RS232-Pegel (+/-12 V) an die GPIO-Pins anlegen,
+das zerstört den Pi. Der MAX3232 ist zwingend erforderlich.
+
 ## Sniffer
 
 Wenn unklar ist, ob die Waage überhaupt antwortet (z.B. nach Hardware-
