@@ -45,6 +45,7 @@
   function takeOver(): void {
     if (weight === null) return;
     sollText = weight.toFixed(1);
+    toast.show(t('toast.valueTakenOver'), 'ok');
   }
 </script>
 
