@@ -9,8 +9,32 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.3.3] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Neu
+- **Behälter-Bibliothek:** häufig benutzte Gefäße einmal anlegen
+  und beim Wiegen aus einer Liste wählen — Default „Kein Behälter
+  (0 g)". REST-Endpoints unter `/app/containers` mit CRUD,
+  SQLite-persistent, alphabetisch sortiert. Eingebaut als
+  ContainerPicker in NettoPanel (setzt Software-Tara) und
+  DifferenzPanel (stapelt direkt als neue Schicht).
+- Toast-Bestätigung beim „Aktuellen Wert übernehmen"-Klick in
+  WiegenPanel und TolerancePanel.
+
+### Geändert
+- **Zahleneingabe-Felder rechtsbündig** in der gesamten App
+  (`inputmode=decimal/numeric/number`) — passend zur üblichen
+  Konvention für Mess- und Zahlenwerte.
+- **Toleranz-Form** kompakter: drei-Spalten-Layout mit Sollwert
+  breiter, Tol-/Tol+ schmaler; keine überquellenden Zahlenfelder.
+- **Mobile + Tool-Modus:** Sidebar (LiveWaage + MessLog)
+  ausgeblendet, weil die Werkzeug-Panels den Live-Wert eh
+  prominent zeigen — keine doppelte Wert-Anzeige mehr.
+- App-Body mit zusätzlichem padding-top für saubere Abgrenzung
+  zur Topbar.
+
+### Tests
+- Backend: 15 neue Cases (8 ContainerStore + 7 REST-Endpoints) —
+  138 Tests gesamt grün.
+- Frontend weiterhin 40 Tests grün.
 
 ## [0.3.2] — 2026-05-07
 
