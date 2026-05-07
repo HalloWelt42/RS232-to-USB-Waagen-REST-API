@@ -9,8 +9,38 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.7] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben (HTML-Spec-Konformität)
+- **Kein Flow-Content mehr in `<button>` und `<label>`** — IDE-LSP
+  meldete „Element div is not allowed here", `npm run check`
+  (svelte-check 4.x) lief sauber durch, fing diese Verstöße aber
+  nicht. Per Skript-Audit über alle 211 Svelte-Files **11 echte
+  Stellen** gefunden und gefixt:
+  - `<h3>`/`<p>` direkt in `<button>` in `ActionCard.svelte` und
+    `panels/HelpPanel.svelte` — durch `<span class="title|desc|preview">`
+    mit `display: block` ersetzt.
+  - `<div class="row-flex">`/`<div class="row">` als Layout-Wrapper
+    direkt in `<label>` in ContainerPicker, NettoPanel,
+    TolerancePanel, CountPanel (zwei Stellen), DifferenzPanel und
+    WiegenPanel — durch `<span>` ersetzt; CSS hat schon `display: flex`
+    auf den Klassen.
+- Subtile Browser-Bugs damit weg: bei Flow-Content im `<button>`
+  schließt der Parser den Button vorzeitig (kaputte Tab-Navigation,
+  Hit-Testing-Probleme); bei `<div>` im `<label>` ging die
+  Klick-auf-Label-fokussiert-Input-Funktion verloren.
+- Audit-Skript läuft jetzt auf 0 Verstöße über alle Svelte-Files.
+
+### Klargestellt (kein Code-Bug)
+Folgende IDE-LSP-Meldungen sind keine echten Fehler — `npm run check`
+stützt das mit 0 Errors / 0 Warnings:
+- „Unrecognized option 'runes'" — in Svelte 5 Sprachstandard, die
+  `compilerOptions.runes: true` ist optional gültig.
+- „Cannot find name '$state' / '$derived'" — Runes sind ambient
+  globals (Quelle: `node_modules/svelte/types/index.d.ts`); LSP-
+  Cache-Problem, Reload des Sprachservers genügt.
+- „onclick does not exist" — Svelte 5 schreibt `onclick={...}`
+  offiziell als Property statt `on:click`.
+- Spell-/Grammatik-Hinweise (typo, Anführungszeichen-Paare,
+  Komma-Empfehlungen) — Tooling-spezifisch.
 
 ## [0.5.6] — 2026-05-07
 
