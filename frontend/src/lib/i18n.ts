@@ -1,30 +1,11 @@
 /**
- * Mini-i18n: aktuell nur Deutsch.
- * Vorgesehen für späteres Lazy-Loading weiterer Sprachen wie in
- * RadioHub. Bis dahin: ``t('bereich.key')`` mit Path-Lookup.
+ * Re-Export-Schicht. Die echte Implementierung liegt in
+ * `i18n.svelte.ts` mit Svelte-5-Runes — alle bestehenden Importe
+ * `import { t } from '../lib/i18n'` funktionieren weiter.
  */
-import de from '../locales/de';
+export { t, i18n, type Lang } from './i18n.svelte';
 
-type AnyDict = { [k: string]: AnyDict | string | ((...args: unknown[]) => string) };
-
-const locales: Record<string, AnyDict> = { de: de as unknown as AnyDict };
-let current: AnyDict = locales.de;
-
-export function t(key: string, ...args: unknown[]): string {
-  const path = key.split('.');
-  let node: AnyDict | string | ((...args: unknown[]) => string) | undefined = current;
-  for (const p of path) {
-    if (node && typeof node === 'object' && p in (node as AnyDict)) {
-      node = (node as AnyDict)[p];
-    } else {
-      return key;
-    }
-  }
-  if (typeof node === 'function') return node(...args);
-  if (typeof node === 'string') return node;
-  return key;
-}
-
-export function setLanguage(lang: string): void {
-  if (locales[lang]) current = locales[lang];
+export function setLanguage(lang: 'de' | 'en'): void {
+  // Lazy-Import vermeidet Zyklus mit Komponenten, die i18n bereits laden.
+  void import('./i18n.svelte').then(m => m.i18n.set(lang));
 }

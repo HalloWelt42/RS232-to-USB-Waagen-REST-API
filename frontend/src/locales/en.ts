@@ -1,0 +1,166 @@
+/**
+ * English translations. Same key tree as `de.ts`.
+ *
+ * The German file is the master; whenever a new key is added there
+ * it should be added here too. Missing keys fall back to the key
+ * itself (handled in i18n.ts).
+ */
+
+const en = {
+  app: {
+    title: 'Waage',
+    subtitle: 'Precision scales over RS232',
+    apiDocs: 'API docs',
+  },
+  topbar: {
+    glossary: 'Glossary',
+    info: 'Information and help',
+    donate: 'Thanks — support development',
+    themeAuto: 'Display mode: Automatic',
+    themeLight: 'Display mode: Light',
+    themeDark: 'Display mode: Dark',
+    languageDe: 'Sprache: Deutsch',
+    languageEn: 'Language: English',
+    search: 'Search (full-text in help and tools)',
+  },
+  tools: {
+    wiegen: 'Weighing',
+    netto: 'Tare / Net',
+    count: 'Piece counting',
+    tolerance: 'Quality control',
+    samples: 'Capture values',
+    differenz: 'Differential weighing',
+    help: 'Help and glossary',
+    settings: 'Settings',
+    donate: 'Thanks',
+  },
+  toolsShort: {
+    wiegen: 'Weigh',
+    netto: 'Net',
+    count: 'Count',
+    tolerance: 'QC',
+    samples: 'Capture',
+    differenz: 'Diff',
+    help: 'Help',
+    settings: 'Settings',
+    donate: 'Thanks',
+  },
+  toolsDescription: {
+    wiegen: 'Read live value, hold, copy.',
+    netto: 'Freeze tare, show net weight.',
+    count: 'Determine quantity from piece weight.',
+    tolerance: 'Target with traffic-light green/yellow/red.',
+    samples: 'Values with label and CSV export.',
+    differenz: 'Stack multiple tare layers, content = gross − Σ.',
+    help: 'Manual, examples, terms.',
+    settings: 'Model, theme, port, license.',
+    donate: 'Support development.',
+  },
+  toolsOriginal: {
+    wiegen: 'WEIGHING',
+    netto: 'TARA / NETTO',
+    count: 'COUNTING',
+    tolerance: 'QC / TOLERANCE',
+    samples: 'SAMPLES',
+    differenz: 'MULTI-TARE',
+    help: 'HELP',
+    settings: 'SETTINGS',
+    donate: 'DONATE',
+  },
+  commands: {
+    tare: 'Set to zero',
+    tareTooltip: 'Tare — set scale display to zero (RS232: ESC t)',
+    unit: 'Unit',
+    unitTooltip: 'Switch unit — g, kg, oz, lb, ct (RS232: ESC s)',
+    light: 'Backlight',
+    lightTooltip: 'Display backlight on/off (RS232: ESC u)',
+  },
+  status: {
+    live: 'Live',
+    connecting: 'Connecting',
+    closed: 'Disconnected',
+    error: 'Error',
+    stable: 'STABLE',
+    unstable: 'UNSTABLE',
+    readerActive: 'Reader active',
+    readerInactive: 'Reader off',
+    port: 'Port',
+    baudrate: 'Baudrate',
+    uptime: 'Uptime',
+    version: 'Version',
+  },
+  donate: {
+    title: 'Support Waage',
+    intro:
+      'Open source, but intended exclusively for private, non-commercial ' +
+      'use. If you like the application I appreciate a small contribution — ' +
+      'either via Ko-fi or one of the crypto addresses.',
+    kofi: 'Support on Ko-fi',
+    orCrypto: 'or via cryptocurrency',
+    addressCopy: 'Copy address',
+    addressCopied: 'Copied',
+    thanks: 'Thank you for your support',
+    addressCopyError: 'Copy failed',
+    qrLabel: 'QR code for the address',
+    selectCrypto: 'Pick a currency — QR code and address appear below.',
+  },
+  contact: {
+    label: 'Developer contact for workflow integration',
+    intro: 'Want to integrate this software into your workflow? Drop me a line.',
+    license: 'CC BY-NC-ND 4.0 + additional terms — Private use. Copyright 2026 HalloWelt42',
+    licenseShort: 'Open source, private use only — CC BY-NC-ND 4.0',
+  },
+  disclaimer: {
+    title: 'Disclaimer',
+    short: 'No warranty · No liability · Not legal-for-trade',
+    body:
+      'This software is provided without warranty as to accuracy, completeness ' +
+      'or timeliness. It is not a legal-for-trade measurement system; for sale ' +
+      'by weight, official quantity declarations or medical dosing with ' +
+      'statutory tolerances it may not be used. To the extent permitted by ' +
+      'law, any liability for indirect damages, lost profits or loss of data ' +
+      'is excluded. The user is responsible for proper application and for ' +
+      'regularly verifying the scale’s accuracy with calibrated reference ' +
+      'weights.',
+    fullTextLink: 'Full text: DISCLAIMER.md in the repository',
+  },
+  toast: {
+    valueCopied: 'Value copied',
+    valueCopiedG: (g: string) => `${g} copied`,
+    jsonCopied: 'JSON copied',
+    addressCopied: 'Address copied',
+    copyError: 'Copy not possible',
+    settingSaved: 'Setting saved',
+    error: 'Error',
+  },
+  general: {
+    back: 'Back',
+    close: 'Close',
+    save: 'Save',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    activate: 'Activate',
+    deactivate: 'Deactivate',
+    apply: 'Apply',
+    confirm: 'Confirm',
+    yes: 'Yes',
+    no: 'No',
+    loading: 'Loading…',
+  },
+  units: {
+    pieces: 'pieces',
+    grams: 'grams',
+    kilograms: 'kilograms',
+  },
+  search: {
+    placeholder: 'Search help, tools, glossary…',
+    noResults: 'No matches',
+    hintTool: 'Tool',
+    hintHelp: 'Help',
+    hintTerm: 'Term',
+    open: 'Press Enter to open',
+    keys: 'Keyboard: ↑/↓ navigate · Enter open · Esc close',
+  },
+} as const;
+
+export default en;

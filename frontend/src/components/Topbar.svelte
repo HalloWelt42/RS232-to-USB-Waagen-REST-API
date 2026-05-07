@@ -1,13 +1,15 @@
 <script lang="ts">
   import { route } from '../lib/routing.svelte';
   import { t } from '../lib/i18n';
-  import { helpStore } from '../lib/helpStore.svelte';
+  import { searchStore } from '../lib/searchStore.svelte';
   import ThemeToggle from './ThemeToggle.svelte';
+  import LanguageToggle from './LanguageToggle.svelte';
   import HelpButton from './HelpButton.svelte';
 
   function backToDashboard(): void { route.go(null); }
   function openDonate(): void { route.go('donate'); }
-  function openGlossary(): void { helpStore.open('glossary'); }
+  function openGlossary(): void { route.openHelp('glossary'); }
+  function openSearch(): void { searchStore.show(); }
 
   let isTool = $derived(route.mode === 'tool');
   let activeTitle = $derived.by(() => {
@@ -33,8 +35,14 @@
   </div>
 
   <div class="actions">
+    <button class="hdr-btn search-btn" onclick={openSearch}
+            title={t('topbar.search')} aria-label={t('topbar.search')}>
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <span class="kbd">⌘K</span>
+    </button>
+    <LanguageToggle />
     <ThemeToggle />
-    <a class="hdr-btn" href="/docs" target="_blank" rel="noopener" title="API-Doku öffnen">
+    <a class="hdr-btn" href="/docs" target="_blank" rel="noopener" title={t('app.apiDocs')}>
       <i class="fa-solid fa-code"></i> {t('app.apiDocs')}
     </a>
     <button class="hdr-btn icon-only" onclick={openGlossary}
@@ -71,4 +79,17 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .actions { display: flex; align-items: center; gap: var(--sp-2); }
+  .search-btn { gap: 6px; }
+  .kbd {
+    font-family: var(--num);
+    font-size: 10px;
+    color: var(--fg-mute);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: 4px;
+  }
+  @media (max-width: 800px) {
+    .kbd { display: none; }
+  }
 </style>
