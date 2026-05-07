@@ -7,6 +7,41 @@ Datumsformat: ISO 8601 (JJJJ-MM-TT). Quelle der Wahrheit für die aktuelle
 Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 `package.json` werden daraus synchronisiert.
 
+## [0.3.1] — 2026-05-07
+
+### Geändert
+- **Routing ohne Raute:** History-API statt `#/...`. Pfade jetzt
+  `/`, `/<tool>` mit optionalem `?help=<id1>,<id2>`. Deeplinks aus
+  Mails/Chats funktionieren — `/count?help=count` öffnet Stückzählung
+  und das Hilfe-Fenster gleichzeitig.
+- **Sidebar permanent links:** LiveWaage und Messprotokoll sind im
+  Desktop dauerhaft sichtbar — auch während ein Werkzeug aktiv ist.
+  Mobile zeigt sie weiter als kompakten Header oben.
+- **Lizenz präzisiert:** Texte in App und Mockup auf
+  `CC BY-NC-ND 4.0 + Zusatzbestimmungen (private Nutzung)` korrigiert
+  (war fälschlich „MIT — Private Nutzung"); LICENSE-Datei ergänzt.
+
+### Neu
+- Sprachflagge im Header — DE/EN umschaltbar, persistent in
+  localStorage; Browser-Sprache wird beim ersten Start auto-erkannt.
+  Englische Locale komplett mit allen Schlüsseln.
+- Globale Volltextsuche über Hilfe-Inhalte, Werkzeug-Namen und
+  Glossar-Begriffe. Lupe in Topbar plus `Cmd/Ctrl+K`.
+  Tastatur-Navigation ↑/↓/Enter/Esc.
+- Hilfe-Fenster werden beim Öffnen, beim Speichern und bei
+  Viewport-Änderungen automatisch in den sichtbaren Bereich
+  geclamped — nichts verschwindet mehr hinter dem Rand.
+- Hilfe-Stack als URL-Querystring `?help=...` mit Komma-Trennung —
+  mehrere Hilfen gleichzeitig deeplink-fähig.
+- `DISCLAIMER.md` im Repo-Wurzel mit rechtssicherem Standard-Text
+  (deutsch + englisch): keine Gewähr, keine Haftung, nicht eichfähig.
+- Disclaimer-Karte im Settings-Tab und eigener Hilfe-Eintrag.
+- WebSocket über `/api/scale/stream` — nginx-Config mit
+  `Connection`-Map für sauberen Upgrade-Header.
+
+### Entfernt
+- `Dashboard.svelte` ersetzt durch `Sidebar.svelte` + `CardGrid.svelte`.
+
 ## [0.3.0] — 2026-05-07
 
 ### Geändert (Breaking)
