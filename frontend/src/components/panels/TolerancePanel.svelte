@@ -155,6 +155,7 @@
   .lamp {
     width: 100%; max-width: 480px;
     border-radius: var(--radius-soft);
+    container-type: inline-size;
     padding: var(--sp-5) var(--sp-4);
     text-align: center;
     border: 2px solid var(--border);
@@ -164,9 +165,11 @@
   }
   .lamp .main {
     display: block;
-    font-size: var(--fs-xxxl);
+    /* Skaliert mit Container, max. 67 px — passt auch -30.000,0 g rein. */
+    font-size: clamp(36px, 13cqi, 67px);
     line-height: 1;
     color: var(--fg-dim);
+    overflow: hidden;
   }
   .lamp .main :global(.stable-value) { color: inherit; }
   .lamp .dev {

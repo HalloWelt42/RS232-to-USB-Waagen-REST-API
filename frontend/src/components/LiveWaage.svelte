@@ -98,6 +98,9 @@
     box-shadow: var(--shadow);
     flex: 0 0 auto;
     transition: border-color 0.3s;
+    /* Container-Query-Basis, damit das Display sich an die Sidebar-
+       Breite anpasst (280–400 px). */
+    container-type: inline-size;
   }
   .live-card.stable { border-color: var(--green); }
   .topline {
@@ -130,10 +133,14 @@
   .display:disabled { cursor: default; }
   .value {
     display: block;
-    font-size: 56px;
+    /* Schrift adaptive zur Container-Breite — bei einer 280-px-Sidebar
+       wird sie etwa 36 px, bei einer 400-px-Sidebar 56 px. */
+    font-size: clamp(28px, 14cqi, 56px);
     color: var(--green);
     line-height: 1;
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
+    overflow: hidden;
+    text-overflow: clip;
   }
   .value :global(.stable-value) { color: inherit; }
   .stable .value { color: var(--green); }

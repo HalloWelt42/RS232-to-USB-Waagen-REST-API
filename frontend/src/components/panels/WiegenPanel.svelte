@@ -153,6 +153,7 @@
     text-align: center;
     cursor: copy;
     box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+    container-type: inline-size;
   }
   :global(:root[data-theme="light"]) .display {
     background: rgba(0,0,0,0.04);
@@ -161,10 +162,13 @@
   .display:hover:not(:disabled) { background: rgba(0,0,0,0.32); }
   .value {
     display: block;
-    font-size: var(--fs-xxxl);
+    /* Schrift skaliert mit Container — bei einer 480-px-Display-Karte
+       wird sie ~62 px, auf schmaleren Containern entsprechend kleiner. */
+    font-size: clamp(36px, 13cqi, 67px);
     color: var(--green);
     line-height: 1;
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
+    overflow: hidden;
   }
   .value :global(.stable-value) { color: inherit; }
   .hint {

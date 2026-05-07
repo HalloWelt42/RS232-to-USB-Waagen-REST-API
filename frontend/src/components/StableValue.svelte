@@ -51,17 +51,16 @@
     font-family: var(--mono-display);
     font-weight: 700;
     font-variant-numeric: tabular-nums lining-nums slashed-zero;
-    font-feature-settings: 'tnum' 1, 'lnum' 1, 'zero' 1, 'cv01' 1, 'cv02' 1;
-    letter-spacing: 0.02em;
+    font-feature-settings: 'tnum' 1, 'lnum' 1, 'zero' 1;
+    letter-spacing: 0;
+    /* Im Container nicht über die Breite schlagen */
+    max-width: 100%;
   }
-  /* Ziffern und Trenner als gleichbreite Zellen — selbst bei
-     Schriftarten ohne perfekt feste Glyph-Breite. */
+  /* JetBrains Mono ist bereits monospaced — keine zusätzlichen
+     min-widths nötig, dadurch passt auch ein langes
+     „-30.000,0 g" auf eine 280-px-Sidebar. */
   .seg { display: inline-block; }
-  .seg-digit, .seg-sep, .seg-decimal {
-    text-align: center;
-    min-width: 0.65em;
-  }
-  .seg-sign { min-width: 0.5em; text-align: right; }
-  .seg-unit { padding-left: 0.4em; min-width: 1.6em; text-align: left; }
+  .seg-sign { padding-right: 0.05em; }
+  .seg-unit { padding-left: 0.35em; }
   .ghost { opacity: 0.1; }       /* 90 % transparent */
 </style>
