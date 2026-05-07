@@ -199,7 +199,11 @@
 
   .actions { display: flex; gap: var(--sp-2); }
   .actions button {
-    flex: 1; min-height: var(--tap);
+    flex: 1 1 0;
+    min-width: 0;                 /* Schrumpfen erlauben — sonst läuft */
+                                  /* z.B. „Beleuchtung" über den rechten Rand */
+    min-height: var(--tap);
+    padding: 6px var(--sp-2);
     background: var(--bg-card-2);
     border: 1px solid var(--border);
     color: var(--fg);
@@ -210,6 +214,12 @@
     cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
     gap: 6px;
+    /* Lange Wörter an Zeilenbruch erlauben — „Auf Null setzen" landet
+       z.B. auf zwei Zeilen, statt aus der Karte zu laufen. */
+    text-align: center;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .actions button:hover:not(:disabled) {
     border-color: var(--accent); color: var(--accent);
