@@ -20,6 +20,17 @@
   let label = $state('');
   let note = $state('');
 
+  // Auto-Capture-Modi:
+  //   manual    — Klick erfasst sofort (Default)
+  //   half-auto — Klick „auf nächsten Stable" wartet bis stable + erfasst
+  //   auto      — automatisch erfassen, sobald nach unstable wieder stable
+  type Mode = 'manual' | 'half-auto' | 'auto';
+  let mode = $state<Mode>('manual');
+
+  let waitingForStable = $state(false);
+  let lastAutoCapture: number | null = $state(null);   // letzter erfasster Wert
+  let autoArmed = $state(false);                       // erst nach unstable wieder armed
+
   async function refresh(): Promise<void> {
     try {
       const list = await api.app.samplesList(session, 500);
@@ -32,12 +43,55 @@
     busy = true;
     try {
       await api.app.samplesAdd(label, note, session);
-      toast.show('Wert erfasst', 'ok');
+      toast.show(t('samples.captured'), 'ok');
       label = ''; note = '';
       await refresh();
     } catch (e) { toast.show((e as Error).message, 'error'); }
     finally { busy = false; }
   }
+
+  /** Halb-Auto-Modus: bis zum nächsten Stable-Wert warten und dann erfassen. */
+  function armHalfAuto(): void {
+    if (!live.reading) return;
+    if (live.reading.stable) {
+      // Schon stable — direkt erfassen
+      void add();
+    } else {
+      waitingForStable = true;
+      toast.show(t('samples.waitingForStable'), 'ok');
+    }
+  }
+
+  // Reaktive Auto-Capture-Logik
+  $effect(() => {
+    const r = live.reading;
+    if (!r) return;
+
+    if (mode === 'half-auto' && waitingForStable && r.stable) {
+      waitingForStable = false;
+      void add();
+      return;
+    }
+
+    if (mode === 'auto') {
+      // Bei jeder Unstable-Phase wird die „autoArmed"-Markierung gesetzt;
+      // sobald der nächste Stable-Wert kommt, der sich vom letzten erfassten
+      // Wert unterscheidet, wird automatisch erfasst.
+      if (!r.stable) {
+        autoArmed = true;
+        return;
+      }
+      if (r.stable && autoArmed && r.weight_g !== lastAutoCapture) {
+        autoArmed = false;
+        lastAutoCapture = r.weight_g;
+        void add();
+      }
+    } else {
+      // Andere Modi: Tracking zurücksetzen, damit beim Wechsel sauber startet
+      autoArmed = false;
+      lastAutoCapture = null;
+    }
+  });
 
   async function del(id: number): Promise<void> {
     busy = true;
@@ -85,12 +139,38 @@
       <input type="text" placeholder="kurze Bemerkung" bind:value={note} />
     </label>
 
-    <div class="actions-row">
-      <div class="live-info">Aktueller Live-Wert: <span class="num">{formatGrams(liveGross)}</span></div>
-      <button class="btn-primary" onclick={add} disabled={busy || liveGross === null}>
-        <i class="fa-solid fa-arrow-down-to-bracket"></i>
-        Aktuellen Wert erfassen
+    <div class="modes" role="radiogroup" aria-label={t('samples.modeLabel')}>
+      <button class:active={mode==='manual'}     onclick={() => mode='manual'}>
+        <i class="fa-solid fa-hand-pointer"></i> {t('samples.modeManual')}
       </button>
+      <button class:active={mode==='half-auto'}  onclick={() => mode='half-auto'}>
+        <i class="fa-solid fa-stopwatch"></i> {t('samples.modeHalfAuto')}
+      </button>
+      <button class:active={mode==='auto'}       onclick={() => mode='auto'}>
+        <i class="fa-solid fa-bolt"></i> {t('samples.modeAuto')}
+      </button>
+    </div>
+
+    <div class="actions-row">
+      <div class="live-info">
+        {t('samples.liveValue')}: <span class="num">{formatGrams(liveGross)}</span>
+        {#if mode === 'auto'}
+          · <span class="auto-hint">{t('samples.autoHint')}</span>
+        {:else if mode === 'half-auto' && waitingForStable}
+          · <span class="auto-hint">{t('samples.waitingForStable')}</span>
+        {/if}
+      </div>
+      {#if mode === 'half-auto'}
+        <button class="btn-primary" onclick={armHalfAuto} disabled={busy || liveGross === null}>
+          <i class="fa-solid fa-stopwatch"></i>
+          {t('samples.captureOnStable')}
+        </button>
+      {:else if mode === 'manual'}
+        <button class="btn-primary" onclick={add} disabled={busy || liveGross === null}>
+          <i class="fa-solid fa-arrow-down-to-bracket"></i>
+          {t('samples.captureNow')}
+        </button>
+      {/if}
     </div>
   </div>
 
@@ -165,6 +245,24 @@
     gap: var(--sp-2); flex-wrap: wrap;
   }
   .live-info { color: var(--fg-dim); font-size: var(--fs-sm); }
+  .auto-hint { color: var(--accent); font-style: italic; }
+  .modes { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+  .modes button {
+    flex: 1 1 auto;
+    min-height: var(--tap);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--fg-dim);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px;
+    font-size: var(--fs-sm);
+  }
+  .modes button.active {
+    color: var(--accent); border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
   .actions-row .btn-primary {
     display: inline-flex; align-items: center; gap: 6px;
   }
