@@ -25,17 +25,12 @@ export default defineConfig({
     strictPort: false,
     cors: true,
     proxy: {
-      // REST-Endpoints
+      // REST-Endpoints + WebSocket (/api/scale/stream wird mit ws upgegradet)
       '/api': {
         target: BACKEND,
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-      // WebSocket
-      '/stream': {
-        target: BACKEND.replace(/^http/, 'ws'),
-        changeOrigin: true,
         ws: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
       // Swagger UI und OpenAPI-Schema direkt vom Backend
       '/docs': {
