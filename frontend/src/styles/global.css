@@ -142,7 +142,7 @@ button:focus-visible {
 }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 
-input[type="text"], input[type="number"] {
+input[type="text"], input[type="number"], input[type="search"] {
   font-family: var(--num);
   font-variant-numeric: tabular-nums lining-nums slashed-zero;
   font-size: var(--fs-sm);
@@ -155,6 +155,18 @@ input[type="text"], input[type="number"] {
   font-weight: 500;
 }
 input:focus { outline: none; border-color: var(--accent); }
+
+/* Zahleneingabe-Felder grundsätzlich rechtsbündig — egal wo in der App.
+   Kennzeichnung über inputmode oder explizite Klassen. Text-Inputs
+   für Sessions/Labels/etc. bleiben linksbündig (Default). */
+input[inputmode="decimal"],
+input[inputmode="numeric"],
+input[type="number"],
+input.num-input {
+  text-align: right;
+  font-variant-numeric: tabular-nums lining-nums slashed-zero;
+  letter-spacing: 0.02em;
+}
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }

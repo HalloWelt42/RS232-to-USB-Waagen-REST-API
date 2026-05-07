@@ -97,8 +97,8 @@
 <div class="layout">
   <Topbar />
 
-  <main class="body">
-    <Sidebar {messlog} />
+  <main class="body" data-mode={route.mode}>
+    <div class="sidebar-wrap"><Sidebar {messlog} /></div>
     <section class="right">
       {#if route.mode === 'tool'}
         <ToolView />
@@ -141,6 +141,9 @@
     display: flex; flex-direction: column;
     overflow: hidden;
   }
+  .sidebar-wrap {
+    display: contents;       /* Sidebar bleibt direktes Flex-Kind */
+  }
 
   @media (max-width: 800px) {
     .body {
@@ -150,5 +153,9 @@
       overflow-y: auto;
     }
     .right { flex: 1 1 auto; }
+    /* Auf Mobile im Tool-Modus die LiveWaage/MessLog-Sidebar
+       ausblenden — die Werkzeug-Panels zeigen den Live-Wert eh
+       prominent. Verhindert die doppelte Anzeige des Wägewerts. */
+    .body[data-mode="tool"] .sidebar-wrap { display: none; }
   }
 </style>

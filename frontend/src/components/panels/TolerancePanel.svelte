@@ -46,7 +46,9 @@
   }
 
   function takeOver(): void {
-    if (live.reading) targetText = live.reading.weight_g.toFixed(1);
+    if (!live.reading) return;
+    targetText = live.reading.weight_g.toFixed(1);
+    toast.show(t('toast.valueTakenOver'), 'ok');
   }
 
   // Live-Status berechnen
@@ -192,19 +194,28 @@
     max-width: 480px; margin-inline: auto; width: 100%;
     display: flex; flex-direction: column; gap: var(--sp-3);
   }
+  /* Drei Spalten mit kompakten Zahleneingaben — Sollwert bekommt
+     mehr Platz wegen Übernehmen-Knopf, Tol- und Tol+ kompakt. */
   .grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--sp-2);
+    align-items: end;
   }
   label {
     display: flex; flex-direction: column; gap: 6px;
-    font-size: var(--fs-sm); color: var(--fg-dim);
+    font-size: var(--fs-xs); color: var(--fg-dim);
     letter-spacing: 0.05em; text-transform: uppercase;
+    min-width: 0;
   }
-  .row-flex { display: flex; gap: var(--sp-2); }
-  .row-flex input { flex: 1; }
-  .btn-primary.small { padding: 0 12px; }
+  label input { width: 100%; min-width: 0; }
+  .row-flex { display: flex; gap: var(--sp-2); min-width: 0; }
+  .row-flex input { flex: 1 1 auto; min-width: 0; }
+  .btn-primary.small {
+    flex: 0 0 auto;
+    padding: 0 10px;
+    min-width: var(--tap);
+  }
 
   .info {
     background: var(--bg-card-2);
