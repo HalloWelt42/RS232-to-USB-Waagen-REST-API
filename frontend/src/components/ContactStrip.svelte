@@ -87,6 +87,10 @@
     white-space: nowrap;
   }
   @media (max-width: 900px) {
-    .intro, .label { display: none; }
+    /* Auf Mobile reduzieren wir auf den Email-Knopf — Intro-Text,
+       Label und Lizenz-Zeile sind doppelt vorhanden (Settings,
+       Hilfe „Disclaimer") und kosten am Handy nur Platz. */
+    .intro, .label, .license { display: none; }
+    .contact { justify-content: center; padding: 0 var(--sp-2); }
   }
 </style>

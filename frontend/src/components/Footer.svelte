@@ -56,4 +56,11 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
   }
+  /* Auf Mobile macht die ausführliche Statusleiste mit Reader, Port,
+     Baud und Uptime keinen Sinn — die Werkzeug-Panels (LiveWaage)
+     zeigen den Verbindungsstatus per LED bereits prominent. Wir
+     blenden den ganzen Footer aus und gewinnen wertvollen Platz. */
+  @media (max-width: 900px) {
+    footer { display: none; }
+  }
 </style>
