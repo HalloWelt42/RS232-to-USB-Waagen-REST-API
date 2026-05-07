@@ -9,8 +9,22 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.1] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Geändert
+- **Topbar auf Mobile aufgeräumt** — Brand-Schriftzug „WAAGE",
+  Such-Knopf mit ⌘K-Hint, API-Doku-Link und Glossar-Buch-Icon werden
+  unter 900 px ausgeblendet. Diese Funktionen sind über Cmd+K-Shortcut,
+  Hilfe-Karten und Settings sekundär erreichbar; auf schmalen Geräten
+  zählt der Platz für Sprachflagge, Theme-Toggle, Hilfe und Spende.
+  Umsetzung als wiederverwendbare CSS-Klasse `only-desktop`.
+- **Mobile-Breakpoint von 800 px auf 900 px** — in der 800–900-px-
+  Übergangsphase wurde die Sidebar zu schmal, um Live-Display und
+  Messprotokoll lesbar zu halten, und gleichzeitig blieb für die
+  Tool-Karten zu wenig Platz (Karten-Titel wie „Behälter wiegen"
+  wurden zu „Be…" abgeschnitten). Der Wechsel ins Single-Column-Layout
+  setzt jetzt früher ein.
+- **Sidebar-Mindestbreite** von 280 px auf 320 px angehoben
+  (clamp 30 vw, max 400 px). Im Desktop-Modus bleibt das Wäge-Display
+  damit auch bei knapp über 900 px noch knackig lesbar.
 
 ## [0.5.0] — 2026-05-07
 
