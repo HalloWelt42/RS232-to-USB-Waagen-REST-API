@@ -9,8 +9,25 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.4.6] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben
+- **Source-Switch Live ↔ Simulator funktioniert jetzt zuverlässig** —
+  `state.current_reader.close()` schlug still fehl, weil weder
+  `Waage` noch `SimulatedWaage` eine public `close()`-Methode hatten.
+  Reader-Loop hing am alten Reader fest. Beide Klassen haben jetzt
+  ein idempotentes `close()`, der Simulator wirft danach `RuntimeError`
+  aus `read_one()` — der Reader-Loop reconnectet sauber.
+- **UTF-8-BOM im CSV-Export** — Excel interpretierte UTF-8-CSV als
+  Latin-1 („Münzen" → „Münzen"). `to_csv()` schreibt jetzt das
+  Byte-Order-Mark (`﻿`) voran; LibreOffice, pandas und Python-csv
+  ignorieren das korrekt.
+- **Symlink `backend/VERSION` entfernt** — User-Vorgabe „niemals
+  Symlinks". Datei wird jetzt von `bump.sh` synchron mit der
+  Repo-Wurzel-`VERSION` gepflegt.
+
+### Tests
+- 8 neue Backend-Cases (Reader-close, Simulator-Lifecycle, Source-
+  Round-Trip, CSV-BOM mit Umlauten) — 165 Tests gesamt grün.
+- Frontend weiterhin 56 Tests grün, 0 Errors / 0 Warnings.
 
 ## [0.4.5] — 2026-05-07
 
