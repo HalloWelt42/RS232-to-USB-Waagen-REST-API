@@ -1,31 +1,40 @@
 /**
- * REST-Client für das Waagen-Backend.
+ * REST-Clients für die getrennten Backend-Bereiche.
  *
- * Klassischer OOP-Wrapper: alle Methoden sind Mitglieder einer einzigen
- * Klasse, die mit dem Basis-Pfad ``/api`` arbeitet. Im Dev-Modus reicht
- * Vite die Anfragen weiter an ``http://localhost:8200``, in Produktion
- * übernimmt nginx den Proxy.
+ *   ScaleApi    -> /scale/*  reine Hardware-Funktion
+ *   AppApi      -> /app/*    UI-Komfort-Features
+ *
+ * Beide Klassen können einzeln verwendet werden — Drittsysteme können
+ * z.B. nur die ScaleApi nehmen, ohne die AppApi mitzuschleppen. Die
+ * Default-Instanz ``api`` bündelt beide für die Web-UI.
  */
 
 import type {
   ApiInfo,
   CommandResult,
   CountState,
+  DifferenzState,
   HealthInfo,
   HistoryResponse,
+  MesslogResponse,
   NettoState,
   Reading,
   Sample,
   SampleListResponse,
   SampleStats,
+  ScaleConfig,
+  ScaleModel,
   ToleranceState,
 } from './types';
 
-export class WaageApi {
-  constructor(private readonly base: string = '/api') {}
+// -----------------------------------------------------------------------
+//  Basis-Klasse mit fetch + Fehlerbehandlung
+// -----------------------------------------------------------------------
 
-  /** Generische JSON-Anfrage mit einheitlicher Fehlerbehandlung. */
-  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+class HttpBase {
+  constructor(protected readonly base: string) {}
+
+  protected async request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const headers: Record<string, string> = {
       Accept: 'application/json',
       ...((init.headers as Record<string, string>) ?? {}),
@@ -35,13 +44,11 @@ export class WaageApi {
       const text = await res.text();
       throw new Error(`${res.status} ${res.statusText}: ${text}`);
     }
-    if (res.status === 204) {
-      return undefined as T;
-    }
+    if (res.status === 204) return undefined as T;
     return res.json() as Promise<T>;
   }
 
-  private async post<T>(path: string, body?: unknown): Promise<T> {
+  protected post<T>(path: string, body?: unknown): Promise<T> {
     const init: RequestInit = { method: 'POST' };
     if (body !== undefined) {
       init.headers = { 'Content-Type': 'application/json' };
@@ -50,80 +57,146 @@ export class WaageApi {
     return this.request<T>(path, init);
   }
 
-  private del<T>(path: string): Promise<T> {
+  protected put<T>(path: string, body?: unknown): Promise<T> {
+    const init: RequestInit = { method: 'PUT' };
+    if (body !== undefined) {
+      init.headers = { 'Content-Type': 'application/json' };
+      init.body = JSON.stringify(body);
+    }
+    return this.request<T>(path, init);
+  }
+
+  protected del<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
   }
-
-  // ---------------- Meta -----------------------------------------
-  info(): Promise<ApiInfo>     { return this.request('/'); }
-  health(): Promise<HealthInfo> { return this.request('/health'); }
-
-  // ---------------- Wägung ---------------------------------------
-  weight(): Promise<Reading> { return this.request('/weight'); }
-  stable(timeout = 5): Promise<Reading> {
-    return this.request(`/weight/stable?timeout=${timeout}`);
-  }
-  history(limit = 100): Promise<HistoryResponse> {
-    return this.request(`/history?limit=${limit}`);
-  }
-
-  // ---------------- Kommandos -----------------------------------
-  cmdTare(): Promise<CommandResult>  { return this.post('/command/tare'); }
-  cmdUnit(): Promise<CommandResult>  { return this.post('/command/unit'); }
-  cmdLight(): Promise<CommandResult> { return this.post('/command/light'); }
-
-  // ---------------- Zählmodus -----------------------------------
-  count(): Promise<CountState> { return this.request('/count'); }
-  countCalibrate(referenceCount: number): Promise<CountState> {
-    return this.post('/count/calibrate', { reference_count: referenceCount });
-  }
-  countReset(): Promise<CountState> { return this.post('/count/reset'); }
-
-  // ---------------- Snapshots -----------------------------------
-  sampleAdd(label = '', note = '', session = 'default'): Promise<Sample> {
-    return this.post('/samples', { label, note, session });
-  }
-  sampleList(session: string | null = null, limit = 500): Promise<SampleListResponse> {
-    const q = new URLSearchParams();
-    if (session !== null && session !== '') q.set('session', session);
-    q.set('limit', String(limit));
-    return this.request(`/samples?${q.toString()}`);
-  }
-  sampleDelete(id: number): Promise<{ ok: boolean; id: number }> {
-    return this.del(`/samples/${id}`);
-  }
-  sampleClear(session: string | null = null): Promise<{ ok: boolean; deleted: number }> {
-    const q = session ? `?session=${encodeURIComponent(session)}` : '';
-    return this.del(`/samples${q}`);
-  }
-  sampleStats(session: string | null = null): Promise<SampleStats> {
-    const q = session ? `?session=${encodeURIComponent(session)}` : '';
-    return this.request(`/samples/stats${q}`);
-  }
-  sampleExportUrl(session: string | null = null): string {
-    const q = session ? `?session=${encodeURIComponent(session)}` : '';
-    return `${this.base}/samples/export.csv${q}`;
-  }
-
-  // ---------------- QC-Toleranz ---------------------------------
-  tolerance(): Promise<ToleranceState> { return this.request('/tolerance'); }
-  toleranceSet(target_g: number, minus: number, plus: number): Promise<ToleranceState> {
-    return this.post('/tolerance', {
-      target_g, tolerance_minus_g: minus, tolerance_plus_g: plus,
-    });
-  }
-  toleranceClear(): Promise<ToleranceState> { return this.del('/tolerance'); }
-
-  // ---------------- Software-Tara / Netto -----------------------
-  netto(): Promise<NettoState> { return this.request('/netto'); }
-  nettoTareCurrent(): Promise<NettoState> {
-    return this.post('/netto/tare', {});
-  }
-  nettoTareValue(tare_g: number): Promise<NettoState> {
-    return this.post('/netto/tare', { tare_g });
-  }
-  nettoTareClear(): Promise<NettoState> { return this.del('/netto/tare'); }
 }
 
-/** Default-Instanz, von Komponenten direkt importiert. */
+// -----------------------------------------------------------------------
+//  ScaleApi — alle /scale/* Endpoints
+// -----------------------------------------------------------------------
+
+export class ScaleApi extends HttpBase {
+  constructor(base = '/api') {
+    super(base);
+  }
+
+  weight(): Promise<Reading>          { return this.request('/scale/weight'); }
+  stable(timeout = 5): Promise<Reading> {
+    return this.request(`/scale/weight/stable?timeout=${timeout}`);
+  }
+  history(limit = 100): Promise<HistoryResponse> {
+    return this.request(`/scale/history?limit=${limit}`);
+  }
+  health(): Promise<HealthInfo>       { return this.request('/scale/health'); }
+
+  cmdTare(): Promise<CommandResult>   { return this.post('/scale/command/tare'); }
+  cmdUnit(): Promise<CommandResult>   { return this.post('/scale/command/unit'); }
+  cmdLight(): Promise<CommandResult>  { return this.post('/scale/command/light'); }
+
+  models(): Promise<ScaleModel[]>     { return this.request('/scale/models'); }
+  config(): Promise<ScaleConfig>      { return this.request('/scale/config'); }
+  setConfig(modelId: string): Promise<ScaleConfig> {
+    return this.put('/scale/config', { model_id: modelId });
+  }
+
+  /** WebSocket-URL für /scale/stream (Browser-Side) */
+  streamUrl(): string {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${proto}://${location.host}${this.base}/scale/stream`;
+  }
+}
+
+// -----------------------------------------------------------------------
+//  AppApi — alle /app/* Endpoints
+// -----------------------------------------------------------------------
+
+export class AppApi extends HttpBase {
+  constructor(base = '/api') {
+    super(base);
+  }
+
+  // Toleranz
+  tolerance(): Promise<ToleranceState>             { return this.request('/app/tolerance'); }
+  toleranceSet(t: number, m: number, p: number): Promise<ToleranceState> {
+    return this.post('/app/tolerance',
+      { target_g: t, tolerance_minus_g: m, tolerance_plus_g: p });
+  }
+  toleranceClear(): Promise<ToleranceState>        { return this.del('/app/tolerance'); }
+
+  // Netto
+  netto(): Promise<NettoState>                     { return this.request('/app/netto'); }
+  nettoTareCurrent(): Promise<NettoState>          { return this.post('/app/netto/tare', {}); }
+  nettoTareValue(g: number): Promise<NettoState>   { return this.post('/app/netto/tare', { tare_g: g }); }
+  nettoTareClear(): Promise<NettoState>            { return this.del('/app/netto/tare'); }
+
+  // Count
+  count(): Promise<CountState>                     { return this.request('/app/count'); }
+  countCalibrate(n: number): Promise<CountState>   { return this.post('/app/count/calibrate', { reference_count: n }); }
+  countReset(): Promise<CountState>                { return this.post('/app/count/reset'); }
+
+  // Samples
+  samplesAdd(label='', note='', session='default'): Promise<Sample> {
+    return this.post('/app/samples', { label, note, session });
+  }
+  samplesList(session: string | null = null, limit = 500): Promise<SampleListResponse> {
+    const q = new URLSearchParams();
+    if (session) q.set('session', session);
+    q.set('limit', String(limit));
+    return this.request(`/app/samples?${q.toString()}`);
+  }
+  samplesDelete(id: number): Promise<{ ok: boolean; id: number }> {
+    return this.del(`/app/samples/${id}`);
+  }
+  samplesClear(session: string | null = null): Promise<{ ok: boolean; deleted: number }> {
+    const q = session ? `?session=${encodeURIComponent(session)}` : '';
+    return this.del(`/app/samples${q}`);
+  }
+  samplesStats(session: string | null = null): Promise<SampleStats> {
+    const q = session ? `?session=${encodeURIComponent(session)}` : '';
+    return this.request(`/app/samples/stats${q}`);
+  }
+  samplesExportUrl(session: string | null = null): string {
+    const q = session ? `?session=${encodeURIComponent(session)}` : '';
+    return `${this.base}/app/samples/export.csv${q}`;
+  }
+
+  // Differenz
+  differenz(): Promise<DifferenzState>             { return this.request('/app/differenz'); }
+  differenzPushCurrent(label = ''): Promise<DifferenzState> {
+    return this.post('/app/differenz/push', { label });
+  }
+  differenzPushValue(g: number, label = ''): Promise<DifferenzState> {
+    return this.post('/app/differenz/push', { weight_g: g, label });
+  }
+  differenzRemove(id: number): Promise<DifferenzState> {
+    return this.del(`/app/differenz/${id}`);
+  }
+  differenzClear(): Promise<DifferenzState>        { return this.del('/app/differenz'); }
+
+  // Messlog
+  messlog(limit = 200): Promise<MesslogResponse>   {
+    return this.request(`/app/messlog?limit=${limit}`);
+  }
+  messlogClear(): Promise<{ ok: boolean; deleted: number }> {
+    return this.del('/app/messlog');
+  }
+}
+
+// -----------------------------------------------------------------------
+//  Convenience-Bundle für die Web-UI
+// -----------------------------------------------------------------------
+
+export class WaageApi extends HttpBase {
+  scale: ScaleApi;
+  app: AppApi;
+
+  constructor(base = '/api') {
+    super(base);
+    this.scale = new ScaleApi(base);
+    this.app = new AppApi(base);
+  }
+
+  info(): Promise<ApiInfo> { return this.request('/'); }
+}
+
 export const api = new WaageApi();

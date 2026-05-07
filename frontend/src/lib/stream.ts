@@ -1,16 +1,10 @@
 /**
- * WebSocket-Client mit automatischem Reconnect.
- *
- * Klassen-basierter Wrapper um den nativen ``WebSocket``: pusht eingehende
- * ``Reading``-Frames an den ``onReading``-Callback und meldet Verbindungs-
- * zustände an ``onState``. Bei Verbindungsabbruch reconnectet die Klasse
- * mit exponentiellem Backoff bis maximal zehn Sekunden.
+ * WebSocket-Client für /scale/stream mit automatischem Reconnect.
  */
-
 import type { ConnectionState, Reading } from './types';
 
-export type ReadingCallback = (reading: Reading) => void;
-export type StateCallback   = (state: { status: ConnectionState; error?: unknown }) => void;
+export type ReadingCallback = (r: Reading) => void;
+export type StateCallback   = (s: { status: ConnectionState; error?: unknown }) => void;
 
 export class WaageStream {
   private ws: WebSocket | null = null;
@@ -19,7 +13,7 @@ export class WaageStream {
   private readonly maxBackoffMs = 10_000;
 
   constructor(
-    private readonly path: string = '/stream',
+    private readonly url: string,
     private readonly onReading: ReadingCallback = () => undefined,
     private readonly onState: StateCallback = () => undefined,
   ) {}
@@ -41,9 +35,7 @@ export class WaageStream {
     if (this.closed) return;
     this.onState({ status: 'connecting' });
 
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const url = `${proto}://${location.host}${this.path}`;
-    const ws = new WebSocket(url);
+    const ws = new WebSocket(this.url);
     this.ws = ws;
 
     ws.addEventListener('open', () => {
@@ -53,10 +45,9 @@ export class WaageStream {
 
     ws.addEventListener('message', (ev: MessageEvent<string>) => {
       try {
-        const reading = JSON.parse(ev.data) as Reading;
-        this.onReading(reading);
+        this.onReading(JSON.parse(ev.data) as Reading);
       } catch (e) {
-        console.error('Bad WS message', e, ev.data);
+        console.error('Bad WS message', e);
       }
     });
 

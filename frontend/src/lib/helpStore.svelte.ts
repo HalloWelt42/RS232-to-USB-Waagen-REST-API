@@ -1,87 +1,55 @@
-/**
- * Globaler Speicher für offene Hilfe-Fenster.
- *
- * Mehrere Fenster können parallel offen sein, jedes mit eigener
- * Position. Die Fenster sind frei verschiebbar; ihre Positionen werden
- * pro Hilfe-Bereich im ``localStorage`` gemerkt.
- */
-
+/** Reaktiver Speicher für offene Hilfe-Fenster. */
 import type { HelpId } from './help';
 
 export interface OpenWindow {
   id: HelpId;
-  x: number;
-  y: number;
+  x: number; y: number;
+  w: number; h: number;
   z: number;
 }
 
-const POS_KEY = 'waage.help.positions';
+const POS_KEY = 'waage.help.windows';
 
-interface SavedPositions {
-  [id: string]: { x: number; y: number };
-}
+interface SavedGeo { [id: string]: { x: number; y: number; w: number; h: number } }
 
 class HelpStore {
-  private windows = $state<OpenWindow[]>([]);
+  windows = $state<OpenWindow[]>([]);
   private nextZ = 100;
 
   open(id: HelpId): void {
-    const existing = this.windows.find((w) => w.id === id);
-    if (existing) {
-      existing.z = ++this.nextZ;
-      return;
-    }
-    const saved = this.loadPositions()[id];
-    const x = saved?.x ?? this.defaultX();
-    const y = saved?.y ?? this.defaultY();
-    this.windows = [...this.windows, { id, x, y, z: ++this.nextZ }];
+    const existing = this.windows.find(w => w.id === id);
+    if (existing) { existing.z = ++this.nextZ; return; }
+    const saved = this.loadGeo()[id];
+    const x = saved?.x ?? Math.max(40, window.innerWidth  - 460);
+    const y = saved?.y ?? 90;
+    const w = saved?.w ?? 420;
+    const h = saved?.h ?? 380;
+    this.windows = [...this.windows, { id, x, y, w, h, z: ++this.nextZ }];
   }
 
   close(id: HelpId): void {
-    this.windows = this.windows.filter((w) => w.id !== id);
-  }
-
-  list(): OpenWindow[] {
-    return this.windows;
+    this.windows = this.windows.filter(w => w.id !== id);
   }
 
   bringToFront(id: HelpId): void {
-    const w = this.windows.find((x) => x.id === id);
+    const w = this.windows.find(x => x.id === id);
     if (w) w.z = ++this.nextZ;
   }
 
-  setPosition(id: HelpId, x: number, y: number): void {
-    const w = this.windows.find((x) => x.id === id);
-    if (w) {
-      w.x = x;
-      w.y = y;
-    }
-    const all = this.loadPositions();
-    all[id] = { x, y };
-    try {
-      localStorage.setItem(POS_KEY, JSON.stringify(all));
-    } catch {
-      // localStorage voll oder gesperrt — egal
-    }
+  setGeometry(id: HelpId, x: number, y: number, w: number, h: number): void {
+    const item = this.windows.find(it => it.id === id);
+    if (item) { item.x = x; item.y = y; item.w = w; item.h = h; }
+    const all = this.loadGeo();
+    all[id] = { x, y, w, h };
+    try { localStorage.setItem(POS_KEY, JSON.stringify(all)); } catch {}
   }
 
-  private loadPositions(): SavedPositions {
+  private loadGeo(): SavedGeo {
     if (typeof localStorage === 'undefined') return {};
     try {
       const raw = localStorage.getItem(POS_KEY);
-      return raw ? (JSON.parse(raw) as SavedPositions) : {};
-    } catch {
-      return {};
-    }
-  }
-
-  private defaultX(): number {
-    const w = typeof window === 'undefined' ? 1280 : window.innerWidth;
-    return Math.max(40, w - 460);
-  }
-
-  private defaultY(): number {
-    return 90;
+      return raw ? (JSON.parse(raw) as SavedGeo) : {};
+    } catch { return {}; }
   }
 }
 

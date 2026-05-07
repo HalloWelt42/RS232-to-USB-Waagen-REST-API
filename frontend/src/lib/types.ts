@@ -1,14 +1,12 @@
 /**
- * Zentrale Domain-Typen für das Frontend.
- *
- * Spiegeln die Pydantic-Schemas im Backend (siehe ``backend/src/waage/api.py``)
- * wider und bilden die einzige Quelle der Wahrheit für TypeScript-Konsumenten.
+ * Domain-Typen, gespiegelt zu den Pydantic-Schemas im Backend
+ * (siehe backend/src/waage/scale_api.py und app_api.py).
  */
 
-export type Status = 'ok' | 'low' | 'high' | 'idle';
 export type ConnectionState = 'connecting' | 'open' | 'closed' | 'error';
+export type Status = 'ok' | 'low' | 'high' | 'idle';
+export type MesslogKind = 'change' | 'tare' | 'start';
 
-/** Ein einzelner Wägewert mit Metadaten. */
 export interface Reading {
   weight_g: number;
   unit: string;
@@ -17,7 +15,6 @@ export interface Reading {
   raw: string;
 }
 
-/** Lebenszyklus-Information aus ``/health``. */
 export interface HealthInfo {
   ok: boolean;
   reader_alive: boolean;
@@ -25,9 +22,9 @@ export interface HealthInfo {
   port: string;
   baudrate: number;
   uptime_seconds: number;
+  version: string;
 }
 
-/** Bezeichnung eines Endpoints in der ``/``-Übersicht. */
 export interface ApiInfo {
   name: string;
   version: string;
@@ -35,13 +32,35 @@ export interface ApiInfo {
   endpoints: Record<string, string>;
 }
 
-/** Ringpuffer-Liste vom Server. */
 export interface HistoryResponse {
   count: number;
   items: Reading[];
 }
 
-/** Status des QC-Toleranzmodus. */
+export interface CommandResult {
+  ok: boolean;
+  command: string;
+  hex: string;
+}
+
+export interface ScaleModel {
+  id: string;
+  manufacturer: string;
+  series: string;
+  name: string;
+  category: string;
+  max_g: number;
+  resolution_g: number;
+  default_baudrate: number;
+  rs232: boolean;
+  note: string;
+}
+
+export interface ScaleConfig {
+  active_model_id: string;
+  active_model: ScaleModel;
+}
+
 export interface ToleranceState {
   active: boolean;
   target_g: number | null;
@@ -54,7 +73,6 @@ export interface ToleranceState {
   status: Status;
 }
 
-/** Brutto-Tara-Netto-Status. */
 export interface NettoState {
   active: boolean;
   tare_g: number | null;
@@ -64,7 +82,6 @@ export interface NettoState {
   stable: boolean | null;
 }
 
-/** Zählmodus-Status. */
 export interface CountState {
   pieces: number | null;
   pieces_exact: number | null;
@@ -76,7 +93,6 @@ export interface CountState {
   calibrated: boolean;
 }
 
-/** Ein gespeicherter Snapshot. */
 export interface Sample {
   id: number;
   ts: string;
@@ -103,9 +119,31 @@ export interface SampleStats {
   session: string | null;
 }
 
-/** Ergebnis eines Hardware-Kommandos. */
-export interface CommandResult {
-  ok: boolean;
-  command: string;
-  hex: string;
+export interface TareLayer {
+  id: number;
+  label: string;
+  weight_g: number;
+  set_at: string;
+}
+
+export interface DifferenzState {
+  layers: TareLayer[];
+  total_tare_g: number;
+  gross_g: number | null;
+  netto_g: number | null;
+}
+
+export interface MesslogEntry {
+  id: number;
+  ts: string;
+  kind: MesslogKind;
+  diff_g: number | null;
+  value_g: number;
+  unit: string;
+  stable: boolean;
+}
+
+export interface MesslogResponse {
+  count: number;
+  items: MesslogEntry[];
 }

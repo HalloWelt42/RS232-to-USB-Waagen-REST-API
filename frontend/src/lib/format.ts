@@ -1,20 +1,26 @@
-/** Hilfen zum Formatieren von Reading-Werten. */
+/**
+ * Formatierungs-Hilfen.
+ * formatGrams: ab 1000 g auf kg umstellen.
+ */
 
 export function formatGrams(g: number | null | undefined): string {
   if (g === null || g === undefined || Number.isNaN(g)) return '—';
-  if (Math.abs(g) >= 1000) {
-    return `${(g / 1000).toFixed(3)} kg`;
-  }
+  if (Math.abs(g) >= 1000) return `${(g / 1000).toFixed(3)} kg`;
   return `${g.toFixed(1)} g`;
+}
+
+export function formatDiff(g: number | null | undefined): string {
+  if (g === null || g === undefined || Number.isNaN(g)) return '—';
+  const sign = g >= 0 ? '+' : '−';
+  const abs = Math.abs(g);
+  if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(3)} kg`;
+  return `${sign}${abs.toFixed(1)} g`;
 }
 
 export function formatTime(iso: string | null | undefined): string {
   if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleTimeString('de-DE', {
-    hour:   '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  return new Date(iso).toLocaleTimeString('de-DE', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 }
 

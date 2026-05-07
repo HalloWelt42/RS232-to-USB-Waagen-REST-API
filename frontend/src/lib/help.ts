@@ -1,33 +1,17 @@
 /**
- * Hilfe-Inhalte zu jeder Funktion der App.
- *
- * Strukturiert in kurze Erklär-Blöcke: Was, So benutzen, Beispiel,
- * Tipps. Anzeige im DraggableHelpWindow. Texte sind durchgängig
- * deutsch mit ordentlichen Umlauten.
- *
- * Die Hilfe ist branchen-übergreifend formuliert — zu jeder Funktion
- * gibt es Beispiele aus verschiedenen Anwendungsbereichen (Apotheke,
- * Bäckerei, Werkstatt, Versand, Schmuck, Labor), damit der Bezug zur
- * eigenen Tätigkeit leicht herzustellen ist.
+ * Hilfe-Inhalte. Texte mind. 18 px lesbar (siehe Styles), Zahlen
+ * werden im Markup mit <strong> hervorgehoben.
  */
 
 export type HelpId =
-  | 'overview'
-  | 'glossary'
-  | 'tare'
-  | 'unit'
-  | 'light'
-  | 'tolerance'
-  | 'netto'
-  | 'count'
-  | 'samples'
-  | 'sparkline'
-  | 'history'
-  | 'copy';
+  | 'overview' | 'glossary' | 'wiegen' | 'netto' | 'count' | 'tolerance'
+  | 'samples' | 'differenz' | 'sparkline' | 'history'
+  | 'tare' | 'unit' | 'light' | 'copy' | 'settings' | 'donate'
+  | 'architecture';
 
 export interface HelpBlock {
   heading: string;
-  body: string;
+  body: string;       // einfaches HTML zulässig (für <strong>)
 }
 
 export interface HelpEntry {
@@ -44,46 +28,25 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
       {
         heading: 'Was ist das hier?',
         body:
-          'Eine Live-Anzeige für Ihre Präzisionswaage mit Zusatz-' +
-          'funktionen für Qualitätskontrolle, Stückzählung, Behälter-' +
-          'wägung (Tara/Netto) und Mess-Protokollierung. Die Waage ' +
-          'liefert Werte über die serielle Schnittstelle, die Anwendung ' +
-          'zeigt sie sofort an und schreibt sie auf Wunsch in eine ' +
-          'Datenbank.',
+          'Eine Live-Anzeige für Ihre Präzisionswaage mit Werkzeugen für ' +
+          'Qualitätskontrolle, Stückzählung, Behälterwägung und Mess-Protokoll. ' +
+          'Die Waage wird über RS232 ausgelesen und ihre Werte erscheinen sofort ' +
+          'in der Anzeige.',
       },
       {
-        heading: 'Wie ist die Anwendung aufgebaut?',
+        heading: 'Aufbau',
         body:
-          'Auf dem Computer: links der große Wägewert mit Mini-Verlauf ' +
-          'der letzten Minute, rechts vier Werkzeuge in Tabs. Auf dem ' +
-          'Smartphone: Werkzeuge unten als Tab-Leiste, Wert oben groß. ' +
-          'Oben in der Leiste die Schnellaktionen Tara, Einheit, Licht. ' +
-          'Unten eine schmale Statuszeile.',
-      },
-      {
-        heading: 'Vier Werkzeuge im Überblick',
-        body:
-          'Toleranz: prüft, ob ein Wert in einem festgelegten Bereich ' +
-          'liegt — Ampel grün/gelb/rot. ' +
-          'Netto: zieht das Behältergewicht ab und zeigt nur den Inhalt. ' +
-          'Zählen: ermittelt aus dem Stückgewicht die Anzahl. ' +
-          'Erfassen: speichert Werte mit Beschriftung, exportierbar als ' +
-          'CSV-Datei.',
+          'Beim Start sehen Sie ein Dashboard mit Karten — links die Live-Anzeige ' +
+          'der Waage, rechts die verfügbaren Werkzeuge. Klick auf eine Karte ' +
+          'öffnet das Werkzeug; oben erscheint dann eine Tab-Leiste, mit der Sie ' +
+          'zwischen den Werkzeugen wechseln können.',
       },
       {
         heading: 'Hilfe immer dabei',
         body:
-          'In jedem Bereich gibt es einen Fragezeichen-Knopf. Wenn Sie ' +
-          'Hilfe brauchen, klicken Sie ihn an. Das Hilfe-Fenster lässt ' +
-          'sich frei verschieben, damit es nichts verdeckt. Mehrere ' +
-          'Fenster können parallel offen sein.',
-      },
-      {
-        heading: 'Begriffe schnell nachschlagen',
-        body:
-          'Im Glossar finden Sie kurze Erklärungen für Tara, Netto, ' +
-          'Brutto, Stückgewicht, Standardabweichung und weitere ' +
-          'Begriffe — geöffnet über den Übersichts-Knopf rechts oben.',
+          'In jedem Bereich gibt es einen <strong>blauen Info-Knopf</strong>. ' +
+          'Das Hilfe-Fenster lässt sich frei verschieben und in der Größe ändern. ' +
+          'Mehrere Fenster können parallel offen sein.',
       },
     ],
   },
@@ -92,459 +55,146 @@ export const helpEntries: Record<HelpId, HelpEntry> = {
     id: 'glossary',
     title: 'Glossar',
     blocks: [
-      {
-        heading: 'Brutto',
-        body:
-          'Das ist das gesamte Gewicht, das auf der Waage liegt — also ' +
-          'Behälter plus Inhalt zusammen. Ohne Tara entspricht der ' +
-          'angezeigte Wert immer dem Brutto.',
-      },
-      {
-        heading: 'Tara',
-        body:
-          'Das Gewicht des leeren Behälters. Wer ein Tara-Gewicht ' +
-          'speichert, sieht danach nur noch das Netto-Gewicht. Beispiel: ' +
-          'Schale 53 g (Tara) + Mehl 247 g (Netto) = 300 g (Brutto).',
-      },
-      {
-        heading: 'Netto',
-        body:
-          'Das reine Gewicht des Inhalts ohne Behälter. Wird berechnet ' +
-          'als Brutto minus Tara. Auf der Verpackung im Supermarkt steht ' +
-          'genau dieser Wert.',
-      },
-      {
-        heading: 'Stückgewicht',
-        body:
-          'Das Gewicht eines einzelnen Teils. Wird in der App durch ' +
-          'Auflegen einer bekannten Anzahl gleicher Teile ermittelt. ' +
-          'Beispiel: 100 Schrauben wiegen 250 g, das Stückgewicht ist ' +
-          '2,5 g pro Stück.',
-      },
-      {
-        heading: 'Stable / Stabil',
-        body:
-          'Die Waage hat sich beruhigt und der Wert schwankt nicht ' +
-          'mehr. Erst dann ist die Anzeige verlässlich. Wenn sich noch ' +
-          'etwas bewegt — Luftzug, Vibration, Mensch tippt an die Waage ' +
-          '— erscheint die Anzeige als instabil.',
-      },
-      {
-        heading: 'Toleranz',
-        body:
-          'Die erlaubte Abweichung vom Sollwert. Wenn Sie 50 g abfüllen ' +
-          'wollen und ±2 g toleriert sind, ist alles zwischen 48 g und ' +
-          '52 g in Ordnung.',
-      },
-      {
-        heading: 'Mittelwert / Standardabweichung',
-        body:
-          'Der Mittelwert ist der Durchschnitt mehrerer Wägungen. Die ' +
-          'Standardabweichung sagt, wie stark die Werte um den Mittel-' +
-          'wert streuen. Eine kleine Standardabweichung bedeutet: alle ' +
-          'Wägungen waren ähnlich.',
-      },
-      {
-        heading: 'Auflösung',
-        body:
-          'Die kleinste Änderung, die die Waage anzeigen kann. Bei ' +
-          '0,1 g springt die Anzeige in 0,1-g-Schritten. Bei feineren ' +
-          'Waagen sind es 0,01 g oder 0,001 g.',
-      },
-      {
-        heading: 'Maximalkapazität',
-        body:
-          'Das höchste Gewicht, das die Waage messen kann. Steht meist ' +
-          'auf dem Typenschild ("Max = 6000 g"). Mehr darf nicht ' +
-          'aufgelegt werden, sonst zeigt die Waage Overload.',
-      },
-      {
-        heading: 'Session',
-        body:
-          'Ein Name für eine zusammengehörige Mess-Reihe. So lassen ' +
-          'sich z.B. die heutigen Wägungen einer bestimmten Charge von ' +
-          'denen einer anderen Charge trennen — auch wenn sie alle in ' +
-          'derselben Datenbank liegen.',
-      },
-      {
-        heading: 'CSV',
-        body:
-          'Comma-Separated Values: ein einfaches Tabellenformat, das ' +
-          'jede Tabellen-Software lesen kann (Excel, LibreOffice ' +
-          'Calc, Google Sheets, Numbers).',
-      },
+      { heading: 'Brutto', body: 'Gesamtgewicht — Behälter plus Inhalt zusammen.' },
+      { heading: 'Tara', body: 'Gewicht des leeren Behälters. Wer Tara speichert, sieht nur noch das Netto.' },
+      { heading: 'Netto', body: 'Brutto minus Tara — nur der Inhalt.' },
+      { heading: 'Stückgewicht', body: 'Gewicht eines einzelnen Teils. Beispiel: <strong>100</strong> Schrauben wiegen <strong>250 g</strong> -> <strong>2,5 g</strong> pro Stück.' },
+      { heading: 'Stable / Stabil', body: 'Wert hat sich beruhigt und schwankt nicht mehr.' },
+      { heading: 'Toleranz', body: 'Erlaubte Abweichung vom Sollwert. Bei <strong>50 g ± 2 g</strong> ist alles zwischen <strong>48 g</strong> und <strong>52 g</strong> in Ordnung.' },
+      { heading: 'Auflösung', body: 'Kleinste Anzeigeschritt der Waage. Bei der PLC-6000: <strong>0,1 g</strong>.' },
+      { heading: 'Maximalkapazität', body: 'Höchste Last, die die Waage messen kann. Bei der PLC-6000: <strong>6000 g</strong>.' },
+      { heading: 'Session', body: 'Name für eine Mess-Reihe — gruppiert mehrere Wägungen unter einem Etikett.' },
+      { heading: 'Mittelwert / Standardabweichung', body: 'Durchschnitt mehrerer Wägungen und ihre Streuung darum herum.' },
     ],
   },
 
-  tare: {
-    id: 'tare',
-    title: 'Tara',
+  wiegen: {
+    id: 'wiegen', title: 'Wiegen',
     blocks: [
-      {
-        heading: 'Was macht der Knopf?',
-        body:
-          'Setzt den aktuellen Anzeigewert der Waage auf Null. Genau ' +
-          'das, was die Tara-Taste an der Waage selbst auch tut.',
-      },
-      {
-        heading: 'Wozu nutzen?',
-        body:
-          'Wenn Sie ein Gefäß auf die Waage stellen und nur den Inhalt ' +
-          'wiegen möchten: leeres Gefäß auflegen, Tara drücken — ' +
-          'danach füllen, die Waage zeigt direkt das Netto-Gewicht.',
-      },
-      {
-        heading: 'Beispiel Bäckerei',
-        body:
-          'Schüssel auf die Waage stellen, Tara — auf 0 zurück. Mehl ' +
-          'einrieseln lassen, bis die Waage 500 g zeigt. Wasser dazu ' +
-          'bis 250 g hinzukommen. Salz bis 10 g. Fertig — alles im ' +
-          'gleichen Gefäß abgewogen, ohne Rechnen.',
-      },
-      {
-        heading: 'Beispiel Versand',
-        body:
-          'Versandkarton auf die Waage, Tara. Inhalt einlegen — die ' +
-          'Anzeige ist sofort das verkehrsgerechte Gewicht des Inhalts ' +
-          'ohne Verpackung.',
-      },
-      {
-        heading: 'Tipp',
-        body:
-          'Wenn Sie das Tara-Gewicht später noch wissen möchten oder ' +
-          'mehrere unterschiedliche Behälter haben, ist der Tab Netto ' +
-          'die bessere Wahl: dort bleibt das Tara-Gewicht gespeichert.',
-      },
-    ],
-  },
-
-  unit: {
-    id: 'unit',
-    title: 'Einheit umschalten',
-    blocks: [
-      {
-        heading: 'Was passiert?',
-        body:
-          'Die Waage wechselt zwischen den verfügbaren Einheiten — je ' +
-          'nach Modell sind das Gramm, Kilogramm, Karat, Unzen und ' +
-          'Pfund.',
-      },
-      {
-        heading: 'Beispiel Schmuck',
-        body:
-          'Ein Schmuckhändler arbeitet meist in Karat (1 ct = 0,2 g). ' +
-          'Statt umzurechnen einfach mit der Einheit-Taste auf ct ' +
-          'umstellen — der Wert erscheint direkt in der gewünschten ' +
-          'Einheit auf der Waage.',
-      },
-      {
-        heading: 'Tipp',
-        body:
-          'Die Anzeige in dieser Anwendung rechnet intern immer in ' +
-          'Gramm. Selbst wenn die Waage in Kilogramm sendet, sehen Sie ' +
-          'hier die Werte einheitlich in Gramm bzw. ab 1000 g ' +
-          'automatisch in Kilogramm.',
-      },
-    ],
-  },
-
-  light: {
-    id: 'light',
-    title: 'Beleuchtung',
-    blocks: [
-      {
-        heading: 'Was macht der Knopf?',
-        body:
-          'Schaltet die Hintergrundbeleuchtung am Display der Waage ' +
-          'ein oder aus.',
-      },
-      {
-        heading: 'Praktisch dafür',
-        body:
-          'Bei Dauereinsatz Strom sparen, oder kurz prüfen, ob die ' +
-          'Verbindung wirklich steht: wenn das Display reagiert, kommen ' +
-          'Ihre Befehle bei der Waage an.',
-      },
-    ],
-  },
-
-  tolerance: {
-    id: 'tolerance',
-    title: 'Qualitätskontrolle',
-    blocks: [
-      {
-        heading: 'Was ist das?',
-        body:
-          'Sie geben einen Sollwert vor, dazu eine erlaubte Über- und ' +
-          'Unterschreitung. Die Anwendung zeigt dann live in einer ' +
-          'großen Ampel, ob das aktuelle Gewicht im Bereich liegt ' +
-          '(grün), zu leicht (gelb) oder zu schwer (rot) ist.',
-      },
-      {
-        heading: 'So benutzen Sie es',
-        body:
-          'Sollwert in Gramm eintragen, untere und obere Toleranz ' +
-          'eingeben, Aktivieren drücken. Danach legen Sie Ihre Teile ' +
-          'auf — die Ampel reagiert sofort. Mit Deaktivieren schalten ' +
-          'Sie den Modus wieder ab.',
-      },
-      {
-        heading: 'Beispiel Apotheke',
-        body:
-          'Eine Rezeptur verlangt 2,000 g Wirkstoff, erlaubte Abweichung ' +
-          '±0,05 g. Soll = 2, Tol- = 0,05, Tol+ = 0,05. Beim Einwiegen ' +
-          'zeigt die Ampel sofort, ob die Menge im engen Bereich liegt — ' +
-          'kein Rechnen, kein zweiter Blick auf Notizen.',
-      },
-      {
-        heading: 'Beispiel Verpackung',
-        body:
-          'Sie packen Tütchen mit 50 g Gewürz, erlaubte Abweichung ist ' +
-          '±2 g. Soll = 50, Tol- = 2, Tol+ = 2. Alles zwischen 48 g und ' +
-          '52 g zeigt grün, darunter gelb, darüber rot.',
-      },
-      {
-        heading: 'Beispiel Versand',
-        body:
-          'Pakete bis 500 g Briefporto, alles darüber kostet mehr. ' +
-          'Soll = 250, Tol- = 250, Tol+ = 250. Solange die Ampel grün ' +
-          'ist, passt das Paket noch in die günstige Klasse.',
-      },
-      {
-        heading: 'Tipp: nur Mindestmenge',
-        body:
-          'Wenn Sie nur sicherstellen wollen, dass nicht zu wenig drin ' +
-          'ist, setzen Sie Tol+ auf einen großen Wert (etwa 9999) und ' +
-          'nur Tol- restriktiv. Dann wird ausschließlich Untergewicht ' +
-          'rot angezeigt.',
-      },
+      { heading: 'Funktion', body: 'Reines Ablesen des Live-Werts. Klick auf den großen Wert kopiert ihn in die Zwischenablage.' },
+      { heading: 'Untermodi', body: 'Frei (nur ablesen) oder mit Sollwert-Hinweis: gewünschtes Gewicht eintragen, beim Auflegen sieht man wie nahe man dran ist.' },
     ],
   },
 
   netto: {
-    id: 'netto',
-    title: 'Netto und Tara',
+    id: 'netto', title: 'Netto und Tara',
     blocks: [
-      {
-        heading: 'Was kann das?',
-        body:
-          'Speichert ein bekanntes Behältergewicht (Tara) in der ' +
-          'Software und zeigt fortan das Netto-Gewicht — also Brutto ' +
-          'minus Tara — in großer Schrift an.',
-      },
-      {
-        heading: 'Variante 1: Behälter aufstellen',
-        body:
-          'Leeres Gefäß auf die Waage stellen, Aktuelles Gewicht als ' +
-          'Tara einfrieren drücken. Ab jetzt zeigt das Panel das ' +
-          'Netto-Gewicht des Inhalts.',
-      },
-      {
-        heading: 'Variante 2: Tara als Zahl eingeben',
-        body:
-          'Wenn Sie das Behältergewicht schon kennen (z.B. 23,4 g für ' +
-          'eine Standard-Schale), tragen Sie es ins Feld neben Setzen ' +
-          'ein und klicken Setzen.',
-      },
-      {
-        heading: 'Beispiel Labor',
-        body:
-          'Ein Reagenzglas wiegt 18,5 g. Tarawert eintragen: 18,5. Ab ' +
-          'jetzt sehen Sie ausschließlich, wie viel an Probe drin ist — ' +
-          'auch wenn Sie das Glas zwischendurch von der Waage nehmen.',
-      },
-      {
-        heading: 'Beispiel Werkstatt',
-        body:
-          'Eine Schale für Kleinteile, Eigengewicht unbekannt. Schale ' +
-          'auflegen, „Aktuelles Gewicht als Tara einfrieren". Beim ' +
-          'Hinzufügen von Schrauben sehen Sie immer nur das reine ' +
-          'Schraubengewicht.',
-      },
-      {
-        heading: 'Unterschied zur Tara-Taste oben',
-        body:
-          'Die Tara-Taste oben in der Leiste setzt den Nullpunkt direkt ' +
-          'an der Waage. Das Netto-Panel hier macht es nur in der ' +
-          'Software — die Waage selbst zeigt weiter den Brutto-Wert. ' +
-          'Vorteil: das Behältergewicht bleibt gespeichert und kann ' +
-          'weiter verwendet werden, auch wenn die Waage zwischendurch ' +
-          'genullt wird.',
-      },
+      { heading: 'Was kann das?', body: 'Speichert ein Behältergewicht (Tara) in der Software und zeigt fortan nur den Inhalt — Netto = Brutto − Tara.' },
+      { heading: 'Variante 1: Behälter aufstellen', body: 'Leeres Gefäß auf die Waage, „Tara einfrieren". Ab jetzt Netto-Anzeige.' },
+      { heading: 'Variante 2: Tara als Zahl', body: 'Behältergewicht direkt eintragen, z.B. <strong>23,4 g</strong>. „Setzen" speichert es.' },
+      { heading: 'Beispiel Bäckerei', body: 'Schüssel auflegen, Tara — Mehl bis <strong>500 g</strong>, Wasser bis <strong>250 g</strong>. Alles im selben Gefäß abgewogen, ohne zu rechnen.' },
     ],
   },
 
   count: {
-    id: 'count',
-    title: 'Stückzählung',
+    id: 'count', title: 'Stückzählung',
     blocks: [
-      {
-        heading: 'Funktionsweise',
-        body:
-          'Sie kalibrieren die Anwendung mit einer bekannten Anzahl ' +
-          'gleicher Teile — die Software berechnet daraus das Stück-' +
-          'gewicht. Danach zeigt sie für jedes neue Gewicht die ' +
-          'aktuelle Stückzahl an.',
-      },
-      {
-        heading: 'Beispiel Werkstatt',
-        body:
-          '10 identische Schrauben auf die Waage legen, Eingabefeld auf ' +
-          '10 stellen, Kalibrieren klicken. Wenn jetzt mehr Schrauben ' +
-          'aufgelegt werden, zeigt die Anzeige live deren Anzahl. ' +
-          'Schneller als jedes Zählen von Hand.',
-      },
-      {
-        heading: 'Beispiel Apotheke',
-        body:
-          'Tabletten verteilen: 50 Tabletten als Referenz auflegen, ' +
-          'kalibrieren. Beim Befüllen einer Bestellung zeigt die App ' +
-          'sofort, wie viele Tabletten in der Schale liegen — ohne ' +
-          'einzeln nachzählen.',
-      },
-      {
-        heading: 'Beispiel Versand',
-        body:
-          'Briefe oder kleine Päckchen mit gleichem Inhalt: 20 Stück ' +
-          'auflegen, kalibrieren. Danach sehen Sie auf einen Blick, ob ' +
-          'in der nächsten Charge alle Stück mit drin sind.',
-      },
-      {
-        heading: 'Genauigkeit',
-        body:
-          'Je mehr Referenzteile Sie zum Kalibrieren nehmen, desto ' +
-          'genauer wird das Stückgewicht. Bei kleinen Teilen unter 1 g ' +
-          'sollten es mindestens 20 Stück sein, sonst kippt die Anzeige ' +
-          'wegen der Auflösungsgrenze von 0,1 g.',
-      },
-      {
-        heading: 'Neu kalibrieren',
-        body:
-          'Wenn Sie auf andere Teile wechseln, nutzen Sie Neu ' +
-          'kalibrieren — das überschreibt das gespeicherte Stück-' +
-          'gewicht. Zurücksetzen schaltet den Zählmodus ganz aus.',
-      },
+      { heading: 'Funktionsweise', body: 'Mit bekannter Anzahl gleicher Teile kalibrieren. Die App rechnet das Stückgewicht aus und zeigt für jedes neue Gewicht die Anzahl.' },
+      { heading: 'Vorlagen', body: 'Schrauben, Tabletten, Münzen, Briefe — Vorlagen mit typischen Stückgewichten als Schnell-Start.' },
+      { heading: 'Beispiel Werkstatt', body: '<strong>10</strong> Schrauben auflegen, <strong>10</strong> eingeben, kalibrieren. Beim weiteren Auflegen sieht man live die Stückzahl.' },
+      { heading: 'Beispiel Apotheke', body: '<strong>50</strong> Tabletten als Referenz. Beim Befüllen einer Bestellung zeigt die App die aktuelle Anzahl.' },
+      { heading: 'Genauigkeit', body: 'Mehr Referenzteile = genauer. Bei Teilen unter <strong>1 g</strong> mindestens <strong>20</strong> Stück, sonst kippt die Anzeige wegen der Auflösung von <strong>0,1 g</strong>.' },
+    ],
+  },
+
+  tolerance: {
+    id: 'tolerance', title: 'Qualitätskontrolle',
+    blocks: [
+      { heading: 'Was ist das?', body: 'Sie geben einen Sollwert mit Toleranzgrenzen vor. Eine große Ampel zeigt grün, gelb oder rot — je nach Abweichung.' },
+      { heading: 'Beispiel Apotheke', body: 'Rezeptur verlangt <strong>2,000 g</strong> ± <strong>0,05 g</strong>. Beim Einwiegen reagiert die Ampel sofort — kein Rechnen, kein zweiter Blick.' },
+      { heading: 'Beispiel Verpackung', body: 'Tütchen mit <strong>50 g</strong> ± <strong>2 g</strong>. Alles zwischen <strong>48 g</strong> und <strong>52 g</strong> ist grün.' },
+      { heading: 'Tipp Mindestmenge', body: 'Wenn Sie nur Untergewicht prüfen wollen, setzen Sie Tol+ auf einen sehr großen Wert.' },
     ],
   },
 
   samples: {
-    id: 'samples',
-    title: 'Werte erfassen',
+    id: 'samples', title: 'Werte erfassen',
     blocks: [
-      {
-        heading: 'Was wird gespeichert?',
-        body:
-          'Sie halten den aktuellen Wägewert mit einem optionalen Label ' +
-          'und einer Notiz fest. Der Eintrag wandert in eine Datenbank ' +
-          'auf dem Server und überlebt Backend-Neustarts.',
-      },
-      {
-        heading: 'Sessions',
-        body:
-          'Mehrere Wägungen lassen sich unter einem Session-Namen ' +
-          'gruppieren — etwa Charge-2026-05-07 oder Probe-Mehl. Im ' +
-          'Feld oben rechts geben Sie den Session-Namen ein.',
-      },
-      {
-        heading: 'Beispiel Labor',
-        body:
-          'Mehrere Proben einer Versuchsreihe wiegen, jede mit eindeu-' +
-          'tiger Bezeichnung. Session = Versuch-2026-05-07, Label = ' +
-          'Probe-A1, A2, A3 ... Am Ende exportieren Sie die Reihe als ' +
-          'CSV und importieren sie in die Auswertungs-Software.',
-      },
-      {
-        heading: 'Beispiel Bäckerei',
-        body:
-          'Tagesproduktion: jedes Brot wiegen und mit Sortenname ' +
-          'erfassen. Sessionname pro Tag, Label = Sorte. Am Monatsende ' +
-          'lassen sich Mittelwerte und Streuung pro Sorte auswerten.',
-      },
-      {
-        heading: 'Statistik',
-        body:
-          'Sobald mehrere Werte erfasst sind, sehen Sie automatisch ' +
-          'Anzahl, Minimum, Maximum, Mittelwert, Standardabweichung ' +
-          'und Summe für die aktuelle Session.',
-      },
-      {
-        heading: 'CSV-Export',
-        body:
-          'Klick auf CSV-Export liefert die Werte als Datei zum ' +
-          'Download — geeignet für Import in Excel, Numbers, ' +
-          'LibreOffice oder eine Auswertungssoftware.',
-      },
+      { heading: 'Was wird gespeichert?', body: 'Aktueller Wägewert mit Label und Notiz, in einer Datenbank — überlebt Backend-Neustarts.' },
+      { heading: 'Sessions', body: 'Mehrere Wägungen unter einem Session-Namen gruppieren, z.B. „Charge-2026-05-07".' },
+      { heading: 'Statistik', body: 'Anzahl, Min, Max, Mittelwert, Standardabweichung und Summe automatisch berechnet.' },
+      { heading: 'Beispiel Labor', body: 'Versuchsreihe mit Probe-A1, A2, A3 ... CSV-Export liefert die Reihe als Datei für die Auswertung.' },
     ],
   },
 
-  sparkline: {
-    id: 'sparkline',
-    title: 'Mini-Verlauf',
+  differenz: {
+    id: 'differenz', title: 'Differenz-Wiegen',
     blocks: [
-      {
-        heading: 'Was zeigt die Linie?',
-        body:
-          'Den Verlauf des Wägewerts der letzten 60 Sekunden. Der ' +
-          'Bereich zwischen Minimum und Maximum füllt sich automatisch.',
-      },
-      {
-        heading: 'Tipp',
-        body:
-          'Ideal um zu sehen, ob ein Wert wirklich zur Ruhe kommt oder ' +
-          'noch driftet — gerade bei feineren Wägungen sehr nützlich.',
-      },
+      { heading: 'Mehrfach-Tara', body: 'Mehrere Tara-Stufen stapelbar. Inhalt = Brutto minus Summe aller Tarae.' },
+      { heading: 'Beispiel', body: 'Behälter auflegen, „als Tara" — <strong>53 g</strong>. Trägermedium auflegen, „als Tara" — weitere <strong>20 g</strong>. Der eigentliche Inhalt erscheint als Netto, ohne dass die Behälter mitgewogen werden.' },
+      { heading: 'Schichten verwalten', body: 'Jede Schicht in einer Liste — einzelne Tarae lassen sich entfernen, ohne den Rest zu verlieren.' },
     ],
   },
 
   history: {
-    id: 'history',
-    title: 'Verlauf',
+    id: 'history', title: 'Messprotokoll',
     blocks: [
-      {
-        heading: 'Was steht da?',
-        body:
-          'Eine Liste mit den letzten Werten — aber nur die Frames, ' +
-          'bei denen sich der Wert wirklich geändert hat. Werte unter ' +
-          'der Auflösungs-Schwelle (0,05 g) gelten als gleich und ' +
-          'tauchen nicht erneut auf.',
-      },
-      {
-        heading: 'Warum nicht alle Frames?',
-        body:
-          'Eine ruhige Waage liefert mehrere Frames pro Sekunde mit ' +
-          'demselben Wert — das wäre nicht hilfreich. Stattdessen ' +
-          'sehen Sie die echte Bewegung: jede neue Auflage, jede ' +
-          'Entnahme, jedes Tara.',
-      },
+      { heading: 'Was steht da?', body: 'Eine Liste der Werte-<strong>Änderungen</strong>: jede neue Auflage, jede Entnahme, jeder Tara-Vorgang ein Eintrag mit Differenz und resultierendem Wert.' },
+      { heading: 'Warum nicht alle Frames?', body: 'Eine ruhige Waage liefert dieselben Werte mehrfach pro Sekunde — das wäre nicht hilfreich. Die Liste reagiert nur auf echte Änderungen.' },
+    ],
+  },
+
+  sparkline: {
+    id: 'sparkline', title: 'Mini-Verlauf',
+    blocks: [{ heading: 'Hinweis', body: 'In dieser Version ist der Mini-Verlauf durch das Messprotokoll ersetzt — siehe Hilfe „Messprotokoll".' }],
+  },
+
+  tare: {
+    id: 'tare', title: 'Auf Null setzen (Tara)',
+    blocks: [
+      { heading: 'Funktion', body: 'Setzt den aktuellen Anzeigewert der Waage auf Null. Entspricht der Tara-Taste an der Waage.' },
+      { heading: 'Wozu?', body: 'Behälter aufstellen, Tara, Inhalt füllen — die Anzeige zeigt direkt das Netto.' },
+    ],
+  },
+
+  unit: {
+    id: 'unit', title: 'Maßeinheit umschalten',
+    blocks: [
+      { heading: 'Funktion', body: 'Die Waage wechselt zwischen Gramm, Kilogramm, Karat, Unzen und Pfund — je nach Modell.' },
+      { heading: 'Tipp', body: 'Die Anzeige in der App rechnet intern immer in Gramm.' },
+    ],
+  },
+
+  light: {
+    id: 'light', title: 'Beleuchtung',
+    blocks: [
+      { heading: 'Funktion', body: 'Schaltet die Hintergrundbeleuchtung am Display der Waage ein oder aus.' },
+      { heading: 'Diagnose', body: 'Wenn die Beleuchtung umschaltet, kommen Ihre Befehle bei der Waage an — guter Funktionstest.' },
     ],
   },
 
   copy: {
-    id: 'copy',
-    title: 'Werte kopieren und übernehmen',
+    id: 'copy', title: 'Werte kopieren',
     blocks: [
-      {
-        heading: 'Klick kopiert',
-        body:
-          'Tippen oder klicken Sie auf den großen Wägewert oder eine ' +
-          'beliebige Kennzahl in der App — der Wert wandert direkt in ' +
-          'die Zwischenablage. Eine kurze Meldung bestätigt das.',
-      },
-      {
-        heading: 'Aktuellen Wert übernehmen',
-        body:
-          'Im Toleranz-, Netto- oder Zähl-Panel gibt es den Knopf ' +
-          '"Aktuellen Wert übernehmen". Er setzt den aktuell live ' +
-          'angezeigten Wägewert in das passende Eingabefeld — z.B. als ' +
-          'Sollwert für die Toleranz oder als Tara-Gewicht.',
-      },
-      {
-        heading: 'Wofür praktisch?',
-        body:
-          'Statt Werte abzulesen und einzutippen, einfach übernehmen — ' +
-          'kein Tippfehler, keine Verzögerung. Funktioniert auch auf ' +
-          'dem Touchpanel oder Tablet.',
-      },
+      { heading: 'Klick kopiert', body: 'Tippen oder klicken Sie auf den großen Wägewert. Der Wert wandert in die Zwischenablage; ein kurzer Hinweis bestätigt.' },
+      { heading: 'Übernehmen', body: 'In Toleranz, Netto und Zählung gibt es Knöpfe „aktuellen Wert übernehmen". Spart Tippen, vermeidet Tippfehler.' },
+    ],
+  },
+
+  settings: {
+    id: 'settings', title: 'Einstellungen',
+    blocks: [
+      { heading: 'Modell', body: 'Wählen Sie Ihre Waage aus der Liste. Das Modell beeinflusst Anzeige-Einheiten und Maximal-/Auflösungswerte.' },
+      { heading: 'Theme', body: 'Hell, Dunkel oder Automatisch (folgt der Systemeinstellung).' },
+      { heading: 'Anschluss', body: 'Serieller Port und Baudrate. Beim Default „auto" findet die App den FTDI-Adapter selbst.' },
+      { heading: 'Polling', body: 'Wie oft die App den Print-Befehl an die Waage schickt — Standard <strong>0,5 s</strong>.' },
+    ],
+  },
+
+  donate: {
+    id: 'donate', title: 'Danke',
+    blocks: [
+      { heading: 'Worum geht es?', body: 'Diese Software ist nicht-kommerziell und open source. Wer Lust hat, kann mich per Ko-fi oder Krypto unterstützen.' },
+      { heading: 'Lizenz', body: 'MIT — Private Nutzung, Copyright 2026 HalloWelt42.' },
+    ],
+  },
+
+  architecture: {
+    id: 'architecture', title: 'Architektur Scale ↔ App',
+    blocks: [
+      { heading: 'Was ist getrennt?', body: 'Das <strong>Scale-Modul</strong> (Endpoint /scale/*) macht nur das Auslesen und Steuern der Waage. Es kann eigenständig laufen — Drittsysteme können das einbinden, ohne den App-Layer mitzunehmen.' },
+      { heading: 'Was ist optional?', body: 'Das <strong>App-Modul</strong> (/app/*) bietet Toleranz, Netto, Zählen, Erfassen, Differenz und Messprotokoll — UI-Komfort. Setzt das Scale-Modul voraus.' },
+      { heading: 'Konsequenz', body: 'Wer nur das Gewicht in seinen Workflow integriert, braucht nur /scale/*. UI-Updates an /app/* berühren das Scale-Modul nicht.' },
     ],
   },
 };
