@@ -152,7 +152,11 @@
     display: contents;       /* Sidebar bleibt direktes Flex-Kind */
   }
 
-  @media (max-width: 800px) {
+  /* Mobile-Switch früher: in der 800–900-px-Übergangsphase wurde die
+     Sidebar zu schmal, um Live-Display und Messprotokoll lesbar zu
+     halten — und gleichzeitig blieb für die Tool-Karten zu wenig
+     Platz. Wir wechseln deshalb ab 900 px ins Single-Column-Layout. */
+  @media (max-width: 900px) {
     .body {
       flex-direction: column;
       gap: var(--sp-2);
@@ -160,9 +164,9 @@
       overflow-y: auto;
     }
     .right { flex: 1 1 auto; }
-    /* Auf Mobile im Tool-Modus die LiveWaage/MessLog-Sidebar
-       ausblenden — die Werkzeug-Panels zeigen den Live-Wert eh
-       prominent. Verhindert die doppelte Anzeige des Wägewerts. */
+    /* Im Tool-Modus die LiveWaage/MessLog-Sidebar ausblenden — die
+       Werkzeug-Panels zeigen den Live-Wert eh prominent.
+       Verhindert die doppelte Anzeige des Wägewerts. */
     .body[data-mode="tool"] .sidebar-wrap { display: none; }
   }
 </style>

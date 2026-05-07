@@ -101,7 +101,7 @@
     outline-offset: -2px;
   }
 
-  @media (max-width: 800px) {
+  @media (max-width: 900px) {
     button span { display: none; }
     button i { font-size: var(--fs-lg); }
   }

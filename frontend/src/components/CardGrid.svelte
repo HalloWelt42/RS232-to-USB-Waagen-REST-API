@@ -35,7 +35,7 @@
     box-shadow: var(--shadow);
   }
 
-  @media (max-width: 800px) {
+  @media (max-width: 900px) {
     .grid {
       padding: var(--sp-2);
       gap: var(--sp-2);

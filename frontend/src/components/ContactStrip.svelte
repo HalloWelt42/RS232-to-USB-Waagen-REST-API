@@ -86,7 +86,7 @@
     font-size: 10px;
     white-space: nowrap;
   }
-  @media (max-width: 800px) {
+  @media (max-width: 900px) {
     .intro, .label { display: none; }
   }
 </style>

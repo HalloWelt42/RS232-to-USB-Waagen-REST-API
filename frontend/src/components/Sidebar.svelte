@@ -22,14 +22,18 @@
 <style>
   .sidebar {
     flex: 0 0 auto;
-    width: clamp(280px, 32vw, 400px);
+    /* In der Übergangsphase (knapp über dem Mobile-Breakpoint) bleibt
+       die Sidebar bei mindestens 320 px — sonst leidet die
+       Wäge-Display-Lesbarkeit. Erst auf richtigen Mobile-Breiten
+       (siehe App.svelte) wird sie zur kompakten Header-Spalte. */
+    width: clamp(320px, 30vw, 400px);
     display: flex; flex-direction: column;
     gap: var(--sp-3);
     min-height: 0;
     overflow: hidden;
   }
 
-  @media (max-width: 800px) {
+  @media (max-width: 900px) {
     .sidebar {
       width: 100%;
       flex: 0 0 auto;
