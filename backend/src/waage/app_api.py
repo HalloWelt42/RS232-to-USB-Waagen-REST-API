@@ -425,6 +425,7 @@ def build_app_router(state: AppState) -> APIRouter:
 
     @router.get("/samples/export.csv")
     def export_csv(session: Optional[str] = Query(None)) -> Response:
+        """Backward-kompatibler CSV-Direktdownload."""
         items = state.samples.list(session=session, limit=1_000_000)
         chronological = list(reversed(items))
         csv_text = state.samples.to_csv(chronological)
@@ -432,6 +433,60 @@ def build_app_router(state: AppState) -> APIRouter:
         return Response(
             content=csv_text,
             media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    @router.get("/samples/export")
+    def export_samples(
+        session: Optional[str] = Query(None),
+        fmt: str = Query("csv", pattern="^(csv|tsv|json|md)$"),
+        delim: str = Query("comma", pattern="^(comma|semicolon)$"),
+        cols: Optional[str] = Query(
+            None, description="Komma-Liste der gewünschten Spalten",
+        ),
+        labels: Optional[str] = Query(
+            None,
+            description="Komma-Liste 'spalte=neuer Header', "
+            "z.B. 'weight_g=Gewicht (g),ts=Zeit'",
+        ),
+    ) -> Response:
+        """Generischer Export-Endpoint mit Format- und Spalten-Auswahl.
+
+        Der Frontend-Export-Dialog ruft diesen Endpoint mit den
+        gewählten Optionen auf. Die ältere `/samples/export.csv`-Route
+        bleibt als Bookmark-Kompatibilität bestehen.
+        """
+        items = state.samples.list(session=session, limit=1_000_000)
+        chronological = list(reversed(items))
+        column_list = [c.strip() for c in cols.split(",")] if cols else None
+        label_map: Optional[dict[str, str]] = None
+        if labels:
+            label_map = {}
+            for pair in labels.split(","):
+                if "=" in pair:
+                    k, v = pair.split("=", 1)
+                    label_map[k.strip()] = v.strip()
+        try:
+            content = state.samples.export(
+                chronological,
+                fmt=fmt,
+                delimiter="," if delim == "comma" else ";",
+                columns=column_list,
+                labels=label_map,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+
+        media = {
+            "csv":  "text/csv; charset=utf-8",
+            "tsv":  "text/tab-separated-values; charset=utf-8",
+            "json": "application/json; charset=utf-8",
+            "md":   "text/markdown; charset=utf-8",
+        }[fmt]
+        filename = f"waage-samples{'-' + session if session else ''}.{fmt}"
+        return Response(
+            content=content,
+            media_type=media,
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
@@ -482,6 +537,12 @@ def build_app_router(state: AppState) -> APIRouter:
             count=len(items),
             items=[MesslogOut.from_entry(e) for e in items],
         )
+
+    @router.delete("/messlog/{entry_id}")
+    def delete_messlog_entry(entry_id: int) -> dict:
+        if not state.messlog.delete(entry_id):
+            raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+        return {"ok": True, "id": entry_id}
 
     @router.delete("/messlog")
     def clear_messlog() -> dict:

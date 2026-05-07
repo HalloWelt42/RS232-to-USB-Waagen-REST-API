@@ -182,32 +182,105 @@ class SampleStore(AbstractContextManager["SampleStore"]):
             session=session,
         )
 
-    def to_csv(self, samples: Iterable[Sample]) -> str:
-        """CSV-Export im UTF-8-Format mit Byte-Order-Mark (BOM).
+    # ------------------------------------------------------------------
+    #  Export — mehrere Formate, frei konfigurierbar
+    # ------------------------------------------------------------------
+    EXPORT_COLUMNS: tuple[str, ...] = (
+        "id", "ts", "weight_g", "unit", "stable", "label", "note", "session",
+    )
 
-        Das BOM (\\ufeff) ist für Excel notwendig, damit Umlaute in
-        Labels und Notizen nicht als „ä" / „ö" / „ü" auftauchen.
-        Andere Tools (LibreOffice, pandas, Python-csv) ignorieren das
-        BOM korrekt.
+    @staticmethod
+    def _row_dict(s: Sample) -> dict[str, object]:
+        return {
+            "id":       s.id,
+            "ts":       s.ts.isoformat(timespec="milliseconds"),
+            "weight_g": round(s.weight_g, 4),
+            "unit":     s.unit,
+            "stable":   int(s.stable),
+            "label":    s.label,
+            "note":     s.note,
+            "session":  s.session,
+        }
+
+    def export(
+        self,
+        samples: Iterable[Sample],
+        *,
+        fmt: str = "csv",
+        delimiter: str = ",",
+        columns: Optional[Iterable[str]] = None,
+        labels: Optional[dict[str, str]] = None,
+    ) -> str:
+        """Export-Generator fuer mehrere Formate.
+
+        Args:
+            fmt:        ``csv``, ``tsv``, ``json`` oder ``md`` (Markdown).
+            delimiter:  Trennzeichen fuer ``csv`` — ``,`` (US/UK) oder
+                        ``;`` (DE-Excel-Default). Bei ``tsv`` wird immer
+                        Tab verwendet.
+            columns:    Reihenfolge und Auswahl der Spalten. Unbekannte
+                        Spalten werden ignoriert; Default sind alle.
+            labels:     Dict zum Umbenennen der Spalten-Header.
+
+        Returns:
+            Vollstaendiger Export-String. CSV bekommt UTF-8-BOM fuer
+            Excel-Kompatibilitaet.
         """
+        cols = tuple(c for c in (columns or self.EXPORT_COLUMNS) if c in self.EXPORT_COLUMNS)
+        if not cols:
+            cols = self.EXPORT_COLUMNS
+        rows = [self._row_dict(s) for s in samples]
+        header_for = lambda c: (labels or {}).get(c, c)
+        fmt = fmt.lower()
+        if fmt == "csv":
+            return self._to_delim(rows, cols, header_for, delimiter, with_bom=True)
+        if fmt == "tsv":
+            return self._to_delim(rows, cols, header_for, "\t", with_bom=False)
+        if fmt == "json":
+            import json as _json
+            payload = [{header_for(c): r[c] for c in cols} for r in rows]
+            return _json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+        if fmt == "md":
+            return self._to_markdown(rows, cols, header_for)
+        raise ValueError(f"Unbekanntes Export-Format: {fmt}")
+
+    @staticmethod
+    def _to_delim(
+        rows: list[dict[str, object]],
+        cols: tuple[str, ...],
+        header_for,
+        delim: str,
+        *,
+        with_bom: bool,
+    ) -> str:
         buf = io.StringIO()
-        # UTF-8-BOM voranstellen — ohne, würde Excel die Umlaute als
-        # Latin-1 fehlinterpretieren („Münzen" → „Münzen").
-        buf.write("\ufeff")
-        writer = csv.writer(buf)
-        writer.writerow(("id", "ts", "weight_g", "unit", "stable", "label", "note", "session"))
-        for s in samples:
-            writer.writerow((
-                s.id,
-                s.ts.isoformat(timespec="milliseconds"),
-                f"{s.weight_g:.4f}",
-                s.unit,
-                int(s.stable),
-                s.label,
-                s.note,
-                s.session,
-            ))
+        if with_bom:
+            buf.write("\ufeff")
+        writer = csv.writer(buf, delimiter=delim, lineterminator="\r\n")
+        writer.writerow([header_for(c) for c in cols])
+        for r in rows:
+            writer.writerow([r[c] for c in cols])
         return buf.getvalue()
+
+    @staticmethod
+    def _to_markdown(
+        rows: list[dict[str, object]],
+        cols: tuple[str, ...],
+        header_for,
+    ) -> str:
+        def esc(v: object) -> str:
+            return str(v).replace("|", r"\|")
+        lines = [
+            "| " + " | ".join(header_for(c) for c in cols) + " |",
+            "| " + " | ".join("---" for _ in cols) + " |",
+        ]
+        for r in rows:
+            lines.append("| " + " | ".join(esc(r[c]) for c in cols) + " |")
+        return "\n".join(lines) + "\n"
+
+    def to_csv(self, samples: Iterable[Sample]) -> str:
+        """Backward-kompatibler CSV-Wrapper."""
+        return self.export(samples, fmt="csv")
 
 
 def _row_to_sample(row: tuple) -> Sample:

@@ -89,8 +89,10 @@ def test_csv_export() -> None:
         # BOM überspringen für die Header-Prüfung
         lines = csv_str.lstrip("﻿").strip().splitlines()
         assert lines[0] == "id,ts,weight_g,unit,stable,label,note,session"
-        assert "1.5000" in csv_str
-        assert "-2.5000" in csv_str
+        # Werte werden als float (max 4 Nachkommastellen) ausgegeben
+        assert "1.5" in csv_str
+        assert "-2.5" in csv_str
+        assert "L1" in csv_str
 
 
 def test_csv_starts_with_utf8_bom() -> None:
@@ -107,6 +109,66 @@ def test_csv_starts_with_utf8_bom() -> None:
         # Roundtrip: als UTF-8-Bytes serialisierbar, BOM kommt rein
         encoded = csv_str.encode("utf-8")
         assert encoded.startswith(b"\xef\xbb\xbf")
+
+
+def test_export_tsv_uses_tab_no_bom() -> None:
+    with SampleStore(":memory:") as store:
+        store.add(_r(1.5), label="A")
+        out = store.export(store.list(), fmt="tsv")
+        assert not out.startswith("﻿")     # kein BOM bei TSV
+        first_line = out.splitlines()[0]
+        assert "\t" in first_line
+
+
+def test_export_json_returns_array() -> None:
+    import json as _json
+    with SampleStore(":memory:") as store:
+        store.add(_r(2.0), label="J", note="x")
+        payload = _json.loads(store.export(store.list(), fmt="json"))
+        assert isinstance(payload, list)
+        assert payload[0]["label"] == "J"
+        assert payload[0]["weight_g"] == pytest.approx(2.0)
+
+
+def test_export_markdown_has_header_separator() -> None:
+    with SampleStore(":memory:") as store:
+        store.add(_r(3.0), label="M")
+        md = store.export(store.list(), fmt="md")
+        lines = md.splitlines()
+        assert lines[0].startswith("|") and lines[0].endswith("|")
+        assert "---" in lines[1]
+
+
+def test_export_with_custom_columns_and_labels() -> None:
+    with SampleStore(":memory:") as store:
+        store.add(_r(5.0), label="A", note="n")
+        out = store.export(
+            store.list(),
+            fmt="csv",
+            columns=["ts", "weight_g", "label"],
+            labels={"weight_g": "Gewicht (g)", "ts": "Zeit"},
+        )
+        # BOM + erste Zeile = umbenannte Header
+        cleaned = out.lstrip("﻿").splitlines()[0]
+        assert "Zeit" in cleaned
+        assert "Gewicht (g)" in cleaned
+        assert "label" in cleaned        # nicht umbenannt
+        assert "session" not in cleaned  # nicht gewählt
+
+
+def test_export_csv_with_semicolon_delimiter() -> None:
+    with SampleStore(":memory:") as store:
+        store.add(_r(7.0), label="S")
+        out = store.export(store.list(), fmt="csv", delimiter=";")
+        first = out.lstrip("﻿").splitlines()[0]
+        assert ";" in first
+        assert "," not in first
+
+
+def test_export_unknown_format_raises() -> None:
+    with SampleStore(":memory:") as store:
+        with pytest.raises(ValueError):
+            store.export(store.list(), fmt="xml")
 
 
 def test_concurrent_writes(tmp_path: Path) -> None:

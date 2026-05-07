@@ -143,6 +143,27 @@ class MesslogStore(AbstractContextManager["MesslogStore"]):
             self._last_stored = None
             return cur.rowcount
 
+    def delete(self, entry_id: int) -> bool:
+        """Löscht einen einzelnen Eintrag — z.B. Schreibfehler-Korrektur.
+
+        Beim Löschen des letzten Eintrags wird das interne
+        ``_last_stored`` zurückgesetzt, damit das nächste ``feed()``
+        wieder einen Diff zum *aktuellen* Live-Wert berechnet, nicht
+        zum gerade entfernten Eintrag.
+        """
+        with self._lock:
+            cur = self._conn.execute(
+                "DELETE FROM messlog WHERE id = ?", (entry_id,)
+            )
+            if cur.rowcount > 0:
+                # Letzten verbleibenden Wert neu laden, sonst hat der
+                # Diff-Tracker einen veralteten Anker.
+                row = self._conn.execute(
+                    "SELECT value_g FROM messlog ORDER BY id DESC LIMIT 1"
+                ).fetchone()
+                self._last_stored = float(row[0]) if row else None
+            return cur.rowcount > 0
+
     # ------------------------------------------------------------------
     #  Lesen
     # ------------------------------------------------------------------

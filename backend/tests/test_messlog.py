@@ -73,6 +73,36 @@ def test_clear() -> None:
         assert store.clear() == 2
 
 
+def test_delete_single_entry() -> None:
+    with MesslogStore(":memory:") as store:
+        store.feed(_r(0.0))
+        e = store.feed(_r(100.0))
+        assert e is not None
+        ids = [it.id for it in store.list()]
+        # Lösche den jüngsten Eintrag
+        assert store.delete(ids[0]) is True
+        assert len(store.list()) == 1
+        # Erneutes Löschen schlägt fehl
+        assert store.delete(ids[0]) is False
+
+
+def test_delete_resets_diff_anchor() -> None:
+    """Nach dem Löschen des letzten Eintrags muss der nächste Diff
+    auf den verbleibenden Eintrag und nicht auf den entfernten
+    Wert bezogen werden."""
+    with MesslogStore(":memory:") as store:
+        store.feed(_r(0.0))
+        store.feed(_r(100.0))
+        e_drop = store.feed(_r(250.0))
+        assert e_drop is not None
+        # Lösche den letzten (250 g) — Anker wird wieder 100 g
+        assert store.delete(e_drop.id) is True
+        e_next = store.feed(_r(150.0))
+        assert e_next is not None
+        # 150 - 100 = 50 (nicht 150 - 250 = -100, was wäre wenn Anker nicht reset)
+        assert e_next.diff_g == pytest.approx(50.0)
+
+
 def test_persistence(tmp_path: Path) -> None:
     db = tmp_path / "ml.db"
     with MesslogStore(db) as store:
