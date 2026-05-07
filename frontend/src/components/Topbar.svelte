@@ -18,7 +18,8 @@
     if (route.activeTool) return t(`tools.${route.activeTool}`);
     return '';
   });
-  let modelLabel = $derived(modelStore.compactLabel);
+  let modelName = $derived(modelStore.displayName);
+  let modelSpec = $derived(modelStore.specLabel);
 </script>
 
 <header class="topbar">
@@ -35,7 +36,8 @@
     {:else}
       <button class="model-btn" onclick={openSettings}
               title={t('topbar.openSettings')}>
-        {modelLabel}
+        <span class="model-name">{modelName}</span>
+        <span class="model-spec only-desktop">· {modelSpec}</span>
         <i class="fa-solid fa-gear" aria-hidden="true"></i>
       </button>
     {/if}
@@ -94,10 +96,22 @@
     font-size: var(--fs-sm);
     cursor: pointer;
     display: inline-flex; align-items: baseline; gap: 6px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; overflow: hidden;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .model-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
     min-width: 0;
   }
-  .model-btn i { font-size: 11px; opacity: 0.6; }
+  .model-spec {
+    color: var(--fg-mute);
+    flex: 0 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .model-btn i { font-size: 11px; opacity: 0.6; flex: 0 0 auto; }
   .model-btn:hover { color: var(--accent); }
   .model-btn:hover i { opacity: 1; }
   .actions { display: flex; align-items: center; gap: var(--sp-2); }

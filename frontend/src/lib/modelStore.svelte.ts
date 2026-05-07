@@ -62,13 +62,18 @@ class ModelStore {
       .filter(Boolean).join(' ');
   }
 
-  /** Kompaktes Label mit Eckdaten — z.B. „G&G PLC-6000 · 6 kg / 0,1 g".
+  /** Eckdaten-Anhang ohne Name — z.B. „6 kg / 0,1 g".
    *
    *  Nutzt `formatGramsCompact`, das ganze Kilogramm ohne Dezimaltrenner
    *  schreibt — vermeidet die mehrdeutige Form „6,000 kg" zwischen DE
    *  und EN. */
+  get specLabel(): string {
+    return `${formatGramsCompact(this.active.max_g)} / ${formatGramsCompact(this.active.resolution_g)}`;
+  }
+
+  /** Kompaktes Label mit Eckdaten — z.B. „G&G PLC-6000 · 6 kg / 0,1 g". */
   get compactLabel(): string {
-    return `${this.displayName} · ${formatGramsCompact(this.active.max_g)} / ${formatGramsCompact(this.active.resolution_g)}`;
+    return `${this.displayName} · ${this.specLabel}`;
   }
 }
 
