@@ -9,8 +9,26 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.0] — 2026-05-07
 
-### Hinweise
-- (bitte ergänzen)
+### Neu
+- **Multi-Format-Export für Mess-Snapshots** — CSV (mit BOM, frei
+  wählbarem Trenner), TSV (Tab-getrennt), JSON (Array von Objekten),
+  Markdown (Tabelle für Doku/Issues). Neuer REST-Endpoint
+  `/app/samples/export` mit Format-, Spalten- und Label-Parametern.
+  ExportDialog im Frontend als Modal mit Format-Auswahl,
+  Trenner-Wahl, Spalten-Toggle und freien Bezeichnern.
+- **Single-Delete im Messprotokoll** — Hover über eine Zeile
+  blendet ein ×-Symbol ein; Klick entfernt den einzelnen Eintrag.
+  Header bekommt einen Mülleimer-Knopf zum Komplettleeren.
+  Backend-Anker (`_last_stored`) wird beim Löschen sauber
+  zurückgesetzt, damit der nächste Diff korrekt bezogen ist.
+- **„Alles zurücksetzen"** im Settings-Tab — rote Karte mit
+  doppelter Bestätigung leert Snapshots, Messprotokoll, Behälter,
+  Stückzähl-Vorlagen, Differenz-Schichten und alle Werkzeug-
+  Zustände parallel. Modell-Wahl und Theme bleiben erhalten.
+
+### Tests
+- 8 neue Backend-Cases (Multi-Format-Export, Messlog-Single-
+  Delete + Anker-Reset) — 173 Tests gesamt grün.
 
 ## [0.4.6] — 2026-05-07
 
