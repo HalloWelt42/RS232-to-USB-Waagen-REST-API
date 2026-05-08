@@ -19,6 +19,7 @@
   import { countTemplateStore } from '../../lib/countTemplateStore.svelte';
   import { t } from '../../lib/i18n';
   import HelpButton from '../HelpButton.svelte';
+  import IconPicker from '../IconPicker.svelte';
   import type { CountState, CountTemplateRecord } from '../../lib/types';
 
   let info = $state<CountState | null>(null);
@@ -224,8 +225,7 @@
         </label>
         <label>
           {t('countTemplates.icon')}
-          <input type="text" bind:value={formIcon} maxlength="120"
-                 placeholder="fa-solid fa-cube" />
+          <IconPicker value={formIcon} onPick={(c) => (formIcon = c)} />
         </label>
         <label>
           {t('countTemplates.pieceWeight')}

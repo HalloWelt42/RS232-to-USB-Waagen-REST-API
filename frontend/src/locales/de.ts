@@ -191,6 +191,15 @@ const de = {
     resetAllConfirm2: 'Letzte Bestätigung — alle Listen werden geleert. Wirklich fortfahren?',
     resetAllDone: 'Zurückgesetzt — alle Listen sind leer.',
   },
+  iconPicker: {
+    searchPlaceholder: 'Icon suchen — z.B. „Schraube", „Tablette", „Münze" …',
+    noResults: 'Keine passenden Icons',
+    advanced: 'Erweitert: eigene FontAwesome-Klasse',
+    advancedHint:
+      'Nur falls das gewünschte Icon nicht in der Liste ist. Format: ' +
+      '„fa-solid fa-…" oder „fa-regular fa-…". Verfügbare Icons unter fontawesome.com/icons.',
+    apply: 'Übernehmen',
+  },
   countTemplates: {
     title: 'Stückzähl-Vorlagen',
     add: 'Neue Vorlage',

@@ -190,6 +190,15 @@ const en = {
     resetAllConfirm2: 'Final confirmation — all lists will be wiped. Continue?',
     resetAllDone: 'Reset — all lists are empty.',
   },
+  iconPicker: {
+    searchPlaceholder: 'Search icon — e.g. „screw", „pill", „coin" …',
+    noResults: 'No matching icons',
+    advanced: 'Advanced: custom FontAwesome class',
+    advancedHint:
+      'Only if the desired icon is not in the list. Format: ' +
+      '„fa-solid fa-…" or „fa-regular fa-…". Available icons at fontawesome.com/icons.',
+    apply: 'Apply',
+  },
   countTemplates: {
     title: 'Counting templates',
     add: 'New template',
