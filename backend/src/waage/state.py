@@ -69,7 +69,13 @@ class AppState:
         self.resolved_port: str = resolved_port
         self.baudrate: int = baudrate
         self.active_model_id: str = DEFAULT_MODEL_ID
-        self.poll_interval_s: float = 0.5
+        # Polling-Intervall in Sekunden für Live-Hardware. 0,2 s = 5 Hz
+        # ist ein guter Kompromiss aus Reaktivität und Hardware-
+        # Schonung; per env `WAAGE_POLL_INTERVAL_S` überschreibbar
+        # (siehe Waage-Konstruktor in api._make_reader_factory).
+        self.poll_interval_s: float = float(
+            os.getenv("WAAGE_POLL_INTERVAL_S", "0.2")
+        )
         # Quelle: 'live' liest von der Hardware, 'simulate' nutzt SimulatedWaage
         self.source_mode: str = "live"
 

@@ -97,6 +97,18 @@
   // anpassen — alle Anzeigen rendern sofort mit passender Präzision neu.
   $effect(() => { setDefaultResolution(modelStore.active.resolution_g); });
 
+  // Reaktivität bei USB-Disconnect: sobald healthStore.scaleOk auf
+  // false fällt (Hardware antwortet nicht mehr, scale_alive vom Backend
+  // = false), das Live-Reading explizit nullen. Sonst hängt der WS-
+  // Store mit dem letzten gefangenen Frame fest und alle Werkzeug-
+  // Panels (Wiegen, Netto, Toleranz, …) zeigen weiter den letzten
+  // bekannten Wert, obwohl gar nichts mehr gemessen wird.
+  $effect(() => {
+    if (!healthStore.scaleOk && !healthStore.simulated && live.reading) {
+      live.set(null);
+    }
+  });
+
   let connection = $derived(live.connection);
 </script>
 

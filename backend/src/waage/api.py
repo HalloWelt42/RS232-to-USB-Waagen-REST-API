@@ -92,8 +92,18 @@ def _make_reader_factory(port: str, baudrate: int, state: AppState):
         live_port = state.resolved_port
         if not live_port or live_port in ("simulator", "auto"):
             live_port = port
-        log.info("Reader: Live (%s @ %d Baud)", live_port, state.baudrate)
-        return Waage(live_port, state.baudrate)
+        log.info(
+            "Reader: Live (%s @ %d Baud, poll=%.2fs)",
+            live_port, state.baudrate, state.poll_interval_s,
+        )
+        # Polling-Intervall aus dem AppState durchreichen — bisher
+        # nutzte der Reader immer den Default 0,5 s, das State-Feld
+        # blieb wirkungslos. Jetzt zieht WAAGE_POLL_INTERVAL_S durch.
+        return Waage(
+            live_port,
+            state.baudrate,
+            poll_interval=state.poll_interval_s,
+        )
     return factory
 
 

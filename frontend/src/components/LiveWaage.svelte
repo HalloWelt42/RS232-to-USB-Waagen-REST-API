@@ -15,12 +15,6 @@
   let r = $derived(live.reading);
   let conn = $derived(live.connection);
 
-  let stable = $derived(r?.stable ?? false);
-  let weightG = $derived(r?.weight_g ?? null);
-  let timeText = $derived(r ? formatTime(r.timestamp) : '—');
-
-  // Backend-Status: WebSocket steht?
-  let backendState = $derived<'open' | 'connecting' | 'closed' | 'error'>(conn);
   // Hardware-Waage: nur dann „grün", wenn der Reader echt liest und nicht
   // simuliert wird. Im Simulator-Modus ist diese LED nie grün — wir
   // zeigen ein orangefarbenes „SIMULATION" stattdessen.
@@ -29,6 +23,18 @@
     : healthStore.scaleOk ? 'live'
     : 'offline'
   );
+
+  // Reaktivität: ist die Hardware aktuell offline (USB-Adapter weg,
+  // Waage abgeschaltet, …), zeigen wir den letzten Wert NICHT mehr an —
+  // sonst klebt eine "61,9 g STABIL" auf dem Display, obwohl gar nichts
+  // mehr gemessen wird. healthStore.scaleOk ist seit 0.5.12 ehrlich.
+  let scaleOffline = $derived(scaleState === 'offline');
+  let stable = $derived(scaleOffline ? false : (r?.stable ?? false));
+  let weightG = $derived(scaleOffline ? null : (r?.weight_g ?? null));
+  let timeText = $derived(scaleOffline || !r ? '—' : formatTime(r.timestamp));
+
+  // Backend-Status: WebSocket steht?
+  let backendState = $derived<'open' | 'connecting' | 'closed' | 'error'>(conn);
 
   async function copyValue(): Promise<void> {
     if (!r) return;
@@ -82,13 +88,14 @@
     {#if r}<span class="ts num">{timeText}</span>{/if}
   </div>
 
-  <button class="display" onclick={copyValue} disabled={!r}
+  <button class="display" onclick={copyValue} disabled={!r || scaleOffline}
           title={t('commands.copyValueTitle')} aria-label={t('commands.copyValueAria')}>
     <span class="value">
       <StableValue g={weightG} />
     </span>
     <span class="label num">
-      {r ? (stable ? t('status.stable') : t('status.unstable')) : '—'}
+      {scaleOffline ? t('live.scaleOffline') :
+       r ? (stable ? t('status.stable') : t('status.unstable')) : '—'}
     </span>
   </button>
 

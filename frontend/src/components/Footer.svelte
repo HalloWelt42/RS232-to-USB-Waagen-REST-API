@@ -28,7 +28,16 @@
   {:else}
     <span class="cell">{t('general.loading')}</span>
   {/if}
-  <span class="cell version num">v{__APP_VERSION__}</span>
+  <!--
+    Versionsanzeige:
+    - `health.version` kommt live aus `/scale/health` (= zentrale
+      VERSION-Datei) und ist daher immer aktuell, ohne Frontend-
+      Rebuild. Das ist die Wahrheit.
+    - `__APP_VERSION__` ist die zur Vite-Build-Zeit eingefrorene
+      Frontend-Bundle-Version — nur als Fallback, wenn das Backend
+      gerade nicht antwortet.
+  -->
+  <span class="cell version num">v{health?.version ?? __APP_VERSION__}</span>
 </footer>
 
 <style>

@@ -26,7 +26,13 @@ MAX_BUFFER_BYTES = 4096  # Schutz gegen unbegrenzten Pufferaufbau bei Müll
 
 # G&G-Standard-Print-Befehl (Werkseinstellung Adresse 0x1B = ESC, plus 'p')
 DEFAULT_POLL_COMMAND = b"\x1bp"
-DEFAULT_POLL_INTERVAL = 0.5
+# Polling-Intervall — niedriger = agileres Display.
+# G&G-Manuale geben für 9600 8N1 ein theoretisches Maximum von ~50 Hz an,
+# in der Praxis bremst die interne Filterzeit der Waage auf 5–10 Hz.
+# Default 0.2 s = 5 Hz: deutlich responsiver als die alte 2-Hz-Default
+# (Werte erschienen träge), bleibt bequem unter dem Hardware-Limit.
+# Per env `WAAGE_POLL_INTERVAL_S` überschreibbar (Setting in api.py).
+DEFAULT_POLL_INTERVAL = 0.2
 
 # G&G-Fernsteuerkommandos laut Anleitung Kapitel 5.2
 COMMAND_PRINT     = b"\x1bp"   # Datenanforderung (Print)
