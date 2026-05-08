@@ -21,6 +21,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+from . import __version__ as APP_VERSION
 from .differenz import TareLayer
 from .messlog import EntryKind, MesslogEntry
 from .samples import Sample, SampleStats
@@ -548,6 +549,83 @@ def build_app_router(state: AppState) -> APIRouter:
     def clear_messlog() -> dict:
         n = state.messlog.clear()
         return {"ok": True, "deleted": n}
+
+    # ============================ Backup ============================
+    @router.get("/backup")
+    def backup_zip() -> Response:
+        """Liefert ein ZIP mit konsistenten Snapshots aller SQLite-DBs
+        und der `config.json`. Nutzt die SQLite-Backup-API, damit
+        gleichzeitige Schreibvorgänge keine inkonsistenten Files
+        produzieren — Standard-Empfehlung der SQLite-Doku für Online-
+        Backups.
+
+        Response: `application/zip` mit Dateinamen
+        `waage-backup-YYYY-MM-DDTHH-MM-SS.zip`. Enthält:
+
+        - `samples.db`, `messlog.db`, `containers.db`,
+          `count_templates.db` (jeweils SQLite, konsistent)
+        - `config.json` (aktives Modell, Source-Mode)
+        - `manifest.json` (Datei-Größen, SHA-256-Hashes, App-Version,
+          Snapshot-Zeitpunkt)
+        """
+        import hashlib
+        import io
+        import json
+        import sqlite3
+        import zipfile
+        from datetime import datetime as _dt
+
+        def _snapshot_db(store) -> bytes:
+            """Erzeugt eine konsistente Kopie der DB als bytes —
+            nutzt sqlite3.Connection.backup() statt File-Copy."""
+            src_conn: sqlite3.Connection = store._conn  # type: ignore[attr-defined]
+            dst = sqlite3.connect(":memory:")
+            try:
+                src_conn.backup(dst)
+                # Memory-DB nach bytes serialisieren
+                return bytes(dst.serialize())
+            finally:
+                dst.close()
+
+        manifest: dict = {
+            "app_version": APP_VERSION,
+            "snapshot_at": _dt.now().isoformat(timespec="seconds"),
+            "files": {},
+        }
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            for name, store in [
+                ("samples.db",         state.samples),
+                ("messlog.db",         state.messlog),
+                ("containers.db",      state.containers),
+                ("count_templates.db", state.count_templates),
+            ]:
+                blob = _snapshot_db(store)
+                zf.writestr(name, blob)
+                manifest["files"][name] = {
+                    "size_bytes": len(blob),
+                    "sha256":     hashlib.sha256(blob).hexdigest(),
+                }
+            # config.json — falls config_dir gesetzt ist
+            if state._config_dir is not None:
+                cfg_path = state._config_dir / "config.json"
+                if cfg_path.is_file():
+                    cfg_blob = cfg_path.read_bytes()
+                    zf.writestr("config.json", cfg_blob)
+                    manifest["files"]["config.json"] = {
+                        "size_bytes": len(cfg_blob),
+                        "sha256":     hashlib.sha256(cfg_blob).hexdigest(),
+                    }
+            zf.writestr("manifest.json", json.dumps(manifest, indent=2))
+        buffer.seek(0)
+
+        ts = _dt.now().strftime("%Y-%m-%dT%H-%M-%S")
+        filename = f"waage-backup-{ts}.zip"
+        return Response(
+            content=buffer.getvalue(),
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     # ============================ Container-Bibliothek ============================
     def _container_to_out(c) -> ContainerOut:

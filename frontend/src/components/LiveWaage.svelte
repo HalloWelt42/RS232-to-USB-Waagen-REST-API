@@ -27,8 +27,12 @@
   // sonst klebt eine "61,9 g STABIL" auf dem Display, obwohl gar nichts
   // mehr gemessen wird. healthStore.scaleOk ist seit 0.5.12 ehrlich.
   let scaleOffline = $derived(scaleState === 'offline');
-  let stable = $derived(scaleOffline ? false : (r?.stable ?? false));
-  let weightG = $derived(scaleOffline ? null : (r?.weight_g ?? null));
+  // Überlast-Frames (OL/------/++++++) werden vom Parser als
+  // overload=true markiert. UI zeigt dann einen orangefarbenen
+  // Warn-Banner statt eines verfälschten Werts.
+  let overload = $derived(!scaleOffline && (r?.overload ?? false));
+  let stable = $derived(scaleOffline || overload ? false : (r?.stable ?? false));
+  let weightG = $derived(scaleOffline || overload ? null : (r?.weight_g ?? null));
 
   async function copyValue(): Promise<void> {
     if (!r) return;
@@ -59,13 +63,18 @@
 </script>
 
 <section class="live-card" class:stable>
-  <button class="display" onclick={copyValue} disabled={!r || scaleOffline}
+  <button class="display" class:overload onclick={copyValue} disabled={!r || scaleOffline || overload}
           title={t('commands.copyValueTitle')} aria-label={t('commands.copyValueAria')}>
     <span class="value">
-      <StableValue g={weightG} />
+      {#if overload}
+        <span class="overload-text">⚠ {t('live.overload')}</span>
+      {:else}
+        <StableValue g={weightG} />
+      {/if}
     </span>
     <span class="label num">
-      {scaleOffline ? t('live.scaleOffline') :
+      {overload ? t('live.overloadHint') :
+       scaleOffline ? t('live.scaleOffline') :
        r ? (stable ? t('status.stable') : t('status.unstable')) : '—'}
     </span>
   </button>
@@ -127,6 +136,25 @@
     background: rgba(0,0,0,0.32);
   }
   .display:disabled { cursor: default; }
+  .display.overload {
+    border-color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 22%, rgba(0,0,0,0.25));
+    animation: overload-pulse 1.5s ease-in-out infinite;
+  }
+  .display.overload .label,
+  .display.overload .value { color: var(--orange) !important; text-shadow: none !important; }
+  .overload-text {
+    display: inline-block;
+    font-family: var(--num);
+    font-size: clamp(28px, 14cqi, 56px);
+    color: var(--orange);
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  @keyframes overload-pulse {
+    0%, 100% { box-shadow: inset 0 2px 8px rgba(0,0,0,0.3); }
+    50%      { box-shadow: inset 0 0 18px color-mix(in srgb, var(--orange) 60%, transparent); }
+  }
   .value {
     display: block;
     /* Schrift adaptive zur Container-Breite — bei einer 280-px-Sidebar

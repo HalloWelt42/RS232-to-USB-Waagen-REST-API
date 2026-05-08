@@ -13,6 +13,10 @@ export interface Reading {
   stable: boolean;
   timestamp: string;
   raw: string;
+  /** True wenn die Waage statt eines Werts ein Overload-/Underload-
+   *  Frame geliefert hat (typisch „OL", „------"). UI sollte dann
+   *  einen klaren Warn-Banner zeigen. Backend setzt das seit 0.5.16. */
+  overload?: boolean;
 }
 
 export interface HealthInfo {

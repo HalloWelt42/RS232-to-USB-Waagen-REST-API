@@ -4,6 +4,7 @@
   import { t } from '../lib/i18n';
   import { formatDiff, formatGrams, formatTime } from '../lib/format';
   import HelpButton from './HelpButton.svelte';
+  import ProtocolDialog from './ProtocolDialog.svelte';
   import type { MesslogEntry } from '../lib/types';
 
   interface Props {
@@ -12,6 +13,11 @@
     onChanged?: () => void;
   }
   let { entries = [], onChanged }: Props = $props();
+
+  // Protokoll-Dialog: separates Vollbild-Modal mit Tabs (Tabelle,
+  // Druck, Export, Speichern). Wird über das Disketten-Symbol im
+  // Header geöffnet.
+  let protocolOpen = $state(false);
 
   // Backend liefert Messprotokoll bereits in `ORDER BY id DESC` —
   // also neueste zuerst. Wir geben die Liste 1:1 weiter; ein
@@ -49,6 +55,10 @@
     <div class="meta">
       <span class="num count">{entries.length}</span>
       {#if entries.length > 0}
+        <button class="hdr-act" onclick={() => (protocolOpen = true)}
+                title={t('protocol.open')} aria-label={t('protocol.open')}>
+          <i class="fa-solid fa-floppy-disk"></i>
+        </button>
         <button class="hdr-act" onclick={clearAll}
                 title={t('messlog.clearAll')} aria-label={t('messlog.clearAll')}>
           <i class="fa-regular fa-trash-can"></i>
@@ -57,6 +67,8 @@
       <HelpButton id="history" label={t('messlog.helpLabel')} />
     </div>
   </header>
+
+  <ProtocolDialog open={protocolOpen} {entries} onClose={() => (protocolOpen = false)} />
 
   <ul class="list">
     {#if recent.length === 0}

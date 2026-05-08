@@ -53,6 +53,23 @@ _FRAME_RE = re.compile(
     rb"\s*$"
 )
 
+# Overload/Underload-Frames: G&G und kompatible Hersteller schicken bei
+# Last über Maximum (oder unter -Maximum) statt einer Zahl Sonderzeichen.
+# Häufige Varianten:
+#   "OL"          — generisches Overload
+#   " O"          — manche Modelle
+#   "------"      — Strichanzeige
+#   "++++++"      — Strichanzeige für negativen Overload (Underload)
+#   "ovr"/"unr"   — gelegentlich
+# Optional folgt ein „g"/„kg" am Ende, optional ein Vorzeichen vorne.
+_OVERLOAD_RE = re.compile(
+    rb"^\s*"
+    rb"(?P<sign>[+-])?\s*"
+    rb"(?:OL|O|ovr|unr|\-{3,}|\+{3,})"
+    rb"\s*(?:kg|g|oz|lb|ct)?\s*$",
+    re.IGNORECASE,
+)
+
 
 @dataclass(frozen=True, slots=True)
 class Reading:
@@ -60,12 +77,19 @@ class Reading:
 
     Attributes:
         weight: Gewicht in Gramm (immer; kg/oz/lb werden konvertiert).
-        unit: Original-Einheit aus dem Frame (zur Anzeige).
+            Bei Overload undefiniert (0.0); Konsumenten müssen `overload`
+            prüfen, bevor sie den Wert verwenden.
+        unit: Original-Einheit aus dem Frame (zur Anzeige). Bei Overload
+            leer.
         stable: True wenn Frame mit ``ST`` markiert war oder kein Status-Tag
             vorhanden war (dann wird per Konvention stable=True angenommen).
-            False bei ``US``-Frames.
+            False bei ``US``-Frames und bei Overload.
         raw: Original-Frame als Bytes — für Diagnose und Logging.
         timestamp: Zeitpunkt des Parsens.
+        overload: True wenn die Waage ein Overload-/Underload-Frame
+            geschickt hat (typisch ``OL``, ``------``, ``++++++``).
+            Anwender-UI sollte in diesem Fall ein deutliches Warn-
+            Banner zeigen statt eines Werts.
     """
 
     weight: float
@@ -73,6 +97,7 @@ class Reading:
     stable: bool
     raw: bytes
     timestamp: datetime
+    overload: bool = False
 
 
 def parse(frame: bytes, *, now: Optional[datetime] = None) -> Optional[Reading]:
@@ -93,6 +118,20 @@ def parse(frame: bytes, *, now: Optional[datetime] = None) -> Optional[Reading]:
     cleaned = frame.strip()
     if not cleaned:
         return None
+
+    # Overload-/Underload-Frame? Diese sind formal valide Antworten der
+    # Waage — wir geben ein Reading zurück, das `overload=True` markiert,
+    # damit die UI ein klares Warn-Banner zeigen statt den letzten echten
+    # Wert „eingefroren" weiterzuzeigen.
+    if _OVERLOAD_RE.match(cleaned):
+        return Reading(
+            weight=0.0,
+            unit="",
+            stable=False,
+            raw=bytes(frame),
+            timestamp=now or datetime.now(),
+            overload=True,
+        )
 
     match = _FRAME_RE.match(cleaned)
     if not match:

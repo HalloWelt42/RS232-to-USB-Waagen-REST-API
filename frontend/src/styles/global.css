@@ -299,3 +299,69 @@ code {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* =============================================================
+   Druck-Layout
+   -------------------------------------------------------------
+   Beim Drucken die UI-Elemente verstecken, die für ein Papier-
+   Protokoll keinen Sinn ergeben (Topbar, Sidebar, Tab-Bar,
+   Aktions-Knöpfe, Suche, Hilfe-Knöpfe). Card-Schatten und
+   dunkle Hintergründe weg, schwarz auf weiß für Audit-tauglichen
+   Druck. Komponenten, die ein eigenes Druck-Layout brauchen
+   (Mess-Protokoll, Erfasste-Werte-Liste), markieren sich mit
+   `class="print-area"` — alles AUSSERHALB davon wird auf Wunsch
+   ausgeblendet, indem die Wurzel `class="print-only-area"` setzt.
+   ============================================================= */
+@media print {
+  :root {
+    --bg: #ffffff !important;
+    --bg-card: #ffffff !important;
+    --bg-card-2: #ffffff !important;
+    --bg-elev: #ffffff !important;
+    --fg: #000000 !important;
+    --fg-dim: #333333 !important;
+    --fg-mute: #555555 !important;
+    --border: #888888 !important;
+    --shadow: none !important;
+    --shadow-lg: none !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  /* Globale UI-Elemente ausblenden */
+  .topbar,
+  footer,
+  .contact,
+  .tabbar,
+  .sidebar-wrap,
+  .help-button,
+  .actions,
+  button[aria-label="Schließen"],
+  button.close {
+    display: none !important;
+  }
+  /* Karten und Panels: nüchtern, keine Schatten */
+  .card,
+  .panel,
+  .messlog,
+  .live-card {
+    box-shadow: none !important;
+    border: 1px solid #888 !important;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+  }
+  /* Tabellen und Listen sollen sauber umbrechen */
+  table, .row, .layer, .list li, .item {
+    page-break-inside: avoid;
+  }
+  /* Gehe in den Druck mit a4 portrait, kompakte Schrift */
+  @page {
+    size: A4 portrait;
+    margin: 18mm 14mm 18mm 14mm;
+  }
+  body {
+    font-size: 10pt;
+  }
+  h1, h2, h3 { color: #000 !important; }
+}

@@ -193,6 +193,43 @@ def test_messlog_initial_entry(stubbed_app: TestClient) -> None:
     assert "start" in kinds
 
 
+def test_backup_returns_zip_with_all_dbs(stubbed_app: TestClient) -> None:
+    """`/app/backup` liefert ein ZIP mit allen vier SQLite-DBs plus
+    manifest.json. Konsistente Snapshots via SQLite Backup-API,
+    auch bei laufenden Schreibvorgängen."""
+    import io
+    import json
+    import zipfile
+
+    # Etwas Inhalt produzieren, damit die DBs nicht leer sind
+    stubbed_app.post("/app/samples", json={"label": "backup-test"})
+    stubbed_app.post("/app/containers", json={"name": "Glas", "weight_g": 10.0})
+
+    r = stubbed_app.get("/app/backup")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/zip"
+    assert "waage-backup-" in r.headers["content-disposition"]
+
+    zf = zipfile.ZipFile(io.BytesIO(r.content))
+    names = set(zf.namelist())
+    expected_dbs = {"samples.db", "messlog.db", "containers.db", "count_templates.db"}
+    assert expected_dbs.issubset(names), \
+        f"Backup-ZIP muss alle SQLite-DBs enthalten, fehlt: {expected_dbs - names}"
+    assert "manifest.json" in names, "manifest.json fehlt im Backup-ZIP"
+
+    manifest = json.loads(zf.read("manifest.json"))
+    assert "app_version" in manifest
+    assert "snapshot_at" in manifest
+    assert "files" in manifest
+    for db in expected_dbs:
+        assert db in manifest["files"], f"Hash für {db} fehlt im Manifest"
+        assert "sha256" in manifest["files"][db]
+        assert "size_bytes" in manifest["files"][db]
+        # SQLite-Header bestätigt validen DB-Inhalt
+        assert zf.read(db).startswith(b"SQLite format 3"), \
+            f"{db} sieht nicht nach gültiger SQLite-DB aus"
+
+
 def test_messlog_clear(stubbed_app: TestClient) -> None:
     r = stubbed_app.delete("/app/messlog")
     assert r.json()["ok"] is True

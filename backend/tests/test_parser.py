@@ -65,11 +65,12 @@ def test_parse_valid_frames(
         b"",
         b"\r\n",
         b"   \r\n",
-        b"OL\r\n",            # Overload — kein gültiges Gewichts-Frame
-        b"---\r\n",
         b"abc\r\n",
         b"ST,+ XYZ g\r\n",
         b"\x00\x01\x02",      # Nur Müll-Bytes
+        # OL und ------ wandern in test_overload_frames_set_overload_flag
+        # (sie sind seit 0.5.16 KEINE invaliden Frames mehr, sondern
+        # Overload-Marker mit eigenem Flag).
     ],
 )
 def test_parse_invalid_frames_return_none(frame: bytes) -> None:
@@ -116,3 +117,36 @@ def test_no_status_tag_assumes_stable() -> None:
     result = parse(b"  +50.0 g\r\n", now=FIXED_TS)
     assert result is not None
     assert result.stable is True
+
+
+# ---------------- Overload-Frames ----------------
+@pytest.mark.parametrize("frame", [
+    b"OL\r\n",
+    b" OL g\r\n",
+    b"  OL kg\r\n",
+    b"+OL\r\n",
+    b"------\r\n",
+    b"++++++\r\n",
+    b"  ----- \r\n",
+    b"ovr\r\n",
+    b"unr\r\n",
+])
+def test_overload_frames_set_overload_flag(frame: bytes) -> None:
+    """Overload-/Underload-Frames werden als gültiges Reading erkannt,
+    aber mit `overload=True` markiert. So zeigt die UI ein klares
+    Warn-Banner statt den letzten echten Wert eingefroren weiter
+    anzuzeigen."""
+    r = parse(frame, now=FIXED_TS)
+    assert r is not None, f"Frame {frame!r} sollte als Overload erkannt werden"
+    assert r.overload is True
+    assert r.stable is False
+    # Ungültiger Wert wird auf 0.0 gesetzt — UI muss `overload` prüfen.
+    assert r.weight == 0.0
+
+
+def test_normal_frame_is_not_overload() -> None:
+    """Reguläre Wäge-Frames haben overload=False."""
+    r = parse(b"  +123.4 g\r\n", now=FIXED_TS)
+    assert r is not None
+    assert r.overload is False
+    assert r.weight == pytest.approx(123.4)
