@@ -290,7 +290,256 @@ asyncio.run(stream())
 
 ---
 
-## 10. Quellen
+## 10. Anschlussplan
+
+### Verkabelung Waage ↔ Pi
+
+```
+┌──────────────────┐
+│  G&G PLC-6000    │ DE-9 weiblich (DCE) an der Waage
+│                  │
+│  Pin 2 = TxD ────┼──┐    Nullmodem-Adapter
+│  Pin 3 = RxD ────┼──┼──┐ (Pins 2 ↔ 3 gekreuzt,
+│  Pin 5 = GND ────┼──┼──┼──┐ 5 ↔ 5 straight)
+│  Pin 4 = DTR (─) │  │  │  │
+│  Pin 7 = RTS (─) │  │  │  │
+└──────────────────┘  │  │  │
+                      │  │  │
+                      ▼  ▼  ▼
+                 ┌──────────────┐
+                 │  USB-Serial  │  z.B. FTDI FT232RL
+                 │  Adapter     │  USB-VID:PID 0403:6001
+                 │              │
+                 │  TxD ─── 3 ──┐
+                 │  RxD ─── 2 ──┘  Crossover bereits im Adapter,
+                 │  GND ─── 5      wenn das Kabel ein „Console"-
+                 │  USB ──> A ──┐  oder „Nullmodem"-Kabel ist.
+                 └──────────────┘
+                                │
+                                ▼
+                 ┌──────────────────────────┐
+                 │  Raspberry Pi 5/4/Zero 2W │
+                 │  /dev/ttyUSB0             │
+                 │                            │
+                 │  Backend liest mit         │
+                 │  pyserial 8N1, 9600 baud   │
+                 │  poll: ESC p alle 2 s      │
+                 └──────────────────────────┘
+```
+
+### Signal-Flussrichtung (entscheidend!)
+
+Da die Waage ein **DCE** ist und der PC/Pi ein **DTE**, müssen TxD und
+RxD **gekreuzt** werden. Das übernimmt der Nullmodem-Adapter zwischen
+Waage und Adapter-Kabel. Wenn statt dem Adapter ein „echtes" RS232-
+Kabel benutzt wird, muss es ein **Crossover-Kabel** sein.
+
+**Kontrolle**:
+
+```bash
+# Waage müsste auf ESC p antworten
+.venv/bin/python -c "
+import serial, time
+s = serial.Serial('/dev/ttyUSB0', 9600, timeout=2)
+s.write(b'\x1bp')
+time.sleep(0.2)
+print(repr(s.read(64)))
+"
+```
+
+Erwartete Ausgabe:
+```
+b'      0.0 g \r\n'   bei Auflage 0
+b' +123.4 g \r\n'    bei 123,4 g positiv
+b''                    falls Verkabelung falsch (Tx/Rx vertauscht)
+```
+
+---
+
+## 11. Hardware-Stückliste
+
+Was man tatsächlich braucht, um eine G&G-Waage an einen Raspberry Pi zu
+hängen — getestet mit der hier vorliegenden Kombination:
+
+| # | Komponente | Empfehlung | Bezug | Preis ~ |
+|---|---|---|---|---|
+| 1 | **Pi-Host** | Raspberry Pi 5 (4 GB) oder Pi 4 (2 GB+) oder Pi Zero 2 W | Reichelt, BerryBase, BuyZero | 50–80 € |
+| 2 | **MicroSD** | 32 GB Class 10 (Sandisk Industrial / Kingston Endurance) | dito | 8–12 € |
+| 3 | **USB-Serial-Adapter** | FTDI FT232RL (z.B. FTDI Chipi-X) **oder** CP210x (CSL CP2102) **oder** PL2303 (gold) **oder** CH340 | Reichelt, AliExpress | 8–25 € |
+| 4 | **Nullmodem-Adapter DE-9 W↔M** | beliebiger Markenhersteller mit gekreuzten Pins 2/3 | Conrad, Reichelt | 3–6 € |
+| 5 | **Stromversorgung Pi** | offizielles Pi-5 / Pi-4 PSU (5 V / 5 A USB-C bzw. 5 V / 3 A USB-C) | Pi-Foundation-Reseller | 12–18 € |
+| 6 | **Pi-Gehäuse** | Argon NEO oder Flirc Case (passive Kühlung, gut für 24/7) | dito | 15–30 € |
+| 7 | **Ethernet-Kabel oder WLAN** | Cat-5e ≥ 1 m, oder Pi-internes WLAN | – | 0–5 € |
+| 8 | **G&G-Waage** | PLC-6000 (oder JJ-B/JJ-BC/EY) — siehe Modell-Matrix oben | gandg.de oder ggscales.com | je nach Modell 250–800 € |
+
+**Optional, für Werkstatt-Setup:**
+
+| # | Komponente | Zweck |
+|---|---|---|
+| 9 | Industrie-USB-Verlängerung 2–5 m | Pi an Schaltschrank, Waage an Werkbank |
+| 10 | DIN-Hutschienen-Pi-Halter | Aufbau im Schaltschrank |
+| 11 | Touch-Display 7" für Pi | Standalone-Wäge-Terminal |
+| 12 | Ferrit-Kerne | falls EMV-Probleme bei langem RS232-Kabel |
+
+**Erfahrungswerte:**
+
+- **FTDI-Adapter** sind am zuverlässigsten und werden vom Backend ohne
+  Konfiguration auto-erkannt (USB-VID `0403`).
+- **CH340-Adapter** funktionieren auch, brauchen unter macOS ggf.
+  Treiber-Installation.
+- **PL2303 schwarz/silber** sind oft Klone und unter Linux/Windows
+  manchmal instabil — die goldene FTDI-Variante ist bei Pi-Setups
+  zuverlässiger.
+- **Kabel-Längen über 5 m** rufen vereinzelt Frame-Korruptionen hervor;
+  bei industriellem Einsatz lieber eine USB-Verlängerung (statt langes
+  RS232) plus Adapter direkt an der Waage.
+
+---
+
+## 12. Erweiterte Protokoll-Interpretation und Lösungsansätze
+
+Für jeden „Hardware-Mangel" aus Abschnitt 1 hier ein Workaround,
+soweit vom Reader-Code oder von der App-Logik realisierbar.
+
+### 12.1 Stable/Unstable trotz fehlendem Header
+
+**Problem**: G&G sendet keine `ST,`/`US,`-Markierung. Reader weiß nicht
+direkt, ob der Wert gerade schwankt.
+
+**Lösung im Code (`messlog.py`)**:
+- Nach jedem `ESC p` antwortet die Waage erst, wenn der interne Filter
+  einen stabilen Mittelwert ermittelt hat (Beruhigungs-Zeit, modell-
+  abhängig 2–5 s).
+- Der Reader interpretiert „Frame kommt zurück" implizit als „stabil".
+  Bei kontinuierlichem Polling fällt eine schwankende Phase als Lücke
+  zwischen Frames auf.
+- Heuristik in `messlog.py`: ein neuer Eintrag wird nur dann gespeichert,
+  wenn `|new − last| ≥ ε` (Default `ε = 0,05 g`). Damit fallen Mikro-
+  Schwankungen ohne Bedeutung raus.
+
+### 12.2 Beleuchtungs-Status
+
+**Problem**: `ESC u` ist Toggle, kein Read.
+
+**Lösungsansatz**: App speichert den Toggle-Zustand selbst nach jedem
+gesendeten Befehl. Vor dem ersten Toggle ist der Status unbekannt — die
+App zeigt das in der UI als „—" und schaltet beim ersten Klick auf
+„an" (Annahme: Standard nach Boot ist „aus" bei vielen Modellen).
+Aktuell **nicht implementiert** — zu wenig Mehrwert für die typischen
+Werkstatt-Szenarien.
+
+### 12.3 Hardware-Tara erkennen
+
+**Problem**: Wenn die Waage am Gerät tariert wurde (`TARE`-Taste), wertet
+die App den anschließenden Wert als Netto, weiß aber nicht, was vorher
+das Brutto war.
+
+**Lösungsansatz**: Software-Tara als alternative Strategie — die App
+hält ein eigenes Tara-Gewicht und zeigt Brutto = Live, Tara = Software-
+Wert, Netto = Brutto − Tara. Vorteil: sichtbar und protokolliert.
+Wird im **Behälter-wiegen-Tool** und im **Differenz-Wiegen-Tool** so
+umgesetzt (siehe `FUNCTIONS.md`).
+
+### 12.4 Stückzähl-Modus erkennen
+
+**Problem**: Wenn die Waage am Gerät auf Stückzählen umgestellt wurde,
+liefert sie statt `g` die Einheit `pcs`. Die App rechnet dann fälsch-
+licherweise mit der Stück-Zahl als Gramm-Wert.
+
+**Lösungsansatz**: Parser akzeptiert `pcs` als Einheit nicht — solche
+Frames würden als Parse-Fehler verworfen. App-seitig sollte zusätzlich
+ein Hinweis erscheinen, falls Frames lange ausbleiben — könnte
+implementiert werden, ist aktuell **nicht** drin.
+
+### 12.5 Überlast erkennen (`OL`)
+
+**Problem**: Bei Last > Maximum sendet die Waage statt eines Werts den
+String `OL` (oder eine Reihe Striche `------`).
+
+**Lösungsansatz im Parser**: das Standard-Regex matcht nur Zahlen mit
+optionalem Vorzeichen — `OL` wird als `Reading=None` zurückgegeben und
+verworfen. Frontend sieht dadurch „letzter gültiger Wert", nicht das
+`OL`.
+
+**Verbesserung wäre**: explizite Überlast-Erkennung im Parser, die ein
+spezielles `Reading.overload=True` setzt. Frontend könnte dann eine rote
+„OVERLOAD"-Banner anzeigen. **Nicht** im aktuellen Code — wäre 30 Zeilen.
+
+### 12.6 Kalibrierung skripten
+
+**Problem**: `ESC q` startet die internen Kalibrier-Routine; sie erwartet
+dann am Gerät die Kalibrier-Gewicht-Auflage und Bestätigung. Das ist
+**nicht** rein per RS232 abwickelbar — am Gerät muss eine Hand sein.
+
+**Lösungsansatz**: Befehl wird im Frontend bewusst **nicht exponiert**
+(Risiko, Kalibrierung versehentlich zu starten). Wer das tun will,
+benutzt direkt:
+
+```bash
+.venv/bin/python -c "
+import serial, time
+s = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+s.write(b'\x1bq')
+print('Kalibrier-Routine angestoßen — Gewichte am Gerät auflegen.')
+"
+```
+
+### 12.7 Mehrere Waagen am gleichen Bus
+
+**Problem**: zwei Waagen am gleichen RS232-Strang würden sich auf
+`ESC p` gleichzeitig melden und Frames ineinander mischen.
+
+**Lösungsansatz** laut G&G-Manual: Setup-Code C4 ändert das Steuer-Byte
+pro Gerät (z.B. `!` statt `ESC` bei Waage 2). Der PC schickt dann
+`!p` für Waage 2 und `\x1bp` für Waage 1. **Im Code nicht implementiert**;
+die App erwartet aktuell genau ein angeschlossenes Gerät.
+
+---
+
+## 13. Foren-Recherche und OEM-Identität
+
+Status nach Durchstöbern von mikrocontroller.net, eevblog,
+electronics.stackexchange, Reddit, GitHub und Hackaday: **es gibt
+praktisch keine Hobbyist-Lore zu undokumentierten G&G-Befehlen oder
+Service-Modi.** Das offizielle Manual ist die einzige Quelle.
+
+### Baugleiche OEM-Marken
+
+G&G ist eine deutsche Vertriebsmarke (G&G GmbH, Kaarst), die Geräte
+werden in China gefertigt. Anhand identischer Spezifikationen,
+Tasten-Layouts und 9600-8N1-Konfiguration verhalten sich folgende
+Marken **wahrscheinlich kompatibel** zum gleichen RS232-Protokoll
+(nicht alle bestätigt — vor produktivem Einsatz testen):
+
+| Marke | Vermutlich kompatibel | Quelle |
+|---|:---:|---|
+| **Bonvoisin** Analytical Balances | ja | Datenblatt: `9600 bps, 8 data, 1 stop, no parity; modes continuous/press/timing` |
+| **U.S. Solid** Lab Scales | wahrscheinlich | identisches Tasten-Layout, dokumentierter RS232 |
+| **Steinberg Systems SBS-LW** | wahrscheinlich | dito, deutscher Wiederverkäufer |
+| **HoChoice / TFCFL** | wahrscheinlich | Direkt-Importe aus China, gleiches Gehäuse |
+| ggscales.com (Direktvertrieb G&G) | ja | gleicher Hersteller |
+| **Kern, Sartorius, A&D, OHAUS** | **nein** | eigene Protokolle (KCP, xBPI/SBI, AD-4212) |
+
+### Was das bedeutet
+
+Die App und der Reader-Code sollten an Bonvoisin-/Steinberg-Geräten ohne
+Änderung funktionieren. Bei den ausdrücklich ausgeschlossenen Marken
+(Kern, Sartorius etc.) braucht es einen anderen Parser — die Frame-
+Formate dort sind grundlegend anders aufgebaut.
+
+### Praktischer Plan-B für Geräte ohne Befehl
+
+Der einzige in Foren bestätigte Workaround für blinde Hardware-
+Steuerung ist das **Relais am `PRINT`-Taster**: ein Mikrocontroller
+schließt physikalisch den Tastkontakt, dadurch sendet die Waage einen
+Frame ohne RS232-Befehl. Anwendung typischerweise bei billigen
+Waagen, die nur ein einseitig-aktives RS232-Output ohne Print-Anfrage
+unterstützen. Bei den hier gelisteten G&G-/Bonvoisin-Geräten **nicht
+nötig** — `ESC p` funktioniert.
+
+---
+
+## 14. Quellen
 
 - [G&G Schnittstelle (DE) — Anleitung-Schnittstelle.pdf](https://gandg.de/download/anleitungen/Anleitung-Schnittstelle.pdf)
 - [G&G Schnittstelle (EN) — Anleitung-Schnittstelle-E.pdf](https://www.gandg.de/download/anleitungen/Anleitung-Schnittstelle-E.pdf)

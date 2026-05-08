@@ -3,7 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Waage v0.3 — Mockups (Iteration 2)</title>
+  <title>Waage — historisches Mockup v0.3 (ARCHIV)</title>
+  <!--
+    HINWEIS: Diese Datei ist ein archivierter Stand aus der v0.3-Iteration
+    (Mai 2026). Sie zeigt NICHT die aktuelle App-Version, sondern ist
+    eine visuelle Referenz für die damalige Design-Phase.
+
+    Aktuelle Version: siehe Datei VERSION im Repo-Wurzel bzw.
+    GET http://<host>/scale/health → "version".
+
+    Die App selbst hat keinen Bezug zu diesem File — es wird weder
+    von Vite gebaut noch im Container ausgeliefert. Die hier
+    angezeigten "v0.3.0"-Footer sind festgehalten für die History.
+  -->
+  <style>
+    .__archive_banner__ {
+      position: sticky; top: 0; z-index: 9999;
+      background: #cf222e; color: #fff;
+      padding: 10px 16px; font-family: system-ui, sans-serif;
+      font-size: 14px; font-weight: 600; letter-spacing: 0.02em;
+      text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .__archive_banner__ a { color: #ffe; text-decoration: underline; }
+  </style>
 
   <!-- Im echten Build: lokale Pakete @fontsource/barlow, @fontsource/chakra-petch
        und @fortawesome/fontawesome-free. Im Mockup als CDN. -->
@@ -806,6 +828,14 @@
   </style>
 </head>
 <body>
+
+<div class="__archive_banner__">
+  ⚠ HISTORISCHER SNAPSHOT — UI-Iteration v0.3 (Mai 2026). Diese Datei ist
+  KEIN aktueller App-Stand. Aktuelle Version steht im
+  <a href="../VERSION">VERSION</a>-File und wird vom Backend unter
+  <code>/scale/health → version</code> ausgeliefert. Die Footer-Zeilen
+  weiter unten zeigen absichtlich „v0.3.0" als Snapshot-Marker.
+</div>
 
 <div class="doc">
 
