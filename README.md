@@ -21,6 +21,31 @@ und nicht-eichfähig (siehe `DISCLAIMER.md`).
 **Stack:** FastAPI · pyserial · Svelte 5 · Vite · nginx · SQLite ·
 Docker Compose · Python 3.11+
 
+## Eindrücke
+
+<table>
+  <tr>
+    <td align="center" valign="top">
+      <a href="media/desktop_dm.png">
+        <img src="media/desktop_dm.png" width="380" alt="Desktop-Ansicht im Dunkel-Modus" />
+      </a>
+      <br /><sub><b>Desktop · Dunkel</b></sub>
+    </td>
+    <td align="center" valign="top">
+      <a href="media/desktop_wm.png">
+        <img src="media/desktop_wm.png" width="380" alt="Desktop-Ansicht im Hell-Modus" />
+      </a>
+      <br /><sub><b>Desktop · Hell</b></sub>
+    </td>
+    <td align="center" valign="top">
+      <a href="media/mobile.png">
+        <img src="media/mobile.png" width="180" alt="Mobile-Ansicht im Hochformat" />
+      </a>
+      <br /><sub><b>Mobile · Hochformat</b></sub>
+    </td>
+  </tr>
+</table>
+
 ## Architektur
 
 ```
