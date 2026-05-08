@@ -7,6 +7,11 @@ Datumsformat: ISO 8601 (JJJJ-MM-TT). Quelle der Wahrheit für die aktuelle
 Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 `package.json` werden daraus synchronisiert.
 
+## [0.5.15] — 2026-05-08
+
+### Hinweise
+- (bitte ergänzen)
+
 ## [0.5.14] — 2026-05-08
 
 ### Geändert (Status-Indikatoren konsolidiert)
