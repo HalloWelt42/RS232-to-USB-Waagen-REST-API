@@ -1,7 +1,6 @@
 <script lang="ts">
   import { api } from '../lib/api';
   import { copyText } from '../lib/clipboard';
-  import { formatTime } from '../lib/format';
   import { toast } from '../lib/toast.svelte';
   import { live } from '../lib/liveStore.svelte';
   import { healthStore } from '../lib/healthStore.svelte';
@@ -13,11 +12,10 @@
   let busy = $state<CmdKey | null>(null);
 
   let r = $derived(live.reading);
-  let conn = $derived(live.connection);
 
-  // Hardware-Waage: nur dann „grün", wenn der Reader echt liest und nicht
-  // simuliert wird. Im Simulator-Modus ist diese LED nie grün — wir
-  // zeigen ein orangefarbenes „SIMULATION" stattdessen.
+  // Hardware-Status zentral aus dem healthStore — der Footer zeigt
+  // BACKEND/WAAGE-LEDs prominent an, hier in der LiveWaage steuern
+  // wir damit nur noch die Anzeige des Wert-Displays selbst.
   let scaleState = $derived<'live' | 'simulated' | 'offline'>(
     healthStore.simulated ? 'simulated'
     : healthStore.scaleOk ? 'live'
@@ -31,10 +29,6 @@
   let scaleOffline = $derived(scaleState === 'offline');
   let stable = $derived(scaleOffline ? false : (r?.stable ?? false));
   let weightG = $derived(scaleOffline ? null : (r?.weight_g ?? null));
-  let timeText = $derived(scaleOffline || !r ? '—' : formatTime(r.timestamp));
-
-  // Backend-Status: WebSocket steht?
-  let backendState = $derived<'open' | 'connecting' | 'closed' | 'error'>(conn);
 
   async function copyValue(): Promise<void> {
     if (!r) return;
@@ -62,32 +56,9 @@
     }
   }
 
-  const backendLabelKey: Record<string, string> = {
-    open: 'live.backendOk',
-    connecting: 'live.backendConnecting',
-    closed: 'live.backendOff',
-    error: 'live.backendError',
-  };
-  const scaleLabelKey: Record<string, string> = {
-    live: 'live.scaleConnected',
-    simulated: 'live.scaleSimulated',
-    offline: 'live.scaleOffline',
-  };
 </script>
 
 <section class="live-card" class:stable>
-  <div class="topline">
-    <span class="status">
-      <span class="led" data-state={backendState} aria-hidden="true"></span>
-      <span class="num lbl">{t(backendLabelKey[backendState])}</span>
-    </span>
-    <span class="status">
-      <span class="led" data-scale={scaleState} aria-hidden="true"></span>
-      <span class="num lbl">{t(scaleLabelKey[scaleState])}</span>
-    </span>
-    {#if r}<span class="ts num">{timeText}</span>{/if}
-  </div>
-
   <button class="display" onclick={copyValue} disabled={!r || scaleOffline}
           title={t('commands.copyValueTitle')} aria-label={t('commands.copyValueAria')}>
     <span class="value">
@@ -134,30 +105,9 @@
     container-type: inline-size;
   }
   .live-card.stable { border-color: var(--display-green); }
-  .topline {
-    display: flex; flex-wrap: wrap;
-    justify-content: flex-start; align-items: center;
-    gap: var(--sp-2) var(--sp-3);
-    font-size: var(--fs-xs); color: var(--fg-dim);
-  }
-  .status { display: inline-flex; align-items: center; gap: 6px; }
-  .status .lbl { letter-spacing: 0.06em; }
-  .ts { margin-left: auto; }
-
-  /* LED — Default grau */
-  .led {
-    width: 9px; height: 9px; border-radius: 50%;
-    background: var(--fg-mute);
-    box-shadow: none;
-  }
-  /* Backend-LED */
-  .led[data-state="open"]       { background: var(--display-green); box-shadow: 0 0 6px var(--display-green); }
-  .led[data-state="connecting"] { background: var(--orange); animation: pulse 1.2s infinite; }
-  .led[data-state="closed"], .led[data-state="error"] { background: var(--red); }
-  /* Hardware-Waage-LED */
-  .led[data-scale="live"]      { background: var(--display-green); box-shadow: 0 0 6px var(--display-green); }
-  .led[data-scale="simulated"] { background: var(--orange); box-shadow: 0 0 6px color-mix(in srgb, var(--orange) 60%, transparent); }
-  .led[data-scale="offline"]   { background: var(--red); }
+  /* Topline mit BACKEND/WAAGE-LEDs ist seit 0.5.14 entfernt — der
+     Footer zeigt diesen Status zentral an. Live-Wert beginnt direkt
+     mit dem Display, darunter die drei Hardware-Aktions-Knöpfe. */
 
   .display {
     background: rgba(0,0,0,0.25);
@@ -233,11 +183,6 @@
   }
   .actions button i { color: var(--fg-dim); }
   .actions button:hover:not(:disabled) i { color: var(--accent); }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
 
   /* Sticky-Verhalten auf Mobile: das Live-Display klebt am oberen
      Rand des scrollenden Body-Bereichs, während Messprotokoll und
