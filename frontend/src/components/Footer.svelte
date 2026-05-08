@@ -11,6 +11,7 @@
   import { formatDuration } from '../lib/format';
   import { t } from '../lib/i18n';
   import { healthStore } from '../lib/healthStore.svelte';
+  import { versionStore } from '../lib/versionStore.svelte';
   import type { ConnectionState, HealthInfo } from '../lib/types';
 
   interface Props {
@@ -58,9 +59,20 @@
     <span class="cell num only-desktop">{t('status.uptime')} {formatDuration(health.uptime_seconds)}</span>
   {/if}
 
-  <!-- Versionsanzeige: live aus /scale/health (zentrale VERSION-Datei),
-       Fallback auf den Build-Wert, wenn das Backend nicht antwortet. -->
-  <span class="cell version num">v{health?.version ?? __APP_VERSION__}</span>
+  <!-- Versionsanzeige zieht die robusteste verfügbare Quelle:
+       1) /version.json (statisch, von bump.sh aktualisiert,
+          Cache-Buster beim Fetch — also IMMER aktuell), dann
+       2) /scale/health (Backend), dann
+       3) __APP_VERSION__ (Vite-Build-Zeit-Konstante).
+       Bei Mismatch zwischen (1) und (2) wird ein Hinweis-Title
+       gesetzt, damit Deployment-Diskrepanzen sichtbar werden. -->
+  <span class="cell version num"
+        title={versionStore.hasMismatch
+          ? `Frontend v${versionStore.fromFile} ≠ Backend v${versionStore.fromBackend}`
+          : ''}
+        class:mismatch={versionStore.hasMismatch}>
+    v{versionStore.value}
+  </span>
 </footer>
 
 <style>
@@ -76,6 +88,11 @@
   }
   .cell { display: flex; align-items: center; gap: 6px; }
   .cell.version { margin-left: auto; }
+  .cell.version.mismatch {
+    color: var(--orange);
+    cursor: help;
+    text-decoration: underline dotted;
+  }
   .status .lbl { letter-spacing: 0.06em; }
 
   /* LED — gleiches Schema wie in LiveWaage.svelte */

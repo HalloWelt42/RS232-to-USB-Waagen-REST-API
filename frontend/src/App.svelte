@@ -27,6 +27,7 @@
   import { helpStore } from './lib/helpStore.svelte';
   import { healthStore } from './lib/healthStore.svelte';
   import { modelStore } from './lib/modelStore.svelte';
+  import { versionStore } from './lib/versionStore.svelte';
   import { setDefaultResolution } from './lib/format';
   import type { ConnectionState, HealthInfo, MesslogEntry } from './lib/types';
 
@@ -51,6 +52,7 @@
     try {
       health = await api.scale.health();
       healthStore.set(health);
+      versionStore.setBackend(health?.version);
     } catch {
       // offline tolerieren — bestehender Status bleibt sichtbar
     }
@@ -75,6 +77,9 @@
     stream.start();
 
     void refreshHealth();
+    // Frontend-Version aus /version.json — robust gegen Build-Zeit-
+    // Konstanten und Browser-Cache (Cache-Buster im Fetch).
+    void versionStore.loadFromFile();
     void refreshMesslog();
     void modelStore.refresh();
     healthTimer = window.setInterval(refreshHealth, 5000);

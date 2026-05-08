@@ -70,6 +70,36 @@ data["version"] = "$NEW"
 p.write_text(json.dumps(data, indent=2) + "\n")
 PY
 
+# frontend/public/version.json — wird vom Footer beim Page-Load mit
+# Cache-Buster gefetcht und ist daher IMMER aktuell, ohne dass das
+# Frontend-Bundle neu gebaut werden muss. Vite-Dev-Server serviert
+# das aus public/ direkt; bei `npm run build` landet es 1:1 in dist/.
+python3 - <<PY
+import json, pathlib, datetime
+p = pathlib.Path("frontend/public/version.json")
+p.parent.mkdir(parents=True, exist_ok=True)
+p.write_text(json.dumps({
+    "version": "$NEW",
+    "bumped_at": datetime.datetime.now().isoformat(timespec="seconds"),
+}, indent=2) + "\n")
+PY
+
+# Frontend-Bundle automatisch neu bauen, damit auch die zur Build-Zeit
+# eingefrorene `__APP_VERSION__`-Konstante den aktuellen Wert hat.
+# Falls npm nicht da ist (z.B. auf einem reinen Backend-Host), wird
+# der Build übersprungen — der Bump läuft trotzdem durch, der nächste
+# manuelle `npm run build` zieht den Stand dann nach.
+if command -v npm >/dev/null 2>&1 && [[ -d frontend/node_modules ]]; then
+  echo "Frontend-Build …"
+  if (cd frontend && npm run build --silent 2>&1 | tail -5); then
+    echo "  ok"
+  else
+    echo "  WARNUNG: Frontend-Build fehlgeschlagen — manuell prüfen." >&2
+  fi
+else
+  echo "Frontend-Build übersprungen (kein npm bzw. keine node_modules)."
+fi
+
 # CHANGELOG-Eintrag-Vorlage anlegen (sofern oben noch keiner existiert)
 if ! grep -q "^## \[$NEW\]" CHANGELOG.md; then
   TODAY="$(date +%F)"
@@ -86,7 +116,7 @@ if ! grep -q "^## \[$NEW\]" CHANGELOG.md; then
   echo "CHANGELOG.md: Vorlage für $NEW eingefügt — bitte ergänzen."
 fi
 
-git add VERSION backend/VERSION frontend/package.json CHANGELOG.md
+git add VERSION backend/VERSION frontend/package.json frontend/public/version.json CHANGELOG.md
 git commit -m "chore(release): bump auf $NEW"
 git tag -a "v$NEW" -m "Release $NEW"
 
