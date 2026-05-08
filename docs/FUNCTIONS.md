@@ -14,18 +14,18 @@ Endpunkte sie nutzen und wo Daten persistiert werden.
 ┌────────────────────────────────────────────────────────────────┐
 │  Waage-App                                                     │
 ├──────────────┬─────────────────────────────────────────────────┤
-│              │                                                  │
+│              │                                                 │
 │  Sidebar     │  Werkzeug-Bereich (eines aus 9 Tools)           │
-│              │                                                  │
-│  ┌────────┐  │  ┌──────────────────────────────────────────┐  │
-│  │ Live-  │  │  │  1. Wiegen          6. Differenz-Wiegen  │  │
-│  │ Display│  │  │  2. Behälter wiegen 7. Hilfe & Glossar   │  │
-│  │        │  │  │  3. Stückzählung    8. Einstellungen     │  │
-│  │ Mess-  │  │  │  4. Toleranz        9. Spende            │  │
-│  │ Proto- │  │  │  5. Werte erfassen                       │  │
-│  │ koll   │  │  │                                            │  │
-│  └────────┘  │  └──────────────────────────────────────────┘  │
-│              │                                                  │
+│              │                                                 │
+│  ┌────────┐  │  ┌──────────────────────────────────────────┐   │
+│  │ Live-  │  │  │  1. Wiegen          6. Differenz-Wiegen  │   │
+│  │ Display│  │  │  2. Behälter wiegen 7. Hilfe & Glossar   │   │
+│  │        │  │  │  3. Stückzählung    8. Einstellungen     │   │
+│  │ Mess-  │  │  │  4. Toleranz        9. Spende            │   │
+│  │ Proto- │  │  │  5. Werte erfassen                       │   │
+│  │ koll   │  │  │                                          │   │
+│  └────────┘  │  └──────────────────────────────────────────┘   │
+│              │                                                 │
 └──────────────┴─────────────────────────────────────────────────┘
 ```
 

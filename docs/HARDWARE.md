@@ -193,7 +193,7 @@ holbarkeit, Beruhigungs-/Aufwärmzeit und Betriebstemperatur.
            ▼
 ┌────────────────────────────┐
 │  _take_frame() — Split bei │  ← _buf.find(b'\n')
-│  LF (Zeilenende)            │
+│  LF (Zeilenende)           │
 └──────────┬─────────────────┘
            │
            ▼
@@ -317,14 +317,14 @@ asyncio.run(stream())
                  └──────────────┘
                                 │
                                 ▼
-                 ┌──────────────────────────┐
+                 ┌───────────────────────────┐
                  │  Raspberry Pi 5/4/Zero 2W │
                  │  /dev/ttyUSB0             │
-                 │                            │
-                 │  Backend liest mit         │
-                 │  pyserial 8N1, 9600 baud   │
-                 │  poll: ESC p alle 2 s      │
-                 └──────────────────────────┘
+                 │                           │
+                 │  Backend liest mit        │
+                 │  pyserial 8N1, 9600 baud  │
+                 │  poll: ESC p alle 2 s     │
+                 └───────────────────────────┘
 ```
 
 ### Signal-Flussrichtung (entscheidend!)
