@@ -9,8 +9,72 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.16] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Neu (Industrie-tauglich, ALCOA-orientiert)
+- **Protokoll-Dialog** — Disketten-Symbol im Messprotokoll-Header
+  öffnet ein Vollbild-Modal mit vier Tabs:
+  - **Tabelle** — bildschirmoptimierte Liste aller Einträge plus
+    Statistik (n, Min, Max, Mean, σ).
+  - **Druck** — industrieller Header (Operator, Firma, Standort,
+    Verfahren, Datum, Waagen-Modell + Spezifikation, letzte
+    Kalibrierung, Hardware-Live-Status), Tabelle, Statistik-Footer
+    inkl. zwei Unterschrift-Slots, SHA-256-Hash der Einträge als
+    Tamper-Evidence. Header-Felder sind in localStorage gespiegelt
+    (einmal pflegen, immer da). `@page A4 portrait` mit 14–18 mm
+    Rändern.
+  - **Export** — CSV (mit BOM) / TSV / JSON / Markdown, Trenner-
+    Auswahl, Live-Vorschau, Direkt-Download.
+  - **Speichern** — Schnellzugriff-Knöpfe für die vier Formate.
+- Begründung im Code: ausgerichtet an ALCOA+ und dem typischen
+  Mettler-/Sartorius-Layout. Die App bleibt nicht-eichfähig
+  (DISCLAIMER), liefert aber den technischen Teil dessen, was
+  21-CFR-11- bzw. EU-GMP-Annex-11-Software macht (Pflichtfelder
+  + SHA-256-Hash + Audit-Trail-Header). Eine formale GxP-Konformität
+  erfordert weiter SOPs, Computer-System-Validierung (CSV) und
+  externe Audits.
+
+- **Backup-Endpoint `GET /app/backup`** — liefert ein ZIP mit
+  konsistenten Snapshots aller vier SQLite-DBs (samples, messlog,
+  containers, count_templates) plus `config.json` und
+  `manifest.json` (App-Version, Snapshot-Zeit, SHA-256 + Größe pro
+  Datei). Konsistenz via SQLite-`Connection.backup()` → memory →
+  `serialize()`, daher integer auch bei laufenden Schreibvorgängen.
+  Live verifiziert: 2,5 KB ZIP mit 5 Dateien, alle DBs starten mit
+  „SQLite format 3"-Magic.
+
+- **Overload-Erkennung im Parser** — `OL`, „------", „++++++",
+  `ovr`/`unr` werden erkannt und als Reading mit `overload=true`
+  markiert (statt stillschweigend verworfen). LiveWaage zeigt einen
+  orangefarbenen Warn-Display mit „⚠ ÜBERLAST" und animiertem
+  Glow-Pulse, der Display-Klick (Wert kopieren) ist deaktiviert.
+
+- **Print-CSS, global** — `@media print` blendet Topbar, Footer,
+  ContactStrip, TabBar, Sidebar, Hilfe-Knöpfe und Aktions-Buttons
+  aus; Karten werden schwarz auf weiß ohne Schatten gedruckt;
+  `@page A4 portrait`, `page-break-inside: avoid` auf Tabellen/
+  Listen. Komponenten mit eigenem Druck-Layout (ProtocolDialog)
+  erweitern das mit `.no-print`-Klassen.
+
+### i18n
+- Neue `protocol.*`-Keys (DE+EN): Tab-Namen, Header-Feld-Labels,
+  Spalten-Header, Statusmeldungen, Hash-Label, Hint-Texte.
+- Neue `live.overload` und `live.overloadHint`.
+
+### Tests
+- Parametrisierter Overload-Test über alle bekannten Frame-Varianten
+  (`OL`, `--------`, `+++++`, `ovr`, `unr` mit/ohne Einheit/Vorzeichen).
+- Negativ-Test: reguläre Frames haben `overload=false`.
+- Backup-ZIP-Test: prüft Inhalt (alle DBs + manifest.json), Manifest-
+  Felder (app_version, snapshot_at, files mit sha256/size_bytes),
+  SQLite-Header-Magic in jeder DB.
+- 197 Backend-Tests grün (vorher 188).
+
+### Aufgeschoben (bewusst)
+Aus der Optimierungs-Liste verbleiben für eine spätere Iteration:
+CI/CD, Auth/API-Token, Aggregierter `/app/state`-Endpoint,
+PDF-Export der Sessions, PWA + Service Worker, Diagramm im
+SamplesPanel, manueller Reconnect-Knopf, Bulk-Aktionen, mehrere
+Waagen am Bus, Webhooks. Die hier umgesetzten drei Quick-Wins
+(plus der Protokoll-Dialog) hatten den höchsten Wert pro Aufwand.
 
 ## [0.5.15] — 2026-05-08
 
