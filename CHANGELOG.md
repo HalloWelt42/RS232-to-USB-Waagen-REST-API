@@ -9,8 +9,30 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.11] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Doku
+- **`docs/HARDWARE.md`** auf ~640 Zeilen erweitert — Anschlussplan
+  (ASCII-Schema Waage→Nullmodem→FTDI→Pi), Hardware-Stückliste mit
+  Empfehlungen und Erfahrungswerten, Protokoll-Interpretation für
+  jeden Hardware-Mangel mit konkretem Lösungsansatz (Stable-Heuristik,
+  Tara-Workaround, OL-Erkennung, ESC q skripten, Mehrgerät-Bus),
+  Foren-Recherche-Resultat (keine Hobbyist-Lore zu G&G-Internas;
+  OEM-Identität: Bonvoisin/U.S. Solid/Steinberg/HoChoice
+  baugleich, Kern/Sartorius/A&D nicht).
+- **`docs/FUNCTIONS.md`** neu — vollständige Funktions-Referenz
+  aller App-Tools: Live-Display, Messprotokoll, 9 Tools (Wiegen,
+  Behälter wiegen, Stückzählung, Toleranz, Werte erfassen,
+  Differenz-Wiegen, Hilfe & Glossar, Einstellungen, Spende),
+  Behälter-Bibliothek, Querfunktionen (Sprache, Suche, Hilfe-Knopf,
+  Zahlen-Format, Toasts), Routing-Schema, Datenpersistenz-Übersicht,
+  bewusste Auslassungen mit Begründung. ~480 Zeilen.
+
+### Behoben
+- **Mockup-Datei klar als Archiv markiert** — `mockups/index.html`
+  zeigt v0.3.0-Footer aus dem v0.3-Iteration-Snapshot, was
+  als „uralter Versionfehler" gemeldet wurde. Datei ist nicht
+  Teil des aktiven App-Builds; jetzt prominenter roter Banner
+  oben mit Hinweis „HISTORISCHER SNAPSHOT" und neue
+  `mockups/README.md` erklärt den dokumentarischen Zweck.
 
 ## [0.5.10] — 2026-05-08
 
