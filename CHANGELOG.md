@@ -9,8 +9,27 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.10] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben
+- **Messprotokoll-Reihenfolge: neuester Eintrag wieder oben** —
+  Backend liefert die Liste seit jeher mit `ORDER BY id DESC`
+  (neueste zuerst); `MessLog.svelte` hat sie danach mit
+  `[...entries].reverse()` doppelt gedreht und damit den ältesten
+  Eintrag nach oben gesetzt. Im laufenden Betrieb sah man die
+  Werte rückwärts — die jüngste Änderung verschwand am unteren
+  Listenrand statt oben aufzutauchen.
+- Fix: das `.reverse()` ist weg, `let recent = $derived(entries)`
+  reicht die Backend-Liste 1:1 an die Tabelle weiter. Der
+  irreführende Kommentar daneben („Server liefert auch so") ist
+  ersetzt durch eine klare Begründung.
+
+### Tests
+- Zwei neue Regressions-Tests, damit die Reihenfolge nicht wieder
+  stillschweigend kippt:
+  - `tests/test_messlog.py::test_list_returns_newest_first` —
+    prüft auf Store-Ebene streng monoton fallende IDs und Werte.
+  - `tests/test_app_api.py::test_messlog_http_preserves_store_ordering` —
+    verifiziert, dass die HTTP-Schale `/app/messlog` die Reihenfolge
+    unverändert weiterreicht.
 
 ## [0.5.9] — 2026-05-08
 
