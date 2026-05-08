@@ -200,6 +200,21 @@ def test_messlog_clear(stubbed_app: TestClient) -> None:
     assert r.json()["count"] == 0
 
 
+def test_messlog_http_preserves_store_ordering(stubbed_app: TestClient) -> None:
+    """Der `/app/messlog`-Endpunkt reicht die Liste aus
+    `state.messlog.list()` 1:1 weiter — keine zusätzliche Sortierung
+    in der Route. Die kritische Reihenfolgen-Garantie (neuester oben)
+    deckt `tests/test_messlog.py::test_list_returns_newest_first`
+    auf Store-Ebene; hier verifizieren wir nur, dass die HTTP-Schale
+    die Items unverändert durchgibt — die IDs müssen monoton sein."""
+    items = stubbed_app.get("/app/messlog").json()["items"]
+    if len(items) < 2:
+        pytest.skip("Test-Pipe lieferte zu wenig Frames für Reihenfolge-Check")
+    ids = [it["id"] for it in items]
+    assert ids == sorted(ids, reverse=True), \
+        f"Messlog-IDs müssen absteigend sortiert sein, sind: {ids}"
+
+
 # ---------------- 404-Verhalten der Single-Delete-Routes ----------------
 # Die Frontend-Bereiche (MessLog, SamplesPanel, DifferenzPanel) rufen die
 # Single-Delete-Endpunkte direkt auf — ohne Bestätigungs-Popup.

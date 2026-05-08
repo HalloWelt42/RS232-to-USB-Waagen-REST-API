@@ -13,8 +13,11 @@
   }
   let { entries = [], onChanged }: Props = $props();
 
-  // Neueste zuerst — Server liefert auch so, Frontend appended hinten
-  let recent = $derived([...entries].reverse());
+  // Backend liefert Messprotokoll bereits in `ORDER BY id DESC` —
+  // also neueste zuerst. Wir geben die Liste 1:1 weiter; ein
+  // zusätzliches `.reverse()` würde die Reihenfolge falsch drehen
+  // (älteste oben), was bis 0.5.9 sichtbar war.
+  let recent = $derived(entries);
 
   async function deleteOne(id: number): Promise<void> {
     try {

@@ -123,3 +123,26 @@ def test_max_entries_truncation() -> None:
             store.feed(_r(float(i * 10)))   # genug Diff für jeden Eintrag
         rows = store.list(limit=100)
         assert len(rows) <= 10
+
+
+def test_list_returns_newest_first() -> None:
+    """`list()` liefert in absteigender Insert-Reihenfolge — neuester
+    Eintrag steht oben. Das Frontend rendert die Liste 1:1 ohne
+    zusätzliches reverse(); ein Bruch dieser Garantie würde im UI
+    die Reihenfolge umkehren (älteste oben statt unten)."""
+    with MesslogStore(":memory:") as store:
+        store.feed(_r(0.0))      # start
+        store.feed(_r(10.0))     # change +10
+        store.feed(_r(50.0))     # change +40
+        store.feed(_r(100.0))    # change +50
+        rows = store.list(limit=100)
+        # Neuester Eintrag (100.0) muss an Index 0 stehen, ältester am Ende
+        values = [r.value_g for r in rows]
+        assert values[0] == pytest.approx(100.0), \
+            f"Reihenfolge falsch — neuester Wert nicht oben. Got: {values}"
+        assert values[-1] == pytest.approx(0.0), \
+            f"Reihenfolge falsch — ältester Wert nicht unten. Got: {values}"
+        # IDs streng monoton fallend
+        ids = [r.id for r in rows]
+        assert ids == sorted(ids, reverse=True), \
+            f"IDs nicht absteigend sortiert: {ids}"
