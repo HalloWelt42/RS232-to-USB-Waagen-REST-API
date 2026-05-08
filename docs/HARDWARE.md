@@ -401,6 +401,44 @@ hängen — getestet mit der hier vorliegenden Kombination:
 Für jeden „Hardware-Mangel" aus Abschnitt 1 hier ein Workaround,
 soweit vom Reader-Code oder von der App-Logik realisierbar.
 
+### 12.0 USB-Adapter abgezogen / Hardware tot
+
+**Problem**: bei pyserial blockiert `read()` nach einem Adapter-Abriss
+nicht zwingend mit einer Exception — `read_one()` gibt dann nur leere
+Frames (`None`) zurück, der Reader-Loop drehte vorher endlos im 10 ms-
+Takt, `last_seen` blieb auf dem letzten erfolgreichen Frame stehen,
+und `reader_alive` war stoisch `True`.
+
+**Lösung im Reader-Loop seit 0.5.12**:
+
+- `AppState.scale_alive` als zweite Wahrheit neben `reader_alive`:
+  `True` nur, wenn die Hardware in den letzten
+  `WAAGE_SCALE_STALE_AFTER_S` Sekunden (Default 5 s) ein Frame
+  geliefert hat. Default-Schwelle ist großzügig genug für
+  0,5–1 Hz Polling, eng genug, dass ein Disconnect binnen Sekunden
+  sichtbar wird.
+- `AppState.stale_for_s` für Diagnose: Sekunden seit dem letzten
+  erfolgreichen Frame.
+- Periodischer Stale-Check im Reader-Loop (alle 2 s): liegt
+  `stale_for_s` über dem doppelten Schwellwert (Default 10 s) ODER
+  hat der gerade frisch geöffnete Reader nach 10 s noch keinen
+  einzigen Frame bekommen, wirft der Loop selbst einen
+  `RuntimeError`. Das löst den schon vorhandenen Reconnect-Pfad
+  mit exponentiellem Backoff aus — wenn der Adapter zurückkommt,
+  wird er beim nächsten `reader_factory()`-Aufruf wieder gefunden.
+- HTTP-Health (`GET /scale/health`) liefert beide Felder
+  (`scale_alive`, `stale_for_s`) zusätzlich zum bisherigen
+  `reader_alive`. `ok` bleibt für Backward-Kompatibilität an
+  `reader_alive AND latest is not None` gebunden — die UI nutzt
+  primär `scale_alive` für die WAAGE-LED.
+
+**Konfigurations-Stellschraube**:
+
+```bash
+# Stale-Schwelle in Sekunden anpassen — Default 5 s
+WAAGE_SCALE_STALE_AFTER_S=10 .venv/bin/python -m waage.api
+```
+
 ### 12.1 Stable/Unstable trotz fehlendem Header
 
 **Problem**: G&G sendet keine `ST,`/`US,`-Markierung. Reader weiß nicht

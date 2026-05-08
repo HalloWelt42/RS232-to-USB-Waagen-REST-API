@@ -62,7 +62,9 @@ class ReadingOut(BaseModel):
 
 class HealthOut(BaseModel):
     ok: bool
-    reader_alive: bool
+    reader_alive: bool       # Reader-Task läuft (Python-Task aktiv)
+    scale_alive: bool        # Hardware antwortet (Frame in den letzten N s)
+    stale_for_s: Optional[float] = None
     last_seen: Optional[str] = None
     port: str
     baudrate: int
@@ -234,9 +236,16 @@ def build_scale_router(state: AppState, app_version: str) -> APIRouter:
     def health() -> HealthOut:
         uptime = (datetime.now() - state.started_at).total_seconds()
         simulated = state.source_mode == "simulate"
+        stale = state.stale_for_s
         return HealthOut(
+            # `ok` bleibt backward-kompatibel: Reader-Task läuft UND
+            # mindestens ein Frame ist je angekommen. Den präziseren
+            # Stale-Check (Hardware antwortet jetzt gerade) liefert
+            # `scale_alive`.
             ok=state.reader_alive and state.latest is not None,
             reader_alive=state.reader_alive,
+            scale_alive=state.scale_alive,
+            stale_for_s=round(stale, 2) if stale is not None else None,
             last_seen=state.last_seen.isoformat(timespec="milliseconds")
                       if state.last_seen else None,
             port="simulator" if simulated else state.resolved_port,

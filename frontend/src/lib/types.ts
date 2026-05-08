@@ -17,7 +17,16 @@ export interface Reading {
 
 export interface HealthInfo {
   ok: boolean;
+  /** Reader-Task läuft (Python-Task aktiv). Sagt nichts über die
+   *  Hardware-Verbindung aus — bei abgezogenem USB-Adapter dreht der
+   *  Loop ohne Frames weiter. Für die UI besser `scale_alive` nutzen. */
   reader_alive: boolean;
+  /** True wenn die Hardware aktuell antwortet (Frame in den letzten
+   *  N Sekunden). False bei abgezogenem Adapter, abgeschalteter Waage,
+   *  defektem Kabel — auch wenn `reader_alive=true`. Seit Backend 0.5.12. */
+  scale_alive?: boolean;
+  /** Sekunden seit dem letzten Frame. Diagnose-Wert. */
+  stale_for_s?: number | null;
   last_seen: string | null;
   port: string;
   baudrate: number;

@@ -200,6 +200,44 @@ def test_messlog_clear(stubbed_app: TestClient) -> None:
     assert r.json()["count"] == 0
 
 
+def test_health_reports_scale_alive_and_stale_for_s(stubbed_app: TestClient) -> None:
+    """`/scale/health` liefert die neuen Felder. Das tatsächliche
+    Verhalten der Stale-Logik wird im Unit-Test
+    `test_health_marks_stale_after_threshold` geprüft (mit kontrolliertem
+    `last_seen`); hier nur Smoke-Test der Feld-Sichtbarkeit, weil die
+    Fixture-Frames einen festen Timestamp aus 2026-05-07 nutzen."""
+    h = stubbed_app.get("/scale/health").json()
+    assert "scale_alive" in h, "Feld scale_alive fehlt im Health-Output"
+    assert "stale_for_s" in h, "Feld stale_for_s fehlt im Health-Output"
+    assert isinstance(h["scale_alive"], bool)
+    assert h["stale_for_s"] is None or isinstance(h["stale_for_s"], (int, float))
+
+
+def test_health_marks_stale_after_threshold() -> None:
+    """Direkter Unit-Test gegen AppState — alte `last_seen`-Zeit
+    macht `scale_alive` False, ohne dass wir das Backend warten lassen."""
+    from datetime import datetime, timedelta
+    from waage.state import AppState
+    state = AppState(
+        history_size=10, port="/dev/null", baudrate=9600,
+        resolved_port="/dev/null", samples_path=None,
+        messlog_path=None, config_dir=None,
+    )
+    state.reader_alive = True
+    state.scale_stale_after_s = 5.0
+    # 10 s alter Frame → stale
+    state.last_seen = datetime.now() - timedelta(seconds=10)
+    assert state.stale_for_s is not None
+    assert state.stale_for_s >= 9.5
+    assert state.scale_alive is False
+    # 1 s alter Frame → alive
+    state.last_seen = datetime.now() - timedelta(seconds=1)
+    assert state.scale_alive is True
+    # Reader-Task tot → scale_alive immer False
+    state.reader_alive = False
+    assert state.scale_alive is False
+
+
 def test_messlog_http_preserves_store_ordering(stubbed_app: TestClient) -> None:
     """Der `/app/messlog`-Endpunkt reicht die Liste aus
     `state.messlog.list()` 1:1 weiter — keine zusätzliche Sortierung

@@ -98,7 +98,22 @@ def _make_reader_factory(port: str, baudrate: int, state: AppState):
 
 
 async def _reader_loop(reader_factory, state: AppState) -> None:
+    """Liest in Schleife von der Hardware/Simulator und veröffentlicht
+    Readings im AppState.
+
+    Disconnect-Erkennung: bei pyserial schlägt der Lese-Aufruf nach
+    einem USB-Adapter-Abriss nicht zwingend mit einer Exception fehl —
+    `read_one()` gibt dann nur leere Frames (None) zurück, der Loop
+    drehte vorher endlos im 10ms-Takt. Wir prüfen deshalb periodisch,
+    ob seit dem letzten erfolgreichen Frame zu viel Zeit vergangen ist
+    (Default 2× `state.scale_stale_after_s`), und werfen dann selbst
+    eine Exception — das löst den existierenden Reconnect-Pfad mit
+    Backoff aus, der das Device beim nächsten Stecken wieder findet.
+    """
+    import time as _time
+
     backoff = 1.0
+    HEALTH_CHECK_INTERVAL_S = 2.0
     while True:
         try:
             with reader_factory() as w:
@@ -106,12 +121,40 @@ async def _reader_loop(reader_factory, state: AppState) -> None:
                 state.current_reader = w
                 backoff = 1.0
                 log.info("Reader geöffnet: %s", type(w).__name__)
+                reader_opened_at = _time.monotonic()
+                last_health_check = reader_opened_at
                 while True:
                     reading = await asyncio.to_thread(w.read_one)
-                    if reading is None:
-                        await asyncio.sleep(0.01)
+                    if reading is not None:
+                        await state.publish(reading)
                         continue
-                    await state.publish(reading)
+                    await asyncio.sleep(0.01)
+                    # Periodischer Stale-Check — bei abgezogenem
+                    # USB-Adapter merkt der Lese-Pfad sonst nichts.
+                    now = _time.monotonic()
+                    if now - last_health_check < HEALTH_CHECK_INTERVAL_S:
+                        continue
+                    last_health_check = now
+                    stale_threshold = state.scale_stale_after_s * 2
+                    elapsed_since_open = now - reader_opened_at
+                    stale_s = state.stale_for_s
+                    if state.last_seen is None:
+                        # Reader läuft, aber NIE einen Frame bekommen.
+                        # Wahrscheinlich Hardware nicht da. Reconnect
+                        # triggern, sobald die Geduld-Schwelle reißt.
+                        if elapsed_since_open > stale_threshold:
+                            raise RuntimeError(
+                                "Hardware liefert seit dem Öffnen keine "
+                                f"Frames ({elapsed_since_open:.0f}s) — "
+                                "Reconnect-Versuch."
+                            )
+                        continue
+                    if stale_s is not None and stale_s > stale_threshold:
+                        raise RuntimeError(
+                            f"Keine Frames seit {stale_s:.1f}s "
+                            "(USB-Adapter wahrscheinlich getrennt) — "
+                            "Reconnect-Versuch."
+                        )
         except asyncio.CancelledError:
             state.reader_alive = False
             state.current_reader = None

@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 from collections import deque
 from contextlib import suppress
 from datetime import datetime
@@ -53,6 +54,15 @@ class AppState:
         self.reader_alive: bool = False
         self.started_at: datetime = datetime.now()
         self.current_reader: Optional[Waage] = None
+        # Wenn länger als `scale_stale_after_s` keine Frames mehr kamen,
+        # gilt die Hardware als „weg" (z.B. USB-Adapter abgezogen). Wirkt
+        # auf `scale_alive` und steuert den Reconnect-Trigger im Reader-
+        # Loop. Default 5s — bei 0,5–1 Hz Polling-Rate viel Zeit für
+        # gelegentliche Lücken, schnell genug um einen Disconnect noch
+        # in derselben Sekunde sichtbar zu machen.
+        self.scale_stale_after_s: float = float(
+            os.getenv("WAAGE_SCALE_STALE_AFTER_S", "5")
+        )
 
         # --- Hardware-Konfig ---
         self.port: str = port
@@ -93,6 +103,37 @@ class AppState:
         self.tare_pending: bool = False  # nach Tara-Befehl: nächster Stable -> Messlog-Marker
 
         self._lock = asyncio.Lock()
+
+    # ------------------------------------------------------------------
+    #  Hardware-Lebenszeichen
+    # ------------------------------------------------------------------
+    @property
+    def stale_for_s(self) -> Optional[float]:
+        """Sekunden seit dem letzten erfolgreichen Frame, oder None
+        wenn noch nie ein Frame angekommen ist."""
+        if self.last_seen is None:
+            return None
+        return (datetime.now() - self.last_seen).total_seconds()
+
+    @property
+    def scale_alive(self) -> bool:
+        """True wenn der Reader-Task läuft UND die Hardware kürzlich
+        ein Frame geliefert hat.
+
+        Anders als `reader_alive` (das nur sagt: der Python-Task läuft)
+        ist `scale_alive` False, wenn der USB-Adapter abgezogen wurde,
+        die Waage abgeschaltet ist oder das Kabel defekt ist — auch
+        dann, wenn der Reader-Loop selbst noch fröhlich pollt.
+        """
+        if not self.reader_alive:
+            return False
+        s = self.stale_for_s
+        if s is None:
+            # Frisch nach Start: noch keine Frames bekommen — ist OK
+            # für die ersten paar Sekunden, danach gilt das als „aus".
+            uptime = (datetime.now() - self.started_at).total_seconds()
+            return uptime < self.scale_stale_after_s
+        return s < self.scale_stale_after_s
 
     # ------------------------------------------------------------------
     #  Stream-Verteilung
