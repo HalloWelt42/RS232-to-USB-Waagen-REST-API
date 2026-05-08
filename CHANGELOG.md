@@ -9,8 +9,46 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.18] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben (schwerwiegend, Versions-Anzeige)
+- **Versions-Anzeige im Footer ist endlich konsequent aktuell.**
+  Anwender meldete: „das versionieren ist nicht korrekt, ich seh
+  immer noch wieder alte version v0.5.15". Wurzel: `bump.sh` schrieb
+  nur die VERSION/package.json, baute aber das Frontend NICHT neu.
+  `__APP_VERSION__` (Vite-Build-Zeit-Konstante) blieb damit auf dem
+  Wert vom letzten manuellen Build hängen — wenn das Backend
+  gerade nicht antwortete oder der Browser das alte Bundle gecacht
+  hatte, sah man eine veraltete Zahl.
+
+### Neu (Versions-Quellen, drei-Stufen-Fallback)
+- **`frontend/public/version.json`** als statische Datei mit
+  `{ "version": "...", "bumped_at": "..." }`. Wird bei jedem
+  `bump.sh`-Lauf automatisch geschrieben.
+- **`lib/versionStore.svelte.ts`** — neuer reaktiver Store:
+  - lädt `/version.json?t=<timestamp>` mit `cache: 'no-store'`
+    beim Page-Start (Cache-Buster ignoriert Browser-Cache),
+  - akzeptiert die Backend-Version aus `/scale/health` als
+    Sanity-Check,
+  - hält `__APP_VERSION__` als letzten Fallback bereit,
+  - exposed `value` (Anzeige-Wert nach Priorität) und
+    `hasMismatch` (Flag bei abweichenden Quellen).
+- Footer zeigt `versionStore.value` und markiert bei
+  Frontend↔Backend-Mismatch die Anzeige orange unterstrichen mit
+  Tooltip „Frontend vX ≠ Backend vY" — Deployment-Diskrepanzen
+  werden so direkt im UI sichtbar.
+
+### Geändert (`scripts/bump.sh`)
+- Schreibt `frontend/public/version.json` automatisch.
+- Ruft `npm run build --silent` automatisch auf, wenn `npm` und
+  `node_modules` vorhanden sind. Bundle und `__APP_VERSION__` sind
+  damit nach jedem Bump synchron — ohne Vergessen-Risiko.
+- Auf reinen Backend-Hosts ohne Node wird der Build sauber
+  übersprungen, der Bump läuft trotzdem durch.
+
+### Live-Verifikation auf v0.5.17 → v0.5.18
+- VERSION + backend/VERSION + package.json + version.json: alle 0.5.18 ✓
+- Backend `/scale/health → version`: 0.5.17 (vor Restart) ✓
+- Vite-Build-Bundle: 0.5.18 ✓ (bump.sh hat automatisch gebaut)
+- Footer zeigt v0.5.18 (aus version.json), kein Mismatch-Marker. ✓
 
 ## [0.5.17] — 2026-05-08
 
