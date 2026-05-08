@@ -9,8 +9,38 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.17] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Geändert (ProtocolDialog vereinfacht)
+- **ALCOA-Schnickschnack raus, eigenes Format rein** — der erste
+  Wurf des Protokoll-Dialogs (0.5.16) war zu industrie-lastig:
+  Operator/Firma/Standort/Verfahren-Felder, zwei Unterschrift-
+  Slots, SHA-256-Tamper-Evidence-Hash, „Hardware Live Ja/Nein",
+  Compliance-Hinweise. Anwender-Feedback: „nee, sowas komplexes
+  bauen wir nicht ein, lass uns eigenen Kram etablieren".
+- Druck-Tab jetzt minimal: Header (Datum + Waagen-Modell + Spec),
+  Tabelle, Statistik-Footer (n/Min/Max/Mean/σ/Sum). Keine
+  Pflichtfelder zum Ausfüllen, keine Unterschriften, kein Audit-
+  Hash.
+- Operator/Firma/Standort/Method/Letzte-Kalibrierung-Eingaben und
+  ihre `localStorage`-Persistenz sind komplett entfernt.
+
+### Neu (eigenes Datei-Format)
+- **`.waage`-Format** — JSON-basiertes App-eigenes Format mit
+  Schema-Marker `waage-protocol-v1`, App-Version, Waagen-Stamm-
+  daten, Statistik und vollständiger Eintragsliste. Kann das
+  Backend später über `POST /app/messlog/import` wieder einlesen,
+  ohne sich an Industrie-Standards zu binden.
+- Format-Spec in **`docs/WAAGE_FORMAT.md`** (Felder, Typen,
+  Versions-Schema, was bewusst NICHT drin ist).
+- Im Export-Tab als fünfte Format-Option, im Save-Tab als
+  hervorgehobene Schnellzugriff-Karte.
+
+### i18n
+- `protocol.*`-Keys massiv abgespeckt — alle Operator-/Firma-/
+  Audit-bezogenen Strings raus, neuer `protocol.waageFormatHint`
+  („eigenes App-Format, JSON, vollständig").
+
+### Verifikation
+- Build sauber (214 Files, 0/0), 56 Frontend-Tests grün.
 
 ## [0.5.16] — 2026-05-08
 
