@@ -9,8 +9,32 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.14] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Geändert (Status-Indikatoren konsolidiert)
+- **Footer zeigt BACKEND- und WAAGE-LEDs zentral** — vorher saß
+  unten links nur ein einsamer „Live"-Dot mit dem reinen WS-Status,
+  der nichts über die Hardware aussagte; gleichzeitig hatte die
+  LiveWaage-Karte eine Topline mit denselben zwei LEDs. Jetzt:
+  - Footer zeigt links zwei LEDs (BACKEND = WS-Verbindung,
+    WAAGE = Hardware live/SIMULATION/AUS) plus rechts die
+    Live-Backend-Version.
+  - Reader/Port/Baud/Uptime werden auf Mobile ausgeblendet
+    (`only-desktop`-Klasse), der Footer ist auf Mobile dadurch
+    SICHTBAR (war bisher komplett `display:none`) — Anwender hat
+    den Hardware-Status auch im Hochformat im Blick.
+- **LiveWaage zeigt nur noch den Wert** — die Topline mit
+  BACKEND/WAAGE/Timestamp ist raus. Card beginnt direkt mit dem
+  Display, darunter die drei Hardware-Aktions-Knöpfe. Saubere,
+  fokussierte Anzeige.
+- Damit: ein einziger Ort für den Verbindungsstatus, kein
+  doppelter Aufwand mehr beim Hinschauen.
+
+### Entfernt
+- **`mockups/`-Verzeichnis komplett gelöscht.** Wurde wiederholt
+  als „uralter Versionfehler v0.3.0" gemeldet, der Banner-Workaround
+  hatte die Verwirrung nicht beendet. Datei war nicht Teil des
+  aktiven App-Builds; der archivierte Stand bleibt über die Git-
+  History abrufbar (`git show 9bf8983:mockups/index.html`).
+  Frontend-Source enthält damit kein hardcoded „v0.3.0" mehr.
 
 ## [0.5.13] — 2026-05-08
 
