@@ -9,8 +9,52 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.12] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben (schwerwiegend, Hardware-Diagnose)
+- **Backend erkennt USB-Disconnect der Waage** — bei einem
+  abgezogenen USB-Serial-Adapter blieb `reader_alive=true` stoisch
+  haften, weil pyserials `read()` nicht mit Exception fehlschlug,
+  sondern still leere Frames lieferte. `last_seen` blieb auf dem
+  letzten echten Frame stehen, das Frontend zeigte die WAAGE-LED
+  weiter grün. Live-Test mit abgezogenem Adapter bestätigte das
+  Problem (Backend zeigte „alive" trotz fehlender Hardware).
+
+### Neu
+- `AppState.scale_alive` und `AppState.stale_for_s` als Properties.
+  `scale_alive` ist nur True, wenn der Reader-Task läuft UND in den
+  letzten `WAAGE_SCALE_STALE_AFTER_S` Sekunden (Default 5 s) ein
+  Frame angekommen ist.
+- `GET /scale/health` liefert beide Felder zusätzlich aus —
+  `scale_alive: bool`, `stale_for_s: float | null`. Das ältere `ok`-
+  Feld bleibt backward-kompatibel (Reader-Task läuft + min. ein Frame).
+- Frontend `healthStore.scaleOk` zieht jetzt `scale_alive` an erster
+  Stelle (mit Fallback auf `reader_alive` für ältere Backends). Die
+  WAAGE-LED in der LiveWaage zeigt damit zuverlässig rot, wenn die
+  Hardware weg ist.
+- Reader-Loop-Stale-Trigger: prüft alle 2 s, ob `stale_for_s` über
+  dem doppelten Schwellwert liegt ODER ein frisch geöffneter Reader
+  nach 10 s noch keinen Frame bekommen hat. In beiden Fällen wirft
+  der Loop selbst einen `RuntimeError`, was den existierenden
+  Reconnect-Pfad mit exponentiellem Backoff anstößt — bei Wieder-
+  einstecken des Adapters greift `reader_factory()` automatisch.
+
+### Konfiguration
+- Neue Env-Variable `WAAGE_SCALE_STALE_AFTER_S` (Default `5`).
+
+### Tests
+- `test_health_reports_scale_alive_and_stale_for_s` — Smoke-Test
+  der HTTP-Schale, Felder vorhanden + korrekte Typen.
+- `test_health_marks_stale_after_threshold` — Unit-Test gegen
+  AppState mit kontrolliertem `last_seen`. 188 Tests grün.
+
+### Doku
+- `docs/HARDWARE.md` Abschnitt 12.0 neu — beschreibt Problem,
+  Lösung und Konfigurations-Stellschraube.
+
+### Live-Verifikation
+- Mit abgezogenem USB-Adapter: `scale_alive: false`,
+  `stale_for_s: null`, Backend-Log zeigt
+  `RuntimeError: Hardware liefert seit dem Öffnen keine Frames (10s)
+  — Reconnect-Versuch.` ✓
 
 ## [0.5.11] — 2026-05-08
 
