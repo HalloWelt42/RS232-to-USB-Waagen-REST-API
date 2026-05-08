@@ -9,8 +9,48 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.13] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Behoben (Reaktivität nach Disconnect)
+- **Display reagiert sofort auf USB-Disconnect** — bisher klebte
+  die LiveWaage am letzten WebSocket-Frame, der Anwender sah weiter
+  „61,9 g STABIL" obwohl die Hardware schon abgezogen war; erst
+  ein Page-Reload räumte das auf. Jetzt:
+  - LiveWaage zeigt bei `scaleState='offline'` explizit „WAAGE AUS"
+    im Status-Slot, der Wert wird auf null gesetzt, der Display-
+    Klick (Wert kopieren) ist deaktiviert.
+  - App.svelte hat einen `$effect`, der `live.set(null)` aufruft,
+    sobald `healthStore.scaleOk` auf false fällt. Damit ziehen
+    alle Werkzeug-Panels (Wiegen/Netto/Toleranz/Differenz/Count)
+    zentral auf den neutralen Zustand — kein stale „61,9 g" mehr,
+    nirgends.
+
+### Behoben (Versions-Anzeige)
+- **Footer-Version dynamisch aus Backend** — vorher zeigte der
+  Footer `v{__APP_VERSION__}`, eine Vite-Build-Zeit-Konstante.
+  Nach jedem `bump.sh` blieb die UI auf der alten Version, bis
+  jemand das Frontend neu baute — effektiv war das ein hardcoded
+  Wert aus dem letzten Build. Jetzt:
+  `v{health?.version ?? __APP_VERSION__}` — primär die Live-
+  Version aus `/scale/health` (= zentrale VERSION-Datei via
+  Backend-Loader), Fallback auf den Build-Wert nur, falls das
+  Backend gerade nicht erreichbar ist.
+
+### Geändert (Reaktivität der Live-Anzeige)
+- **Polling-Intervall von 2 Hz auf 5 Hz reduziert** — Werte
+  zeigten sich „träge", weil der Reader nur alle 0,5 s ein
+  `ESC p` an die Waage schickte. Außerdem wurde das in
+  `state.poll_interval_s` konfigurierte Intervall **nie an
+  `Waage()` durchgereicht** — das Feld war ein totes Konstrukt.
+  Beides gefixt:
+  - `DEFAULT_POLL_INTERVAL` von `0.5` auf `0.2` (5 Hz).
+  - `state.poll_interval_s` aus Env `WAAGE_POLL_INTERVAL_S`
+    (Default `0.2`).
+  - `_make_reader_factory` reicht das Intervall jetzt explizit
+    an den `Waage`-Konstruktor durch.
+- 5 Hz ist deutlich agiler bei der Wert-Verfolgung; G&G-Manuale
+  geben theoretisch ~50 Hz (9600 8N1) an, praktisch limitiert die
+  interne Filterzeit auf 5–10 Hz — wir bleiben bequem im sicheren
+  Bereich. Per `WAAGE_POLL_INTERVAL_S` lässt sich das jederzeit
+  anpassen.
 
 ## [0.5.12] — 2026-05-08
 
