@@ -9,8 +9,29 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 
 ## [0.5.15] — 2026-05-08
 
-### Hinweise
-- (bitte ergänzen)
+### Neu (UX)
+- **IconPicker statt FontAwesome-Texteingabe** — beim Anlegen einer
+  Stückzähl-Vorlage musste der Anwender die FA-Klasse als String
+  tippen (z.B. `fa-solid fa-cube`). Wer FontAwesome nicht kennt,
+  kam nicht weiter; selbst Kenner wissen die Glyph-Namen nicht
+  auswendig. Jetzt:
+  - Visueller Picker mit Suchfeld (substring-Match auf Klasse,
+    Label und Keywords) und Klick-Auswahl in einem Icon-Grid.
+  - Aktuell gewähltes Icon als visuelles Echo neben dem Suchfeld.
+  - „Erweitert"-Bereich (eingeklappt) mit Texteingabe-Fallback —
+    nur falls das gewünschte Icon nicht in der kuratierten Liste
+    ist.
+- Kuratierte Icon-Liste in `frontend/src/lib/icons.ts` mit ~80
+  passenden FA-Free-Solid-Icons aus den Bereichen Werkstatt,
+  Apotheke, Münzen, Versand, Lebensmittel, Schmuck, Garten,
+  Industrie, Office, Standard-Formen — jedes mit DE/EN-Keywords
+  für die Suche.
+- Neue Komponente `IconPicker.svelte` ist allgemein einsetzbar
+  und kann später auch im ContainerPicker verwendet werden.
+
+### i18n
+- Neuer `iconPicker.*`-Block (DE + EN): searchPlaceholder,
+  noResults, advanced, advancedHint, apply.
 
 ## [0.5.14] — 2026-05-08
 
