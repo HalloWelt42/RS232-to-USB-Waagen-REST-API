@@ -203,6 +203,9 @@ Modi (Dev und nginx-Production) ohne Code-Änderung laufen.
   (RX/TX gekreuzt, GND straight).
 - **Host:** Raspberry Pi 5 / 4 / Zero 2 W, beliebiges Linux, oder macOS.
 
+> Vollständige Protokoll-Referenz, Befehlsmatrix, Frame-Format und
+> Konfigurations-Codes der G&G-Waagen siehe **[`docs/HARDWARE.md`](docs/HARDWARE.md)**.
+
 ### Linux / Raspberry Pi
 
 ```bash
