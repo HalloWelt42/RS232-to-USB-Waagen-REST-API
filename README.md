@@ -29,13 +29,13 @@ Docker Compose · Python 3.11+
       <a href="media/desktop_dm.png">
         <img src="media/desktop_dm.png" width="380" alt="Desktop-Ansicht im Hell-Modus" />
       </a>
-      <br /><sub><b>Desktop · Hell</b></sub>
+      <br /><sub><b>Desktop · Dunkel</b></sub>
     </td>
     <td align="center" valign="top">
       <a href="media/desktop_wm.png">
-        <img src="media/desktop_wm.png" width="380" alt="Desktop-Ansicht im Dunkel-Modus" />
+        <img src="media/desktop_wm.png" width="380" alt="Desktop-Ansicht im Hell-Modus" />
       </a>
-      <br /><sub><b>Desktop · Dunkel</b></sub>
+      <br /><sub><b>Desktop · Hell</b></sub>
     </td>
     <td align="center" valign="top">
       <a href="media/mobile.png">
