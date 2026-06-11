@@ -192,6 +192,31 @@ const en = {
     resetAllConfirm2: 'Final confirmation — all lists will be wiped. Continue?',
     resetAllDone: 'Reset — all lists are empty.',
   },
+  connect: {
+    title: 'Forwarding (Connect)',
+    info:
+      'Pushes the current reading periodically to a third-party system ' +
+      '(e.g. an inventory app). Target URL, auth header and interval ' +
+      'are fully configurable; the payload is a lean JSON with weight, ' +
+      'unit, stable flag and optional piece count.',
+    enabled: 'Forwarding active',
+    url: 'Target URL',
+    authHeader: 'Auth header',
+    authToken: 'Token',
+    tokenKeep: 'leave empty to keep current token',
+    tokenEmpty: 'enter token',
+    interval: 'Interval (s)',
+    onlyStable: 'send stable values only',
+    sendNetto: 'send net instead of gross (software tare subtracted)',
+    save: 'Save',
+    test: 'Test push',
+    testOk: 'Test push succeeded.',
+    statusLabel: 'Status',
+    statusRunning: 'sending',
+    statusIdle: 'paused',
+    lastSent: 'Last sent',
+    lastError: 'Last error',
+  },
   protocol: {
     title: 'Measurement protocol',
     open: 'Open protocol',

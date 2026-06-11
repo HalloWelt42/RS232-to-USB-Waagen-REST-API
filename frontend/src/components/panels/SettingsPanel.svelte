@@ -12,13 +12,78 @@
   import { modelStore } from '../../lib/modelStore.svelte';
   import HelpButton from '../HelpButton.svelte';
   import ModelTolerances from '../ModelTolerances.svelte';
-  import type { ScaleConfig, ScaleModel, HealthInfo } from '../../lib/types';
+  import type { ScaleConfig, ScaleModel, HealthInfo, ConnectInfo } from '../../lib/types';
 
   let models = $state<ScaleModel[]>([]);
   let cfg = $state<ScaleConfig | null>(null);
   let health = $state<HealthInfo | null>(null);
   let busy = $state(false);
   let currentTheme = $state<Theme>(themeManager.get());
+
+  // --- Connect-Modul (Messwert-Weiterleitung) ---------------------------
+  let connect = $state<ConnectInfo | null>(null);
+  let cEnabled = $state(false);
+  let cUrl = $state('');
+  let cHeader = $state('X-Device-Token');
+  let cToken = $state('');           // leer = bestehendes Token behalten
+  let cInterval = $state('1.0');
+  let cOnlyStable = $state(true);
+  let cSendNetto = $state(false);
+  let cBusy = $state(false);
+  let cTestResult = $state<string | null>(null);
+
+  async function loadConnect(): Promise<void> {
+    try {
+      connect = await api.connect.get();
+      cEnabled = connect.enabled;
+      cUrl = connect.url;
+      cHeader = connect.auth_header;
+      cInterval = String(connect.interval_s);
+      cOnlyStable = connect.only_stable;
+      cSendNetto = connect.send_netto;
+      cToken = '';
+    } catch {
+      /* Backend ohne Connect-Modul -- Karte zeigt Ladefehler-Hint */
+    }
+  }
+
+  async function saveConnect(): Promise<void> {
+    cBusy = true;
+    cTestResult = null;
+    try {
+      connect = await api.connect.set({
+        enabled: cEnabled,
+        url: cUrl.trim(),
+        auth_header: cHeader.trim() || 'X-Device-Token',
+        auth_token: cToken.trim() === '' ? null : cToken.trim(),
+        interval_s: Math.max(0.2, parseFloat(cInterval.replace(',', '.')) || 1),
+        only_stable: cOnlyStable,
+        send_netto: cSendNetto,
+        extra_fields: connect?.extra_fields ?? {},
+      });
+      cToken = '';
+      toast.show(t('toast.settingSaved'), 'ok');
+    } catch (e) {
+      toast.show((e as Error).message, 'error');
+    } finally {
+      cBusy = false;
+    }
+  }
+
+  async function testConnect(): Promise<void> {
+    cBusy = true;
+    cTestResult = null;
+    try {
+      const res = await api.connect.test();
+      cTestResult = res.detail;
+      toast.show(res.ok ? t('connect.testOk') : res.detail, res.ok ? 'ok' : 'error');
+      connect = await api.connect.get();
+    } catch (e) {
+      toast.show((e as Error).message, 'error');
+    } finally {
+      cBusy = false;
+    }
+  }
 
   /**
    * „Alles zurücksetzen": leert alle persistenten Daten — Mess-Snapshots,
@@ -102,7 +167,10 @@
     return Object.entries(groups);
   });
 
-  onMount(refresh);
+  onMount(() => {
+    void refresh();
+    void loadConnect();
+  });
 </script>
 
 <section class="panel">
@@ -194,6 +262,99 @@
         </ul>
       {/if}
       <p class="hint">{t('settingsPanel.connectionInfo')}</p>
+    </div>
+
+    <div class="card connect-card">
+      <h3><i class="fa-solid fa-tower-broadcast"></i> {t('connect.title')}</h3>
+      <p class="hint">{t('connect.info')}</p>
+
+      <label class="connect-toggle">
+        <input type="checkbox" bind:checked={cEnabled} />
+        <span>{t('connect.enabled')}</span>
+      </label>
+
+      <label class="connect-field">
+        <span class="connect-label">{t('connect.url')}</span>
+        <input
+          type="url"
+          bind:value={cUrl}
+          placeholder="https://example.org/api/v1/scale/measurement"
+          spellcheck="false"
+        />
+      </label>
+
+      <div class="connect-grid">
+        <label class="connect-field">
+          <span class="connect-label">{t('connect.authHeader')}</span>
+          <input type="text" bind:value={cHeader} spellcheck="false" />
+        </label>
+        <label class="connect-field">
+          <span class="connect-label">
+            {t('connect.authToken')}
+            {#if connect?.auth_token_set}
+              <span class="num connect-token-hint">{connect.auth_token_hint}</span>
+            {/if}
+          </span>
+          <input
+            type="password"
+            bind:value={cToken}
+            placeholder={connect?.auth_token_set ? t('connect.tokenKeep') : t('connect.tokenEmpty')}
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </label>
+        <label class="connect-field">
+          <span class="connect-label">{t('connect.interval')}</span>
+          <input type="text" inputmode="decimal" bind:value={cInterval} />
+        </label>
+      </div>
+
+      <div class="connect-options">
+        <label><input type="checkbox" bind:checked={cOnlyStable} /> {t('connect.onlyStable')}</label>
+        <label><input type="checkbox" bind:checked={cSendNetto} /> {t('connect.sendNetto')}</label>
+      </div>
+
+      <div class="connect-actions">
+        <button class="btn" onclick={saveConnect} disabled={cBusy}>
+          <i class="fa-solid fa-floppy-disk"></i> {t('connect.save')}
+        </button>
+        <button class="btn" onclick={testConnect} disabled={cBusy || !connect?.url}>
+          <i class="fa-solid fa-paper-plane"></i> {t('connect.test')}
+        </button>
+      </div>
+
+      {#if cTestResult}
+        <p class="hint num">{cTestResult}</p>
+      {/if}
+
+      {#if connect}
+        <ul class="kv">
+          <li>
+            <span class="k">{t('connect.statusLabel')}</span>
+            <span class="num v">
+              {connect.status.running ? t('connect.statusRunning') : t('connect.statusIdle')}
+            </span>
+          </li>
+          {#if connect.status.last_sent_at}
+            <li>
+              <span class="k">{t('connect.lastSent')}</span>
+              <span class="num v">
+                {connect.status.last_sent_at}
+                {#if connect.status.last_http_status}
+                  · HTTP {connect.status.last_http_status}
+                {/if}
+                · {connect.status.sent_count}x
+              </span>
+            </li>
+          {/if}
+          {#if connect.status.last_error}
+            <li>
+              <span class="k">{t('connect.lastError')}</span>
+              <span class="num v">{connect.status.last_error}</span>
+            </li>
+          {/if}
+        </ul>
+      {/if}
     </div>
 
     <div class="card reset-card">
@@ -356,6 +517,70 @@
     color: var(--orange);
     display: inline-flex; align-items: center; gap: 6px;
   }
+  /* Connect-Karte (Messwert-Weiterleitung) */
+  .connect-card h3 { display: inline-flex; align-items: center; gap: 8px; }
+  .connect-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin: var(--sp-2) 0;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .connect-field {
+    display: flex; flex-direction: column; gap: 4px;
+    margin-bottom: var(--sp-2);
+  }
+  .connect-label {
+    font-size: var(--fs-sm);
+    color: var(--fg-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .connect-token-hint { color: var(--fg-dim); text-transform: none; }
+  .connect-field input {
+    min-height: var(--tap);
+    padding: 0 var(--sp-2);
+    background: var(--bg-inset, transparent);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: var(--fs-sm);
+  }
+  .connect-field input:focus { outline: none; border-color: var(--accent); }
+  .connect-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 110px;
+    gap: var(--sp-2);
+  }
+  @media (max-width: 640px) {
+    .connect-grid { grid-template-columns: 1fr; }
+  }
+  .connect-options {
+    display: flex; gap: var(--sp-3); flex-wrap: wrap;
+    margin-bottom: var(--sp-2);
+  }
+  .connect-options label {
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer;
+    font-size: var(--fs-sm);
+  }
+  .connect-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+  .connect-actions .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    min-height: var(--tap);
+    padding: 0 var(--sp-3);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--fg);
+    font-family: var(--sans); font-size: var(--fs-sm); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    cursor: pointer;
+  }
+  .connect-actions .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .connect-actions .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
   .reset-card { border-color: var(--red); }
   .reset-card h3 { color: var(--red); }
   .reset-card .btn-warn.full {

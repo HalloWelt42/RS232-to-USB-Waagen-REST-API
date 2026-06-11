@@ -349,12 +349,42 @@ Modus. Simulator-Banner unter der Topbar warnt orange.
 Port, Baudrate, Reader-Status, Backend-Version. Werte aus
 `/scale/health`.
 
-### 11.5 Alles zurücksetzen
+### 11.5 Weiterleitung (Connect)
+Pusht den jeweils letzten Messwert periodisch per HTTP-POST an ein
+frei konfigurierbares Drittsystem (z.B. eine Inventar-App, ein ERP
+oder ein eigenes Dashboard). Payload:
+
+```json
+{ "weight_g": 123.4, "unit": "g", "stable": true, "count": 42 }
+```
+
+`count` nur, wenn ein Stückgewicht kalibriert ist (gleiche Rechnung
+wie die Stückzählung). `extra_fields` aus der Konfiguration werden
+unverändert in den Payload gemischt.
+
+**Konfigurierbar**: Ziel-URL, Auth-Header-Name (Default
+`X-Device-Token`), Token (in der Anzeige maskiert, leer lassen =
+behalten), Takt (0,2-60 s), Nur-Stabil-Filter, Netto-statt-Brutto
+(Software-Tara abgezogen).
+
+**Status-Anzeige**: sendet/pausiert, zuletzt gesendet mit
+HTTP-Status und Zähler, letzter Fehler. Fehler-Backoff bis 30 s,
+kein Versand-Puffer (Live-Werte sind flüchtig — Messreihen macht
+das Messlog/Samples-Modul).
+
+**Endpunkte**:
+- `GET  /app/connect` — Konfig (Token maskiert) + Status
+- `PUT  /app/connect` — Konfig setzen
+- `POST /app/connect/test` — Einmal-Push, Ergebnis zurück
+
+**Persistenz**: `data/config.json` (Block `connect`).
+
+### 11.6 Alles zurücksetzen
 Roter Karten-Block. Klick leert alle persistenten Listen parallel
 (samples, messlog, containers, count_templates, differenz, tolerance,
 netto, count). **Direkt, ohne Bestätigungsdialog**.
 
-### 11.6 Disclaimer / Lizenz
+### 11.7 Disclaimer / Lizenz
 Kurzfassung mit Link auf `DISCLAIMER.md` und `LICENSE`.
 
 ---

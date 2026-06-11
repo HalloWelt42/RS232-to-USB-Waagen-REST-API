@@ -193,6 +193,31 @@ const de = {
     resetAllConfirm2: 'Letzte Bestätigung — alle Listen werden geleert. Wirklich fortfahren?',
     resetAllDone: 'Zurückgesetzt — alle Listen sind leer.',
   },
+  connect: {
+    title: 'Weiterleitung (Connect)',
+    info:
+      'Schickt den aktuellen Messwert periodisch an ein Drittsystem ' +
+      '(z.B. eine Inventar-App). Ziel-URL, Auth-Header und Takt sind ' +
+      'frei konfigurierbar; gesendet wird ein schlankes JSON mit ' +
+      'Gewicht, Einheit, Stabil-Flag und optionaler Stückzahl.',
+    enabled: 'Weiterleitung aktiv',
+    url: 'Ziel-URL',
+    authHeader: 'Auth-Header',
+    authToken: 'Token',
+    tokenKeep: 'leer lassen = Token behalten',
+    tokenEmpty: 'Token eintragen',
+    interval: 'Takt (s)',
+    onlyStable: 'nur stabile Werte senden',
+    sendNetto: 'Netto statt Brutto senden (Software-Tara abgezogen)',
+    save: 'Speichern',
+    test: 'Test-Push',
+    testOk: 'Test-Push erfolgreich.',
+    statusLabel: 'Status',
+    statusRunning: 'sendet',
+    statusIdle: 'pausiert',
+    lastSent: 'Zuletzt gesendet',
+    lastError: 'Letzter Fehler',
+  },
   protocol: {
     title: 'Messprotokoll',
     open: 'Protokoll öffnen',

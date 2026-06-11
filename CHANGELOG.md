@@ -7,6 +7,29 @@ Datumsformat: ISO 8601 (JJJJ-MM-TT). Quelle der Wahrheit für die aktuelle
 Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 `package.json` werden daraus synchronisiert.
 
+## [0.6.0] — 2026-06-11
+
+### Neu (Connect-Modul: Messwert-Weiterleitung)
+- **Weiterleitung an Drittsysteme** — neues Modul `connect.py` pusht
+  den jeweils letzten Messwert periodisch per HTTP-POST an einen frei
+  konfigurierbaren Endpoint (z.B. eine Inventar-App). Payload:
+  `{weight_g, unit, stable, count?}` plus optionale `extra_fields`.
+  `count` kommt aus der Stückzählung, sobald ein Stückgewicht
+  kalibriert ist.
+- **Frei konfigurierbar**: Ziel-URL, Auth-Header-Name (Default
+  `X-Device-Token`), Token, Takt (0,2-60 s), Nur-Stabil-Filter,
+  Netto-statt-Brutto (Software-Tara abgezogen).
+- **Endpunkte**: `GET/PUT /app/connect` (Konfig, Token maskiert,
+  Status) und `POST /app/connect/test` (Einmal-Push mit Ergebnis).
+  Persistenz im bestehenden `data/config.json` (Block `connect`).
+- **Einstellungen-Karte** „Weiterleitung (Connect)" mit Toggle,
+  Feldern, Test-Knopf und Status-Zeile (zuletzt gesendet, HTTP-Status,
+  Zähler, letzter Fehler). Deutsch + Englisch.
+- **Robustheit**: Forwarder-Task läuft dauerhaft und prüft selbst, ob
+  aktiviert; Fehler-Backoff bis 30 s; kein Versand-Puffer (Live-Werte
+  sind flüchtig — Messreihen macht weiterhin das Messlog).
+- Neue Laufzeit-Abhängigkeit: `httpx` (vorher nur dev).
+
 ## [0.5.18] — 2026-05-08
 
 ### Behoben (schwerwiegend, Versions-Anzeige)

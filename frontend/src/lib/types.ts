@@ -53,6 +53,45 @@ export interface ApiInfo {
   endpoints: Record<string, string>;
 }
 
+/** Connect-Modul: Messwert-Weiterleitung an Drittsysteme. */
+export interface ConnectStatus {
+  running: boolean;
+  last_sent_at: string | null;
+  last_http_status: number | null;
+  last_error: string | null;
+  sent_count: number;
+}
+
+export interface ConnectInfo {
+  enabled: boolean;
+  url: string;
+  auth_header: string;
+  auth_token_set: boolean;
+  auth_token_hint: string;
+  interval_s: number;
+  only_stable: boolean;
+  send_netto: boolean;
+  extra_fields: Record<string, unknown>;
+  status: ConnectStatus;
+}
+
+export interface ConnectConfigIn {
+  enabled: boolean;
+  url: string;
+  auth_header: string;
+  /** null = bestehendes Token behalten */
+  auth_token: string | null;
+  interval_s: number;
+  only_stable: boolean;
+  send_netto: boolean;
+  extra_fields: Record<string, unknown>;
+}
+
+export interface ConnectTestResult {
+  ok: boolean;
+  detail: string;
+}
+
 export interface HistoryResponse {
   count: number;
   items: Reading[];

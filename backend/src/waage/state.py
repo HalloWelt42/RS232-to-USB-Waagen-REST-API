@@ -99,6 +99,11 @@ class AppState:
         self.count_templates = CountTemplateStore(count_templates_path or ":memory:")
         self.differenz = DifferenzStore()
 
+        # --- Connect-Modul (Messwert-Weiterleitung an Drittsysteme) ---
+        from .connect import ConnectForwarder
+
+        self.connect = ConnectForwarder(self)
+
         # --- Persistenz für Config ---
         self._config_dir: Optional[Path] = (
             Path(config_dir) if config_dir else None
@@ -188,6 +193,12 @@ class AppState:
                     mode = str(data["source_mode"])
                     if mode in ("live", "simulate"):
                         self.source_mode = mode
+                if isinstance(data.get("connect"), dict):
+                    from .connect import ConnectConfig
+
+                    self.connect.config = ConnectConfig.from_dict(
+                        data["connect"]
+                    )
                 log.info("Config geladen: %s", path)
         except Exception:  # noqa: BLE001
             log.exception("Config konnte nicht geladen werden: %s", path)
@@ -205,6 +216,7 @@ class AppState:
                         "poll_interval_s": self.poll_interval_s,
                         "baudrate": self.baudrate,
                         "source_mode": self.source_mode,
+                        "connect": self.connect.config.to_dict(),
                     },
                     indent=2,
                     ensure_ascii=False,

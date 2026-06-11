@@ -36,6 +36,7 @@ from pydantic import BaseModel
 
 from . import __version__
 from .app_api import build_app_router
+from .connect_api import build_connect_router
 from .reader import DEFAULT_BAUD, DEFAULT_PORT, Waage
 from .scale_api import build_scale_router
 from .simulator import SimulatedWaage
@@ -228,6 +229,8 @@ def create_app(
             _reader_loop(reader_factory, state),
             name="waage-reader",
         )
+        # Connect-Forwarder laeuft immer mit -- prueft selbst ob enabled.
+        state.connect.start()
         log.info("API gestartet, Reader-Task läuft (Version %s)", __version__)
         try:
             yield
@@ -235,6 +238,7 @@ def create_app(
             task.cancel()
             with suppress(asyncio.CancelledError):
                 await task
+            await state.connect.stop()
             state.close()
 
     app = FastAPI(
@@ -255,6 +259,7 @@ def create_app(
     # Router mounten
     app.include_router(build_scale_router(state, app_version=__version__))
     app.include_router(build_app_router(state))
+    app.include_router(build_connect_router(state))
 
     @app.get("/", response_model=ApiInfo, tags=["meta"])
     def root() -> ApiInfo:

@@ -12,6 +12,9 @@
 import type {
   ApiInfo,
   CommandResult,
+  ConnectConfigIn,
+  ConnectInfo,
+  ConnectTestResult,
   Container,
   ContainerInput,
   ContainerListResponse,
@@ -260,14 +263,32 @@ export class AppApi extends HttpBase {
 //  Convenience-Bundle für die Web-UI
 // -----------------------------------------------------------------------
 
+// -----------------------------------------------------------------------
+//  ConnectApi — /app/connect (Messwert-Weiterleitung an Drittsysteme)
+// -----------------------------------------------------------------------
+
+export class ConnectApi extends HttpBase {
+  constructor(base = '/api') {
+    super(base);
+  }
+
+  get(): Promise<ConnectInfo>         { return this.request('/app/connect'); }
+  set(cfg: ConnectConfigIn): Promise<ConnectInfo> {
+    return this.put('/app/connect', cfg);
+  }
+  test(): Promise<ConnectTestResult>  { return this.post('/app/connect/test'); }
+}
+
 export class WaageApi extends HttpBase {
   scale: ScaleApi;
   app: AppApi;
+  connect: ConnectApi;
 
   constructor(base = '/api') {
     super(base);
     this.scale = new ScaleApi(base);
     this.app = new AppApi(base);
+    this.connect = new ConnectApi(base);
   }
 
   info(): Promise<ApiInfo> { return this.request('/'); }
