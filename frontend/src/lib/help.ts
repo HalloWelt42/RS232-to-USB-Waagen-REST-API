@@ -21,7 +21,7 @@
 export type HelpId =
   | 'overview' | 'glossary' | 'wiegen' | 'netto' | 'count' | 'tolerance'
   | 'samples' | 'differenz' | 'sparkline' | 'history' | 'containers'
-  | 'tare' | 'unit' | 'light' | 'copy' | 'settings' | 'donate'
+  | 'tare' | 'unit' | 'light' | 'copy' | 'settings' | 'connect' | 'donate'
   | 'architecture' | 'disclaimer' | 'tolerances';
 
 export interface HelpBlock {
@@ -225,6 +225,18 @@ const helpDe: HelpTree = {
     ],
   },
 
+  connect: {
+    id: 'connect', title: 'Weiterleitung (Connect)',
+    blocks: [
+      { heading: 'Was macht das?', body: 'Schickt den jeweils letzten Messwert automatisch an ein anderes System — z.B. eine Inventar-App, die das Gewicht direkt in ihren Wiegen-Dialog übernimmt. Kein Abtippen mehr.' },
+      { heading: 'Einrichten', body: 'Im Zielsystem ein Zugangs-Token erzeugen (bei einer Inventar-App typischerweise unter Einstellungen, Bereich Geräte). Dann hier: Ziel-URL eintragen, Token einfügen, Weiterleitung aktivieren und mit <strong>Test-Push</strong> prüfen. Bei Erfolg erscheint HTTP <strong>204</strong> in der Status-Zeile.' },
+      { heading: 'Was wird gesendet?', body: 'Ein schlankes Paket: Gewicht in Gramm, Einheit, Stabil-Kennzeichen — und die Stückzahl, sobald in der [[tool:count|Stückzählung]] ein Stückgewicht kalibriert ist.' },
+      { heading: 'Nur stabile Werte', body: 'Standardmäßig werden nur stabile Werte gesendet (Anzeige ruhig, Hand weg von der Waage). Abschaltbar, wenn das Zielsystem auch Zwischenwerte sehen soll.' },
+      { heading: 'Netto statt Brutto', body: 'Optional wird die Software-Tara abgezogen, bevor gesendet wird — praktisch, wenn dauerhaft mit demselben Behälter gewogen wird.' },
+      { heading: 'Takt und Verhalten', body: 'Sendet im eingestellten Takt (Standard <strong>1 s</strong>). Ist das Ziel nicht erreichbar, wartet die App automatisch länger (bis 30 s) und versucht es weiter — die Status-Zeile zeigt den letzten Fehler. Das Token wird nach dem Speichern nur maskiert angezeigt; Feld leer lassen heißt: bisheriges Token behalten.' },
+    ],
+  },
+
   donate: {
     id: 'donate', title: 'Danke',
     blocks: [
@@ -410,6 +422,17 @@ const helpEn: HelpTree = {
       { heading: 'Language', body: 'DE or EN — choice persists across sessions.' },
       { heading: 'Connection', body: 'Serial port and baudrate. With default „auto" the app finds the USB-serial adapter on its own.' },
       { heading: 'Polling', body: 'How often the app sends the print command to the scale — default <strong>0.5 s</strong>.' },
+    ],
+  },
+  connect: {
+    id: 'connect', title: 'Forwarding (Connect)',
+    blocks: [
+      { heading: 'What does it do?', body: 'Automatically pushes the latest reading to another system — e.g. an inventory app that takes the weight straight into its weighing dialog. No more typing values.' },
+      { heading: 'Setup', body: 'Create an access token in the target system (for an inventory app typically under settings, devices section). Then here: enter the target URL, paste the token, enable forwarding and verify with <strong>Test push</strong>. On success the status line shows HTTP <strong>204</strong>.' },
+      { heading: 'What is sent?', body: 'A lean packet: weight in grams, unit, stable flag — and the piece count as soon as a piece weight is calibrated in [[tool:count|Counting]].' },
+      { heading: 'Stable values only', body: 'By default only stable values are sent (display calm, hands off the scale). Can be disabled if the target should see intermediate values too.' },
+      { heading: 'Net instead of gross', body: 'Optionally the software tare is subtracted before sending — handy when always weighing with the same container.' },
+      { heading: 'Interval and behaviour', body: 'Sends at the configured interval (default <strong>1 s</strong>). If the target is unreachable the app automatically backs off (up to 30 s) and keeps trying — the status line shows the last error. After saving, the token is only shown masked; leaving the field empty means: keep the current token.' },
     ],
   },
   donate: {

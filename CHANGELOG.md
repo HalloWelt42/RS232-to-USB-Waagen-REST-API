@@ -29,6 +29,10 @@ Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
   aktiviert; Fehler-Backoff bis 30 s; kein Versand-Puffer (Live-Werte
   sind flüchtig — Messreihen macht weiterhin das Messlog).
 - Neue Laufzeit-Abhängigkeit: `httpx` (vorher nur dev).
+- **Eingebaute Hilfe**: neuer Hilfe-Eintrag „Weiterleitung (Connect)"
+  (Deutsch + Englisch) mit Einrichtung, Payload-Erklärung und
+  Verhalten bei Fehlern — Fragezeichen-Knopf direkt an der
+  Einstellungen-Karte, keine externe Doku nötig.
 
 ## [0.5.18] — 2026-05-08
 

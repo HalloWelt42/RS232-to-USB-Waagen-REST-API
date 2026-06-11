@@ -265,7 +265,10 @@
     </div>
 
     <div class="card connect-card">
-      <h3><i class="fa-solid fa-tower-broadcast"></i> {t('connect.title')}</h3>
+      <h3>
+        <i class="fa-solid fa-tower-broadcast"></i> {t('connect.title')}
+        <HelpButton id="connect" />
+      </h3>
       <p class="hint">{t('connect.info')}</p>
 
       <label class="connect-toggle">
