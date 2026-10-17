@@ -7,6 +7,24 @@ Datumsformat: ISO 8601 (JJJJ-MM-TT). Quelle der Wahrheit für die aktuelle
 Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 `package.json` werden daraus synchronisiert.
 
+## [0.6.2] - 2026-10-17
+
+### Neu
+- **Neue Fassung lädt von selbst neu**: der Versions-Store vergleicht die
+  eingebaute Fassung (`__APP_VERSION__`) mit der ausgelieferten aus
+  `/version.json`, beim Start, jede Minute und wenn das Fenster wieder nach
+  vorn kommt. Weicht sie ab, lädt die Seite in den ersten 10 s sofort neu,
+  sonst beim nächsten Ansichtswechsel (Werkzeug oder Dashboard) oder beim
+  Zurückkehren ins Fenster, Letzteres nur ohne Eingaben seit dem letzten
+  Ansichtswechsel. Je Fassung nur ein selbsttätiger Versuch (Merker in der
+  Sitzung). Dazwischen zeigt ein Band unter der Topbar die neue Fassung mit
+  Knopf "Jetzt neu laden" (Deutsch + Englisch).
+
+### Behoben
+- **nginx**: die Startseite kommt mit `Cache-Control: no-cache`, auch für
+  "/" und Deeplinks über den SPA-Fallback; offene Tabs zeigen nach dem
+  Ausrollen nicht mehr die alte Oberfläche.
+
 ## [0.6.1] - 2026-10-17
 
 ### Neu

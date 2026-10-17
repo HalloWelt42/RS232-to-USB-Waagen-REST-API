@@ -165,6 +165,11 @@ const en = {
     templateDeleted: 'Template deleted',
     error: 'Error',
   },
+  update: {
+    available: (v: string) => `New version ${v} is available.`,
+    reloadHint: 'The scale app loads it by itself on the next view change.',
+    reloadNow: 'Reload now',
+  },
   containers: {
     title: 'Container library',
     pickPlaceholder: 'Pick a container …',

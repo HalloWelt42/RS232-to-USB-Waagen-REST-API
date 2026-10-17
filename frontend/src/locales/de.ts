@@ -165,6 +165,11 @@ const de = {
     templateDeleted: 'Vorlage gelöscht',
     error: 'Fehler',
   },
+  update: {
+    available: (v: string) => `Neue Fassung ${v} ist da.`,
+    reloadHint: 'Beim nächsten Ansichtswechsel lädt die Waage sie von selbst.',
+    reloadNow: 'Jetzt neu laden',
+  },
   containers: {
     title: 'Behälter-Bibliothek',
     pickPlaceholder: 'Behälter wählen …',

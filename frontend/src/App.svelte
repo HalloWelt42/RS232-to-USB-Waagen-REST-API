@@ -41,12 +41,14 @@
   import Toast from './components/Toast.svelte';
   import SearchPalette from './components/SearchPalette.svelte';
   import SimulatorBanner from './components/SimulatorBanner.svelte';
+  import VersionBanner from './components/VersionBanner.svelte';
 
   let health = $state<HealthInfo | null>(null);
   let messlog = $state<MesslogEntry[]>([]);
   let stream: WaageStream | null = null;
   let healthTimer: number | null = null;
   let messlogTimer: number | null = null;
+  let stopVersionWatch: (() => void) | null = null;
 
   async function refreshHealth(): Promise<void> {
     try {
@@ -77,9 +79,10 @@
     stream.start();
 
     void refreshHealth();
-    // Frontend-Version aus /version.json — robust gegen Build-Zeit-
-    // Konstanten und Browser-Cache (Cache-Buster im Fetch).
-    void versionStore.loadFromFile();
+    // Ausgelieferte Version aus /version.json (ohne Zwischenspeicher):
+    // beim Start, jede Minute und beim Zurückkehren ins Fenster; eine neue
+    // Fassung lädt von selbst neu.
+    stopVersionWatch = versionStore.watch();
     void refreshMesslog();
     void modelStore.refresh();
     healthTimer = window.setInterval(refreshHealth, 5000);
@@ -92,6 +95,7 @@
     stream?.stop();
     if (healthTimer !== null) clearInterval(healthTimer);
     if (messlogTimer !== null) clearInterval(messlogTimer);
+    stopVersionWatch?.();
   });
 
   // Hilfe-Stack ist URL-getrieben: route.helpOpen ist die Wahrheit,
@@ -120,6 +124,7 @@
 <div class="layout">
   <Topbar />
   <SimulatorBanner {health} />
+  <VersionBanner />
 
   <main class="body" data-mode={route.mode}>
     <div class="sidebar-wrap"><Sidebar {messlog} onMesslogChanged={refreshMesslog} /></div>

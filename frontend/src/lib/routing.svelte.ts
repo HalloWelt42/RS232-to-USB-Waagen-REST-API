@@ -21,6 +21,7 @@
  */
 
 import type { HelpId } from './help';
+import { versionStore } from './versionStore.svelte';
 
 export type ToolKey =
   | 'wiegen'
@@ -52,7 +53,11 @@ class RouteState {
 
   init(): void {
     this.parse();
-    window.addEventListener('popstate', () => this.parse());
+    window.addEventListener('popstate', () => {
+      const before = this.activeTool;
+      this.parse();
+      if (this.activeTool !== before) versionStore.afterNavigation();
+    });
   }
 
   /** Werkzeug wechseln; bestehende Hilfe-Fenster bleiben in der URL. */
@@ -93,9 +98,13 @@ class RouteState {
     if (window.location.pathname + window.location.search !== target) {
       window.history.pushState({}, '', target);
     }
+    // Nur ein Werkzeugwechsel ist ein Ansichtswechsel; ein Hilfe-Fenster
+    // lässt das Werkzeug samt Eingaben stehen.
+    const switched = tool !== this.activeTool;
     this.mode = tool ? 'tool' : 'dashboard';
     this.activeTool = tool;
     this.helpOpen = help;
+    if (switched) versionStore.afterNavigation();
   }
 
   private parse(): void {
