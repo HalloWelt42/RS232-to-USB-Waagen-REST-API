@@ -7,6 +7,18 @@ Datumsformat: ISO 8601 (JJJJ-MM-TT). Quelle der Wahrheit für die aktuelle
 Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 `package.json` werden daraus synchronisiert.
 
+## [0.6.1] - 2026-10-17
+
+### Neu
+- **Symbolsatz und Manifest für Startbildschirm und PWA**: aus dem
+  Logo `frontend/public/favicon.svg` erzeugt `scripts/symbole.py`
+  favicon.ico, PNG in 32/192/512, maskierbare Symbole und
+  apple-touch-icon; dazu `site.webmanifest` und die Kopfeinträge.
+
+### Behoben
+- **nginx**: `.webmanifest` kam als `application/octet-stream`; ein
+  eigener Ort liefert es jetzt als `application/manifest+json`.
+
 ## [0.6.0] — 2026-06-11
 
 ### Neu (Connect-Modul: Messwert-Weiterleitung)
