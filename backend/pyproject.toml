@@ -12,6 +12,8 @@ authors = [{ name = "pi" }]
 dependencies = [
     "pyserial>=3.5",
     "fastapi>=0.110",
+    # WS-Stream: Senden und Empfangen in einer Task-Group
+    "anyio>=4",
     "uvicorn[standard]>=0.27",
     # Connect-Modul: Messwert-Weiterleitung an Drittsysteme
     "httpx>=0.27",

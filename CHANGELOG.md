@@ -7,6 +7,18 @@ Datumsformat: ISO 8601 (JJJJ-MM-TT). Quelle der Wahrheit für die aktuelle
 Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 `package.json` werden daraus synchronisiert.
 
+## [0.7.1] - 2026-10-27
+
+### Behoben
+- **Live-Stream hält das Herunterfahren nicht mehr auf**: `WS /scale/stream`
+  wartete nur auf neue Messwerte und las nie vom Client. Trennte sich ein
+  Client, solange die Waage nichts sendete (Waage aus, kein Adapter), merkte
+  der Handler das nie: seine Queue blieb in den Abonnenten hängen, und der
+  Server beendete sich nach SIGTERM nicht mehr (im Container wartete
+  `docker compose down`/`restart` die 10 s bis SIGKILL). Senden und
+  Empfangen laufen jetzt nebeneinander in einer Task-Group; eine Trennung
+  beendet beide und trägt die Queue aus, auch ohne Datenfluss.
+
 ## [0.7.0] - 2026-10-27
 
 ### Neu

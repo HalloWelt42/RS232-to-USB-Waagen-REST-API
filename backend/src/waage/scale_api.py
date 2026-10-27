@@ -26,6 +26,7 @@ from contextlib import suppress
 from datetime import datetime
 from typing import Optional
 
+import anyio
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
@@ -195,18 +196,33 @@ def build_scale_router(state: AppState, app_version: str) -> APIRouter:
         )
 
     # ---------------------- WebSocket ----------------------
+    async def _push_readings(ws: WebSocket, q: asyncio.Queue[Reading]) -> None:
+        if state.latest is not None:
+            await ws.send_json(ReadingOut.from_reading(state.latest).model_dump())
+        while True:
+            reading = await q.get()
+            await ws.send_json(ReadingOut.from_reading(reading).model_dump())
+
+    async def _wait_for_disconnect(ws: WebSocket) -> None:
+        # Eingehende Nachrichten haben keine Bedeutung; der Empfang ist
+        # nötig, damit eine Trennung (auch beim Herunterfahren des
+        # Servers) ankommt, wenn die Waage gerade nichts sendet.
+        while (await ws.receive())["type"] != "websocket.disconnect":
+            pass
+
     @router.websocket("/stream")
     async def stream(ws: WebSocket) -> None:
         await ws.accept()
         q: asyncio.Queue[Reading] = asyncio.Queue(maxsize=128)
         state.subscribers.add(q)
+        # Senden und Empfangen laufen nebeneinander; endet eines (Trennung
+        # oder Sendefehler), bricht die Task-Group das andere ab.
         try:
-            if state.latest is not None:
-                await ws.send_json(ReadingOut.from_reading(state.latest).model_dump())
-            while True:
-                reading = await q.get()
-                await ws.send_json(ReadingOut.from_reading(reading).model_dump())
-        except WebSocketDisconnect:
+            async with anyio.create_task_group() as tg:
+                tg.start_soon(_push_readings, ws, q)
+                await _wait_for_disconnect(ws)
+                tg.cancel_scope.cancel()
+        except* WebSocketDisconnect:
             pass
         finally:
             state.subscribers.discard(q)
