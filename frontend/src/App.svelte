@@ -41,6 +41,7 @@
   import Toast from './components/Toast.svelte';
   import SearchPalette from './components/SearchPalette.svelte';
   import SimulatorBanner from './components/SimulatorBanner.svelte';
+  import ScaleHintBanner from './components/ScaleHintBanner.svelte';
   import VersionBanner from './components/VersionBanner.svelte';
 
   let health = $state<HealthInfo | null>(null);
@@ -124,6 +125,7 @@
 <div class="layout">
   <Topbar />
   <SimulatorBanner {health} />
+  <ScaleHintBanner />
   <VersionBanner />
 
   <main class="body" data-mode={route.mode}>

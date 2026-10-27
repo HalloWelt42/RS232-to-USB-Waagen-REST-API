@@ -63,8 +63,16 @@ class AppState:
         self.scale_stale_after_s: float = float(
             os.getenv("WAAGE_SCALE_STALE_AFTER_S", "5")
         )
+        # Prüftakt, solange kein Adapter steckt: so schnell wird ein
+        # eingesteckter USB-Seriell-Adapter erkannt (siehe Reader-Loop).
+        self.adapter_poll_s: float = float(
+            os.getenv("WAAGE_ADAPTER_POLL_S", "2")
+        )
 
         # --- Hardware-Konfig ---
+        # port: konfigurierter Wert (WAAGE_PORT, "auto" oder fester Pfad);
+        # resolved_port: Gerät, das der Live-Reader zuletzt geöffnet hat
+        # (bis dahin der konfigurierte Wert).
         self.port: str = port
         self.resolved_port: str = resolved_port
         self.baudrate: int = baudrate

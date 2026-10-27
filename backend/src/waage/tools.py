@@ -11,11 +11,19 @@ Adapter. Funktioniert plattformübergreifend (Linux, macOS, Raspberry Pi):
 Erkannt wird primär über VID/PID des FTDI-Chips. Fällt das aus, sucht
 die Funktion nach typischen Pfad-Bestandteilen (``usbserial``,
 ``ttyUSB``, ``ttyACM``).
+
+``locate_adapter`` beantwortet die Frage "steckt der Adapter gerade?"
+für den konfigurierten Port (``WAAGE_PORT``): bei ``auto`` über die
+Suche oben, bei einem festen Pfad über den Geräteknoten. Reader-Loop
+und Gesundheit fragen beide hier nach, jedes Mal neu beim
+Betriebssystem; ein später eingesteckter Adapter wird so ohne
+Neustart gefunden.
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from typing import Optional
 
@@ -60,8 +68,10 @@ def find_serial_port(preferred: Optional[str] = None) -> Optional[str]:
     for p in ports:
         for vid, pid, label in _KNOWN_DEVICES:
             if p.vid == vid and p.pid == pid:
-                log.info("Erkannt: %s an %s (Seriennr. %s)",
-                         label, p.device, p.serial_number or "—")
+                # debug statt info: die Gesundheit fragt alle paar
+                # Sekunden nach, Übergänge loggt der Reader-Loop.
+                log.debug("Erkannt: %s an %s (Seriennr. %s)",
+                          label, p.device, p.serial_number or "-")
                 # macOS: bevorzugt cu.* statt tty.* (cu blockiert nicht
                 # auf DCD wie tty es tut). pyserial liefert beides; wenn
                 # wir tty.* finden, suchen wir das passende cu.* dazu.
@@ -76,11 +86,41 @@ def find_serial_port(preferred: Optional[str] = None) -> Optional[str]:
     #    Ports oder ältere Kernel)
     for p in ports:
         if any(hint in (p.device or "") for hint in _PATH_HINTS):
-            log.info("Fallback-Match: %s", p.device)
+            log.debug("Fallback-Match: %s", p.device)
             return p.device
 
-    log.warning("Kein passender serieller Port gefunden (geprüft: %s)",
-                [p.device for p in ports])
+    log.debug("Kein passender serieller Port gefunden (geprüft: %s)",
+              [p.device for p in ports])
+    return None
+
+
+AUTO_PORT = "auto"
+
+
+class AdapterMissingError(RuntimeError):
+    """Am konfigurierten bzw. gesuchten Port steckt gerade kein Adapter."""
+
+
+def is_auto_port(configured: Optional[str]) -> bool:
+    """True, wenn der Port automatisch gesucht werden soll (``auto``/leer)."""
+    return not configured or configured == AUTO_PORT
+
+
+def locate_adapter(configured: Optional[str]) -> Optional[str]:
+    """Gerätepfad des Adapters, wenn er gerade angeschlossen ist, sonst None.
+
+    Args:
+        configured: Wert von ``WAAGE_PORT``. ``auto`` (oder leer) sucht
+            über ``find_serial_port``; ein fester Pfad (``/dev/ttyUSB0``,
+            ``COM3``) gilt als vorhanden, wenn der Geräteknoten existiert
+            oder das Betriebssystem den Port listet.
+    """
+    if is_auto_port(configured):
+        return find_serial_port()
+    if os.path.exists(configured):
+        return configured
+    if any(p.device == configured for p in serial.tools.list_ports.comports()):
+        return configured
     return None
 
 

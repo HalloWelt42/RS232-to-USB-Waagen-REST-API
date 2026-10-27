@@ -7,6 +7,41 @@ Datumsformat: ISO 8601 (JJJJ-MM-TT). Quelle der Wahrheit für die aktuelle
 Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 `package.json` werden daraus synchronisiert.
 
+## [0.7.0] - 2026-10-27
+
+### Neu
+- **Start ohne Adapter**: die Compose-Datei verlangt keinen festen
+  `devices:`-Eintrag mehr, der den Start ohne Adapter abbrach. `/dev`
+  des Pi ist eingebunden, `device_cgroup_rules` geben nur
+  USB-Seriell-Geräte frei (`ttyUSB*` = 188, `ttyACM*` = 166),
+  `cap_drop: MKNOD` verhindert neue Geräteknoten im echten `/dev`.
+  Backend und Oberfläche starten ohne Adapter; ein später
+  eingesteckter Adapter wird ohne Neustart des Containers erkannt.
+  `WAAGE_PORT` steht in der Compose-Datei jetzt auf `auto`.
+- **Adapter laufend suchen**: die Reader-Factory sucht den Adapter bei
+  jedem Versuch neu (`locate_adapter`: bei `auto` über die Port-Suche,
+  bei festem Pfad über den Geräteknoten). Fehlt er, prüft der
+  Reader-Loop im Takt `WAAGE_ADAPTER_POLL_S` (Standard 2 s) erneut,
+  ohne wachsenden Backoff und ohne Fehlerprotokoll je Versuch.
+- **Gesundheit meldet den Adapter**: `GET /scale/health` liefert
+  `adapter_present`, getrennt von `scale_alive`.
+- **Anschluss-Hinweis in der Oberfläche**: statt nur "WAAGE AUS"
+  unterscheiden Statuslampe und Live-Anzeige "KEIN ADAPTER" und
+  "WAAGE AUS". Ein Hinweiskasten unter der Topbar sagt, was zu tun ist
+  ("Kein Adapter angeschlossen: USB-Seriell-Adapter an den Pi stecken"
+  bzw. "Waage aus oder antwortet nicht") und öffnet per Klick die neue
+  Hilfe "Anschluss". Die Einstellungen zeigen unter Anschluss den
+  Adapter-Zustand und einen Info-Knopf. Deutsch + Englisch.
+
+### Behoben
+- **Automatische Port-Suche**: fand `auto` beim Start keinen Adapter,
+  blieb das Backend bis zum Neustart beim Ersatzpfad `/dev/ttyUSB0`;
+  ein Adapter unter anderem Namen (`ttyUSB1`, `ttyACM0`) wurde nie
+  gefunden.
+- **Hilfe-Deeplinks**: die Liste der Hilfe-Themen gibt es nur noch
+  einmal (`HELP_IDS` in `help.ts`); `?help=connect` ging bisher beim
+  Neuladen verloren.
+
 ## [0.6.2] - 2026-10-17
 
 ### Neu

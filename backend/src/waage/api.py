@@ -19,6 +19,7 @@ Konfiguration über Umgebungsvariablen (siehe README):
 - ``WAAGE_DATA_DIR``   (optional, für config.json)
 - ``WAAGE_CORS``       (default ``*``)
 - ``WAAGE_SIMULATE``   (1 / true: Simulator statt Hardware)
+- ``WAAGE_ADAPTER_POLL_S`` (default 2: Prüftakt, solange kein Adapter steckt)
 """
 
 from __future__ import annotations
@@ -26,7 +27,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import sys
 from contextlib import asynccontextmanager, suppress
 from typing import AsyncIterator, Optional
 
@@ -41,7 +41,7 @@ from .reader import DEFAULT_BAUD, DEFAULT_PORT, Waage
 from .scale_api import build_scale_router
 from .simulator import SimulatedWaage
 from .state import AppState
-from .tools import find_serial_port
+from .tools import AdapterMissingError, locate_adapter
 
 log = logging.getLogger(__name__)
 
@@ -60,48 +60,39 @@ class ApiInfo(BaseModel):
 #  Helpers
 # ---------------------------------------------------------------------------
 
-def _resolve_port(name: str) -> str:
-    if not name or name == "auto":
-        found = find_serial_port()
-        if found:
-            log.info("Serieller Port automatisch erkannt: %s", found)
-            return found
-        log.warning("WAAGE_PORT=auto, kein Adapter gefunden")
-        if sys.platform == "darwin":
-            return "/dev/cu.usbserial-AUTO"
-        return "/dev/ttyUSB0"
-    return name
-
-
-def _make_reader_factory(port: str, baudrate: int, state: AppState):
+def _make_reader_factory(state: AppState):
     """Erzeugt einen Reader passend zum aktuellen state.source_mode.
 
-    Wird bei jedem Reconnect erneut ausgewertet — so kann der Anwender
+    Wird bei jedem Reconnect erneut ausgewertet: so kann der Anwender
     zwischen Live und Simulator umschalten, ohne das Backend neu zu
     starten.
 
-    Beim Live-Modus wird der konkrete Port aus `state.resolved_port`
-    gelesen (von ``set_source`` aktualisiert) — sonst würde der Reader
-    auf einen veralteten Port-Wert aus der Boot-Phase zugreifen.
+    Im Live-Modus sucht die Factory den Adapter bei jedem Versuch neu
+    (``locate_adapter`` über den konfigurierten Port ``state.port``).
+    Steckt keiner, wirft sie ``AdapterMissingError``; der Reader-Loop
+    prüft dann im Takt ``state.adapter_poll_s`` erneut. Ein später
+    eingesteckter Adapter wird so ohne Neustart gefunden, bei ``auto``
+    auch unter einem anderen Namen (``ttyUSB1``, ``ttyACM0``).
     """
     def factory():
         if state.source_mode == "simulate":
             log.info("Reader: Simulator")
             return SimulatedWaage()
-        # Echte Hardware: nimm den aktuell aufgelösten Port, fall back
-        # auf den Boot-Port nur wenn nötig.
-        live_port = state.resolved_port
-        if not live_port or live_port in ("simulator", "auto"):
-            live_port = port
+        device = locate_adapter(state.port)
+        if device is None:
+            raise AdapterMissingError(
+                f"Kein Adapter angeschlossen (WAAGE_PORT={state.port or 'auto'})"
+            )
+        state.resolved_port = device
         log.info(
             "Reader: Live (%s @ %d Baud, poll=%.2fs)",
-            live_port, state.baudrate, state.poll_interval_s,
+            device, state.baudrate, state.poll_interval_s,
         )
         # Polling-Intervall aus dem AppState durchreichen — bisher
         # nutzte der Reader immer den Default 0,5 s, das State-Feld
         # blieb wirkungslos. Jetzt zieht WAAGE_POLL_INTERVAL_S durch.
         return Waage(
-            live_port,
+            device,
             state.baudrate,
             poll_interval=state.poll_interval_s,
         )
@@ -120,17 +111,25 @@ async def _reader_loop(reader_factory, state: AppState) -> None:
     (Default 2× `state.scale_stale_after_s`), und werfen dann selbst
     eine Exception — das löst den existierenden Reconnect-Pfad mit
     Backoff aus, der das Device beim nächsten Stecken wieder findet.
+
+    Fehlt der Adapter ganz (``AdapterMissingError`` aus der Factory),
+    ist das kein Fehler, sondern ein Wartezustand: einmal loggen, dann
+    im festen Takt ``state.adapter_poll_s`` erneut nachsehen, ohne den
+    Backoff hochzutreiben. So ist ein eingesteckter Adapter nach
+    wenigen Sekunden in Betrieb.
     """
     import time as _time
 
     backoff = 1.0
     HEALTH_CHECK_INTERVAL_S = 2.0
+    waiting_for_adapter = False
     while True:
         try:
             with reader_factory() as w:
                 state.reader_alive = True
                 state.current_reader = w
                 backoff = 1.0
+                waiting_for_adapter = False
                 log.info("Reader geöffnet: %s", type(w).__name__)
                 reader_opened_at = _time.monotonic()
                 last_health_check = reader_opened_at
@@ -170,6 +169,16 @@ async def _reader_loop(reader_factory, state: AppState) -> None:
             state.reader_alive = False
             state.current_reader = None
             raise
+        except AdapterMissingError as exc:
+            state.reader_alive = False
+            state.current_reader = None
+            if not waiting_for_adapter:
+                log.warning(
+                    "%s; warte auf Anschluss, prüfe alle %.1f s",
+                    exc, state.adapter_poll_s,
+                )
+                waiting_for_adapter = True
+            await asyncio.sleep(state.adapter_poll_s)
         except Exception:  # noqa: BLE001
             state.reader_alive = False
             state.current_reader = None
@@ -205,7 +214,10 @@ def create_app(
     config_dir: Optional[str] = None,
 ) -> FastAPI:
 
-    resolved = "simulator" if simulate else _resolve_port(port)
+    # Anzeigewert bis zum ersten Öffnen: gefundener Adapter, sonst der
+    # konfigurierte Wert ("auto" bzw. fester Pfad). Die Factory
+    # aktualisiert ihn bei jedem Öffnen.
+    resolved = "simulator" if simulate else (locate_adapter(port) or port)
 
     state = AppState(
         history_size=history_size,
@@ -221,7 +233,7 @@ def create_app(
     # Wenn beim Boot simulate=True übergeben wurde (env), den Mode setzen.
     if simulate:
         state.source_mode = "simulate"
-    reader_factory = _make_reader_factory(port, baudrate, state)
+    reader_factory = _make_reader_factory(state)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:

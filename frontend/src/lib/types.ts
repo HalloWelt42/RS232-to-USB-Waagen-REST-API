@@ -29,6 +29,10 @@ export interface HealthInfo {
    *  N Sekunden). False bei abgezogenem Adapter, abgeschalteter Waage,
    *  defektem Kabel — auch wenn `reader_alive=true`. Seit Backend 0.5.12. */
   scale_alive?: boolean;
+  /** USB-Seriell-Adapter steckt am konfigurierten bzw. automatisch
+   *  gefundenen Port. Getrennt von `scale_alive`: Adapter da, Waage
+   *  stumm heißt Waage aus oder Kabel. Seit Backend 0.7.0. */
+  adapter_present?: boolean;
   /** Sekunden seit dem letzten Frame. Diagnose-Wert. */
   stale_for_s?: number | null;
   last_seen: string | null;

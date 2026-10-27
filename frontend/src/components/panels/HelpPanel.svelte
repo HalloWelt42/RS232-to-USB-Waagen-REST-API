@@ -24,8 +24,8 @@
   const sections: readonly HelpId[] = [
     'overview', 'glossary', 'wiegen', 'netto', 'count', 'tolerance',
     'samples', 'differenz', 'containers', 'history', 'tolerances',
-    'tare', 'unit', 'light', 'copy', 'settings', 'donate',
-    'architecture', 'disclaimer',
+    'tare', 'unit', 'light', 'copy', 'settings', 'connection', 'connect',
+    'donate', 'architecture', 'disclaimer',
   ] as const;
 
   function previewOf(id: HelpId): string {

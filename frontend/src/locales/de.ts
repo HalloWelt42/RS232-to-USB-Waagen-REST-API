@@ -112,6 +112,7 @@ const de = {
     scaleConnected: 'WAAGE',
     scaleSimulated: 'SIMULATION',
     scaleOffline: 'WAAGE AUS',
+    scaleNoAdapter: 'KEIN ADAPTER',
     overload: 'ÜBERLAST',
     overloadHint: 'Die Waage meldet eine Last über dem Maximum. Last entfernen, dann fährt die Anzeige zurück.',
   },
@@ -164,6 +165,14 @@ const de = {
     templateSaved: 'Vorlage gespeichert',
     templateDeleted: 'Vorlage gelöscht',
     error: 'Fehler',
+  },
+  scaleHint: {
+    noAdapterTitle: 'Kein Adapter angeschlossen:',
+    noAdapterText: 'USB-Seriell-Adapter an den Pi stecken, er wird von selbst erkannt.',
+    offlineTitle: 'Waage aus oder antwortet nicht:',
+    offlineText: 'Waage einschalten und Kabel zur Waage prüfen.',
+    help: 'Hilfe',
+    helpTitle: 'Hilfe zum Anschluss öffnen',
   },
   update: {
     available: (v: string) => `Neue Fassung ${v} ist da.`,
@@ -461,10 +470,14 @@ const de = {
     reader: 'Reader',
     readerActive: 'aktiv',
     readerInactive: 'aus',
+    adapter: 'Adapter',
+    adapterPresent: 'angeschlossen',
+    adapterMissing: 'fehlt',
     backendVersion: 'Backend-Version',
     connectionInfo:
-      'Anschluss und Baudrate sind aktuell server-seitig konfiguriert. ' +
-      'Das Backend findet den FTDI-Adapter automatisch.',
+      'Port und Baudrate sind server-seitig konfiguriert. Das Backend ' +
+      'findet den USB-Seriell-Adapter selbst, auch wenn er erst später ' +
+      'eingesteckt wird.',
     licenseTitle: 'Lizenz',
     licenseRule_privateUse: 'Private, nicht-kommerzielle Nutzung',
     licenseRule_privateMod: 'Private Modifikation für eigenen Gebrauch',

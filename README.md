@@ -87,6 +87,21 @@ docker compose up -d --build
 # API-Docs  http://<host>:8200/docs
 ```
 
+**Waage anschließen:** USB-Seriell-Adapter in einen USB-Port des Pi
+stecken, RS232-Kabel vom Adapter zur Waage. Der Adapter muss zum Start
+nicht stecken: Backend und Oberfläche laufen auch ohne ihn, die
+Oberfläche meldet dann "Kein Adapter angeschlossen". Ein später
+eingesteckter Adapter wird ohne Neustart erkannt (`WAAGE_PORT=auto`,
+Prüfung alle `WAAGE_ADAPTER_POLL_S` Sekunden). Steckt der Adapter, die
+Waage antwortet aber nicht, heißt der Hinweis "Waage aus oder antwortet
+nicht".
+
+Dafür bindet die Compose-Datei `/dev` des Pi ein (neue Geräteknoten
+erscheinen sofort im Container) und gibt per `device_cgroup_rules` nur
+USB-Seriell-Geräte frei: `ttyUSB*` (Hauptnummer 188) und `ttyACM*`
+(166). Andere Schnittstellen, etwa `ttyAMA*` (204), brauchen eine
+weitere Regel, am besten in einer `docker-compose.override.yml`.
+
 Datenpersistenz im `./data`-Volume:
 
 ```
@@ -142,7 +157,7 @@ Vollständig dokumentiert unter `/docs` (Swagger) und `/openapi.json`.
 | POST    | `/scale/command/tare`        | Auf Null setzen (ESC t) |
 | POST    | `/scale/command/unit`        | Einheit umschalten (ESC s) |
 | POST    | `/scale/command/light`       | Beleuchtung (ESC u) |
-| GET     | `/scale/health`              | Reader-Status, Uptime, Source-Mode |
+| GET     | `/scale/health`              | Reader-Status, Adapter, Uptime, Source-Mode |
 | GET     | `/scale/models`              | Liste bekannter Waagen-Modelle |
 | GET     | `/scale/config`              | Aktives Modell + Toleranzen |
 | PUT     | `/scale/config`              | Modell wechseln |
@@ -172,6 +187,7 @@ Vollständig dokumentiert unter `/docs` (Swagger) und `/openapi.json`.
 | `WAAGE_HISTORY`            | `1000`        | In-Memory-Ringpuffer-Größe |
 | `WAAGE_CORS`               | `*`           | Allowed-Origins |
 | `WAAGE_SIMULATE`           | —             | `1`/`true`: Simulator statt Hardware |
+| `WAAGE_ADAPTER_POLL_S`     | `2`           | Prüftakt in Sekunden, solange kein Adapter steckt |
 | `WAAGE_SAMPLES_DB`         | `:memory:`    | SQLite-Pfad für Mess-Snapshots |
 | `WAAGE_MESSLOG_DB`         | `:memory:`    | SQLite-Pfad für Messprotokoll |
 | `WAAGE_CONTAINERS_DB`      | `:memory:`    | SQLite-Pfad für Behälter-Bibliothek |

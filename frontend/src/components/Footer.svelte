@@ -10,7 +10,7 @@
    */
   import { formatDuration } from '../lib/format';
   import { t } from '../lib/i18n';
-  import { healthStore } from '../lib/healthStore.svelte';
+  import { healthStore, SCALE_LABEL_KEY } from '../lib/healthStore.svelte';
   import { versionStore } from '../lib/versionStore.svelte';
   import type { ConnectionState, HealthInfo } from '../lib/types';
 
@@ -23,23 +23,14 @@
 
   // Backend-WS-Status: open/connecting/closed/error → LED-Stilus
   let backendState = $derived<'open' | 'connecting' | 'closed' | 'error'>(connection);
-  // Waagen-Status: live/simulated/offline analog zu LiveWaage
-  let scaleState = $derived<'live' | 'simulated' | 'offline'>(
-    healthStore.simulated ? 'simulated'
-    : healthStore.scaleOk ? 'live'
-    : 'offline'
-  );
+  // Waagen-Status zentral aus dem healthStore (wie LiveWaage)
+  let scaleState = $derived(healthStore.scaleState);
 
   const backendLabelKey: Record<string, string> = {
     open: 'live.backendOk',
     connecting: 'live.backendConnecting',
     closed: 'live.backendOff',
     error: 'live.backendError',
-  };
-  const scaleLabelKey: Record<string, string> = {
-    live: 'live.scaleConnected',
-    simulated: 'live.scaleSimulated',
-    offline: 'live.scaleOffline',
   };
 </script>
 
@@ -50,7 +41,7 @@
   </span>
   <span class="cell status">
     <span class="led" data-scale={scaleState} aria-hidden="true"></span>
-    <span class="num lbl">{t(scaleLabelKey[scaleState])}</span>
+    <span class="num lbl">{t(SCALE_LABEL_KEY[scaleState])}</span>
   </span>
 
   {#if health}
@@ -105,7 +96,8 @@
   .led[data-state="closed"], .led[data-state="error"] { background: var(--red); }
   .led[data-scale="live"]       { background: var(--display-green); box-shadow: 0 0 6px var(--display-green); }
   .led[data-scale="simulated"]  { background: var(--orange); box-shadow: 0 0 6px color-mix(in srgb, var(--orange) 60%, transparent); }
-  .led[data-scale="offline"]    { background: var(--red); }
+  .led[data-scale="offline"],
+  .led[data-scale="noAdapter"]  { background: var(--red); }
 
   code { background: transparent; padding: 0; border: none; font-size: inherit; }
   @keyframes pulse {

@@ -1,4 +1,4 @@
-# RS232-to-USB-Waagen-REST-API — Top-Level Compose
+# RS232-to-USB-Waagen-REST-API - Top-Level Compose
 #
 # Ein-Befehl-Start auf dem Pi:
 #   docker compose up -d --build
@@ -8,9 +8,14 @@
 # Backend Docs: http://<pi-ip>:8200/docs    (Swagger / OpenAPI 3.1)
 # Daten:        ./data                      (alle SQLite-DBs + config.json)
 #
-# Voraussetzung: FTDI-Adapter auf /dev/ttyUSB0 (siehe README).
+# Waage anschließen: USB-Seriell-Adapter (FTDI, CP210x, PL2303, CH340) in
+# einen USB-Port des Pi stecken, RS232-Kabel vom Adapter zur Waage.
+# Der Adapter ist keine Startvoraussetzung: ohne ihn starten Backend und
+# Oberfläche, die Oberfläche meldet "Kein Adapter angeschlossen". Ein
+# später eingesteckter Adapter wird ohne Neustart erkannt (WAAGE_PORT=auto
+# sucht laufend, siehe README).
 #
-# Simulationsmodus (kein Adapter angeschlossen):
+# Simulationsmodus (Testwerte ohne Waage):
 #   WAAGE_SIMULATE=1 docker compose up -d --build
 
 services:
@@ -20,18 +25,32 @@ services:
     restart: unless-stopped
     ports:
       - "8200:8200"
-    devices:
-      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    # Kein festes "devices:": das bricht den Start ab, wenn der Adapter
+    # fehlt, und sieht später eingesteckte Adapter nicht. Stattdessen ist
+    # /dev des Pi eingebunden (neue Geräteknoten erscheinen sofort im
+    # Container) und nur USB-Seriell-Geräte sind freigegeben:
+    # Hauptnummer 188 = ttyUSB*, 166 = ttyACM*. Andere Schnittstellen
+    # (z.B. ttyAMA* mit Hauptnummer 204) brauchen eine weitere Regel,
+    # am besten in einer docker-compose.override.yml.
     volumes:
       - ./data:/data
+      - /dev:/dev
+    device_cgroup_rules:
+      - "c 188:* rmw"
+      - "c 166:* rmw"
+    # /dev ist das echte /dev des Pi: der Container darf dort keine
+    # Geräteknoten anlegen.
+    cap_drop:
+      - MKNOD
     environment:
-      - WAAGE_PORT=${WAAGE_PORT:-/dev/ttyUSB0}
+      - WAAGE_PORT=${WAAGE_PORT:-auto}
       - WAAGE_BAUD=${WAAGE_BAUD:-9600}
       - WAAGE_HOST=0.0.0.0
       - WAAGE_API_PORT=8200
       - WAAGE_HISTORY=${WAAGE_HISTORY:-2000}
       - WAAGE_CORS=${WAAGE_CORS:-*}
       - WAAGE_SIMULATE=${WAAGE_SIMULATE:-}
+      - WAAGE_ADAPTER_POLL_S=${WAAGE_ADAPTER_POLL_S:-2}
       # Persistente Datenbanken — ohne Pfad laufen sie in :memory:
       # und gehen beim Neustart verloren.
       - WAAGE_SAMPLES_DB=/data/samples.db

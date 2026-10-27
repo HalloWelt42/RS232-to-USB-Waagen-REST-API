@@ -41,7 +41,12 @@ Werkzeug.
 - Ghost-Ziffern für führende Nullen (volle Stellenzahl gemäß Modell-
   Auflösung)
 - Stable/Unstable-Indikator unter dem Wert
-- Status-LEDs „BACKEND" und „WAAGE" — orange = Simulator, rot = aus
+- Status-LEDs "BACKEND" und "WAAGE": orange = Simulator, rot = aus;
+  die Waagen-LED unterscheidet "KEIN ADAPTER" (USB-Seriell-Adapter
+  steckt nicht) und "WAAGE AUS" (Adapter steckt, Waage antwortet nicht)
+- Anschluss-Hinweis unter der Topbar in beiden Fällen, mit Sprung in
+  die Hilfe "Anschluss"; Quelle ist `adapter_present` bzw.
+  `scale_alive` aus `/scale/health`
 - Zeitstempel des letzten Frames
 
 **Aktionen**:
@@ -346,8 +351,8 @@ Modus. Simulator-Banner unter der Topbar warnt orange.
 **Endpunkt**: `POST /scale/source` mit `{ "mode": "live"|"simulate" }`.
 
 ### 11.4 Anschluss (read-only)
-Port, Baudrate, Reader-Status, Backend-Version. Werte aus
-`/scale/health`.
+Adapter (angeschlossen/fehlt), Port, Baudrate, Reader-Status,
+Backend-Version. Werte aus `/scale/health`.
 
 ### 11.5 Weiterleitung (Connect)
 Pusht den jeweils letzten Messwert periodisch per HTTP-POST an ein

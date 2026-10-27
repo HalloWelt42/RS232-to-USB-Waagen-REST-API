@@ -75,3 +75,36 @@ def test_list_serial_ports_returns_dicts():
     assert result[0]["device"] == "/dev/ttyUSB0"
     assert result[0]["vid"] == 0x0403
     assert result[0]["serial_number"] == "X"
+
+
+# ---------------- locate_adapter: steckt der Adapter gerade? ----------------
+def test_locate_adapter_auto_finds_plugged_adapter():
+    ports = [_port("/dev/ttyACM0", vid=0x0403, pid=0x6015)]
+    with patch("waage.tools.serial.tools.list_ports.comports", return_value=ports):
+        assert tools.locate_adapter("auto") == "/dev/ttyACM0"
+        assert tools.locate_adapter("") == "/dev/ttyACM0"
+
+
+def test_locate_adapter_auto_none_without_adapter():
+    with patch("waage.tools.serial.tools.list_ports.comports", return_value=[]):
+        assert tools.locate_adapter("auto") is None
+
+
+def test_locate_adapter_fixed_path_present(tmp_path):
+    node = tmp_path / "ttyUSB0"
+    node.touch()
+    with patch("waage.tools.serial.tools.list_ports.comports", return_value=[]):
+        assert tools.locate_adapter(str(node)) == str(node)
+
+
+def test_locate_adapter_fixed_path_missing(tmp_path):
+    with patch("waage.tools.serial.tools.list_ports.comports", return_value=[]):
+        assert tools.locate_adapter(str(tmp_path / "ttyUSB0")) is None
+
+
+def test_locate_adapter_fixed_name_listed_by_os():
+    """Namen ohne Geräteknoten (Windows ``COM3``) zählen, wenn das
+    Betriebssystem den Port listet."""
+    with patch("waage.tools.serial.tools.list_ports.comports",
+               return_value=[_port("COM3")]):
+        assert tools.locate_adapter("COM3") == "COM3"

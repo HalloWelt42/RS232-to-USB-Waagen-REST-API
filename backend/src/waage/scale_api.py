@@ -13,7 +13,7 @@ Endpoints (alle unter Prefix ``/scale``):
 - ``POST /command/tare``         ESC t
 - ``POST /command/unit``         ESC s
 - ``POST /command/light``        ESC u
-- ``GET  /health``               Reader-Status, Uptime, Port
+- ``GET  /health``               Reader-Status, Adapter, Uptime, Port
 - ``GET  /models``               bekannte Waagen-Modelle
 - ``GET/PUT /config``            aktives Modell
 """
@@ -33,7 +33,7 @@ from .models import KNOWN_MODELS, ScaleModel, find_model
 from .parser import Reading
 from .reader import COMMAND_LIGHT, COMMAND_TARE, COMMAND_UNIT
 from .state import AppState
-from .tools import find_serial_port
+from .tools import locate_adapter
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +64,15 @@ class HealthOut(BaseModel):
     ok: bool
     reader_alive: bool       # Reader-Task läuft (Python-Task aktiv)
     scale_alive: bool        # Hardware antwortet (Frame in den letzten N s)
+    adapter_present: bool = Field(
+        ...,
+        description=(
+            "USB-Seriell-Adapter steckt am konfigurierten bzw. automatisch "
+            "gefundenen Port. Getrennt von scale_alive: Adapter da, Waage "
+            "stumm heißt Waage aus oder Kabel. Unabhängig von der Quelle "
+            "(im Simulator rein informativ)."
+        ),
+    )
     stale_for_s: Optional[float] = None
     last_seen: Optional[str] = None
     port: str
@@ -245,6 +254,9 @@ def build_scale_router(state: AppState, app_version: str) -> APIRouter:
             ok=state.reader_alive and state.latest is not None,
             reader_alive=state.reader_alive,
             scale_alive=state.scale_alive,
+            # Jedes Mal neu beim Betriebssystem nachgefragt, dieselbe
+            # Quelle wie die Reader-Factory.
+            adapter_present=locate_adapter(state.port) is not None,
             stale_for_s=round(stale, 2) if stale is not None else None,
             last_seen=state.last_seen.isoformat(timespec="milliseconds")
                       if state.last_seen else None,
@@ -272,20 +284,12 @@ def build_scale_router(state: AppState, app_version: str) -> APIRouter:
             raise HTTPException(400, detail="Modus muss 'live' oder 'simulate' sein")
         if payload.mode != state.source_mode:
             state.source_mode = payload.mode
-            # Wechsel zu Live: physischen Port neu auflösen, falls
-            # `state.resolved_port` aus einer Simulator-Boot-Phase noch
-            # auf "simulator" steht (sonst versucht der Reader den
-            # nicht existierenden Port "auto"/"simulator" zu öffnen).
-            if payload.mode == "live" and state.resolved_port in ("simulator", "auto", ""):
-                if state.port and state.port != "auto":
-                    state.resolved_port = state.port
-                else:
-                    found = find_serial_port()
-                    if found:
-                        state.resolved_port = found
-                        log.info("Live-Port automatisch aufgelöst: %s", found)
-                    else:
-                        log.warning("Live-Modus: kein serieller Adapter gefunden")
+            # Wechsel zu Live: Anzeigewert sofort auf den echten Port
+            # setzen (nicht "simulator" stehen lassen). Geöffnet wird
+            # trotzdem erst in der Reader-Factory, die den Adapter bei
+            # jedem Versuch selbst sucht.
+            if payload.mode == "live":
+                state.resolved_port = locate_adapter(state.port) or state.port
             state.persist_config()
             log.info("Quelle gewechselt: %s (Port=%s)", payload.mode, state.resolved_port)
             # Aktuellen Reader schließen — der Reader-Loop reconnectet

@@ -20,7 +20,7 @@
  * SPA-`index.html` aus (siehe nginx.conf / Vite-History-Fallback).
  */
 
-import type { HelpId } from './help';
+import { HELP_IDS, type HelpId } from './help';
 import { versionStore } from './versionStore.svelte';
 
 export type ToolKey =
@@ -37,13 +37,6 @@ export type ToolKey =
 export const TOOL_KEYS: readonly ToolKey[] = [
   'wiegen', 'netto', 'count', 'tolerance',
   'samples', 'differenz', 'help', 'settings', 'donate',
-] as const;
-
-const HELP_IDS: readonly HelpId[] = [
-  'overview', 'glossary', 'wiegen', 'netto', 'count', 'tolerance',
-  'samples', 'differenz', 'sparkline', 'history', 'containers',
-  'tare', 'unit', 'light', 'copy', 'settings', 'donate',
-  'architecture', 'disclaimer', 'tolerances',
 ] as const;
 
 class RouteState {

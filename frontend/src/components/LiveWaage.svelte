@@ -3,7 +3,7 @@
   import { copyText } from '../lib/clipboard';
   import { toast } from '../lib/toast.svelte';
   import { live } from '../lib/liveStore.svelte';
-  import { healthStore } from '../lib/healthStore.svelte';
+  import { healthStore, SCALE_LABEL_KEY } from '../lib/healthStore.svelte';
   import { t } from '../lib/i18n';
   import StableValue from './StableValue.svelte';
 
@@ -16,17 +16,13 @@
   // Hardware-Status zentral aus dem healthStore — der Footer zeigt
   // BACKEND/WAAGE-LEDs prominent an, hier in der LiveWaage steuern
   // wir damit nur noch die Anzeige des Wert-Displays selbst.
-  let scaleState = $derived<'live' | 'simulated' | 'offline'>(
-    healthStore.simulated ? 'simulated'
-    : healthStore.scaleOk ? 'live'
-    : 'offline'
-  );
+  let scaleState = $derived(healthStore.scaleState);
 
   // Reaktivität: ist die Hardware aktuell offline (USB-Adapter weg,
   // Waage abgeschaltet, …), zeigen wir den letzten Wert NICHT mehr an —
   // sonst klebt eine "61,9 g STABIL" auf dem Display, obwohl gar nichts
   // mehr gemessen wird. healthStore.scaleOk ist seit 0.5.12 ehrlich.
-  let scaleOffline = $derived(scaleState === 'offline');
+  let scaleOffline = $derived(scaleState === 'offline' || scaleState === 'noAdapter');
   // Überlast-Frames (OL/------/++++++) werden vom Parser als
   // overload=true markiert. UI zeigt dann einen orangefarbenen
   // Warn-Banner statt eines verfälschten Werts.
@@ -74,7 +70,7 @@
     </span>
     <span class="label num">
       {overload ? t('live.overloadHint') :
-       scaleOffline ? t('live.scaleOffline') :
+       scaleOffline ? t(SCALE_LABEL_KEY[scaleState]) :
        r ? (stable ? t('status.stable') : t('status.unstable')) : '—'}
     </span>
   </button>

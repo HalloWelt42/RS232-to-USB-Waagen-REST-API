@@ -18,11 +18,16 @@
  *   [[help:wiegen|Wiegen]]        öffnet ein Hilfe-Fenster
  */
 
-export type HelpId =
-  | 'overview' | 'glossary' | 'wiegen' | 'netto' | 'count' | 'tolerance'
-  | 'samples' | 'differenz' | 'sparkline' | 'history' | 'containers'
-  | 'tare' | 'unit' | 'light' | 'copy' | 'settings' | 'connect' | 'donate'
-  | 'architecture' | 'disclaimer' | 'tolerances';
+/** Alle Hilfe-Themen; einzige Liste, auch das Routing (Deeplinks
+ *  `?help=<id>`) prüft dagegen. */
+export const HELP_IDS = [
+  'overview', 'glossary', 'wiegen', 'netto', 'count', 'tolerance',
+  'samples', 'differenz', 'sparkline', 'history', 'containers',
+  'tare', 'unit', 'light', 'copy', 'settings', 'connection', 'connect',
+  'donate', 'architecture', 'disclaimer', 'tolerances',
+] as const;
+
+export type HelpId = typeof HELP_IDS[number];
 
 export interface HelpBlock {
   heading: string;
@@ -220,8 +225,18 @@ const helpDe: HelpTree = {
       { heading: 'Modell', body: 'Wählen Sie Ihre Waage aus der Liste. Das Modell beeinflusst Anzeige-Einheiten, Maximal- und Auflösungswerte. Aktiv: <strong>{{modelName}}</strong>.' },
       { heading: 'Theme', body: 'Hell, Dunkel oder Automatisch (folgt der Systemeinstellung).' },
       { heading: 'Sprache', body: 'DE oder EN — Auswahl bleibt zwischen Sitzungen erhalten.' },
-      { heading: 'Anschluss', body: 'Serieller Port und Baudrate. Beim Default „auto" findet die App den USB-Serial-Adapter selbst.' },
+      { heading: 'Anschluss', body: 'Serieller Port und Baudrate. Beim Standard "auto" findet die App den USB-Seriell-Adapter selbst. Was die Statuslampe meldet und was zu tun ist: [[help:connection|Anschluss]].' },
       { heading: 'Polling', body: 'Wie oft die App den Print-Befehl an die Waage schickt — Standard <strong>0,5 s</strong>.' },
+    ],
+  },
+
+  connection: {
+    id: 'connection', title: 'Anschluss',
+    blocks: [
+      { heading: 'Statuslampe', body: 'Unten in der Statusleiste steht, wie es um die Waage steht: <strong>WAAGE</strong> (grün) liefert Werte, <strong>KEIN ADAPTER</strong> (rot) heißt, der USB-Seriell-Adapter steckt nicht, <strong>WAAGE AUS</strong> (rot) heißt, der Adapter steckt, aber die Waage antwortet nicht. <strong>SIMULATION</strong> (orange) zeigt Testwerte statt einer echten Waage.' },
+      { heading: 'Kein Adapter angeschlossen', body: 'USB-Seriell-Adapter in einen USB-Port des Pi stecken und das RS232-Kabel vom Adapter zur Waage führen. Die App sucht laufend nach dem Adapter und nimmt ihn ohne Neustart in Betrieb, meist nach wenigen Sekunden. Bis dahin bleiben Werkzeuge, Messprotokoll und Einstellungen bedienbar, nur Live-Werte fehlen.' },
+      { heading: 'Waage aus oder antwortet nicht', body: 'Der Adapter steckt, es kommen aber keine Werte. Waage einschalten, das Kabel zwischen Adapter und Waage prüfen (Nullmodem, RX und TX gekreuzt) und die Baudrate der Waage mit dem Wert in den [[tool:settings|Einstellungen]] unter Anschluss vergleichen (Standard <strong>9600</strong>). Antwortet die Waage wieder, erscheinen die Werte von selbst.' },
+      { heading: 'Ohne Waage ausprobieren', body: 'In den [[tool:settings|Einstellungen]] unter Quelle auf Simulation umschalten: die App erzeugt dann Testwerte, alle Werkzeuge lassen sich so ausprobieren.' },
     ],
   },
 
@@ -420,10 +435,20 @@ const helpEn: HelpTree = {
       { heading: 'Model', body: 'Pick your scale from the list. The model affects display units, maximum and resolution. Active: <strong>{{modelName}}</strong>.' },
       { heading: 'Theme', body: 'Light, dark or automatic (follows system setting).' },
       { heading: 'Language', body: 'DE or EN — choice persists across sessions.' },
-      { heading: 'Connection', body: 'Serial port and baudrate. With default „auto" the app finds the USB-serial adapter on its own.' },
+      { heading: 'Connection', body: 'Serial port and baudrate. With the default "auto" the app finds the USB serial adapter on its own. What the status lamp reports and what to do: [[help:connection|Connection]].' },
       { heading: 'Polling', body: 'How often the app sends the print command to the scale — default <strong>0.5 s</strong>.' },
     ],
   },
+  connection: {
+    id: 'connection', title: 'Connection',
+    blocks: [
+      { heading: 'Status lamp', body: 'The status bar at the bottom shows how the scale is doing: <strong>SCALE</strong> (green) delivers values, <strong>NO ADAPTER</strong> (red) means the USB serial adapter is not plugged in, <strong>SCALE OFF</strong> (red) means the adapter is there but the scale does not answer. <strong>SIMULATION</strong> (orange) shows test values instead of a real scale.' },
+      { heading: 'No adapter connected', body: 'Plug the USB serial adapter into a USB port of the Pi and run the RS232 cable from the adapter to the scale. The app keeps looking for the adapter and starts using it without a restart, usually within a few seconds. Until then tools, measurement log and settings stay usable, only live values are missing.' },
+      { heading: 'Scale off or not responding', body: 'The adapter is there, but no values arrive. Switch the scale on, check the cable between adapter and scale (null modem, RX and TX crossed) and compare the scale\'s baudrate with the value in [[tool:settings|Settings]] under Connection (default <strong>9600</strong>). As soon as the scale answers again, values appear by themselves.' },
+      { heading: 'Try without a scale', body: 'In [[tool:settings|Settings]] switch the source to Simulation: the app then generates test values, so every tool can be tried out.' },
+    ],
+  },
+
   connect: {
     id: 'connect', title: 'Forwarding (Connect)',
     blocks: [

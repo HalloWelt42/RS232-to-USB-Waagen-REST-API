@@ -112,6 +112,7 @@ const en = {
     scaleConnected: 'SCALE',
     scaleSimulated: 'SIMULATION',
     scaleOffline: 'SCALE OFF',
+    scaleNoAdapter: 'NO ADAPTER',
     overload: 'OVERLOAD',
     overloadHint: 'The scale reports a load above maximum. Remove load, the display will recover.',
   },
@@ -164,6 +165,14 @@ const en = {
     templateSaved: 'Template saved',
     templateDeleted: 'Template deleted',
     error: 'Error',
+  },
+  scaleHint: {
+    noAdapterTitle: 'No adapter connected:',
+    noAdapterText: 'plug the USB serial adapter into the Pi, it is detected automatically.',
+    offlineTitle: 'Scale off or not responding:',
+    offlineText: 'switch the scale on and check the cable to the scale.',
+    help: 'Help',
+    helpTitle: 'Open connection help',
   },
   update: {
     available: (v: string) => `New version ${v} is available.`,
@@ -453,10 +462,13 @@ const en = {
     reader: 'Reader',
     readerActive: 'active',
     readerInactive: 'off',
+    adapter: 'Adapter',
+    adapterPresent: 'connected',
+    adapterMissing: 'missing',
     backendVersion: 'Backend version',
     connectionInfo:
-      'Port and baudrate are configured server-side. The backend ' +
-      'auto-detects the FTDI adapter.',
+      'Port and baudrate are configured server-side. The backend finds ' +
+      'the USB serial adapter by itself, even when it is plugged in later.',
     licenseTitle: 'License',
     licenseRule_privateUse: 'Private, non-commercial use',
     licenseRule_privateMod: 'Private modification for personal use',

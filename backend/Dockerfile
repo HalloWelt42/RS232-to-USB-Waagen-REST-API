@@ -1,6 +1,9 @@
 # Backend für G&G und kompatible Präzisionswaagen — FastAPI + pyserial
 # Build:  docker build -t waage-backend ./backend
-# Run:    docker run --rm -p 8200:8200 --device=/dev/ttyUSB0 -v $PWD/data:/data waage-backend
+# Run:    docker run --rm -p 8200:8200 -v /dev:/dev \
+#           --device-cgroup-rule='c 188:* rmw' --device-cgroup-rule='c 166:* rmw' \
+#           --cap-drop=MKNOD -v $PWD/data:/data waage-backend
+#         (startet auch ohne Adapter, ein später eingesteckter wird gefunden)
 FROM python:3.13-slim
 
 ENV PYTHONUNBUFFERED=1 \

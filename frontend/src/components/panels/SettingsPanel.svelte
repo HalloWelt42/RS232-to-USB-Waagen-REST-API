@@ -251,10 +251,14 @@
       {/if}
     </div>
 
-    <div class="card">
-      <h3>{t('settingsPanel.connection')}</h3>
+    <div class="card connection-card">
+      <h3>{t('settingsPanel.connection')} <HelpButton id="connection" /></h3>
       {#if health}
         <ul class="kv">
+          {#if typeof health.adapter_present === 'boolean'}
+            <li><span class="k">{t('settingsPanel.adapter')}</span>
+                <span class="num v">{health.adapter_present ? t('settingsPanel.adapterPresent') : t('settingsPanel.adapterMissing')}</span></li>
+          {/if}
           <li><span class="k">{t('settingsPanel.port')}</span>          <span class="num v">{health.port}</span></li>
           <li><span class="k">{t('settingsPanel.baudrate')}</span>      <span class="num v">{health.baudrate}</span></li>
           <li><span class="k">{t('settingsPanel.reader')}</span>        <span class="num v">{health.reader_alive ? t('settingsPanel.readerActive') : t('settingsPanel.readerInactive')}</span></li>
@@ -520,7 +524,8 @@
     color: var(--orange);
     display: inline-flex; align-items: center; gap: 6px;
   }
-  /* Connect-Karte (Messwert-Weiterleitung) */
+  /* Karten mit Info-Knopf im Titel: Anschluss, Connect (Weiterleitung) */
+  .connection-card h3,
   .connect-card h3 { display: inline-flex; align-items: center; gap: 8px; }
   .connect-toggle {
     display: inline-flex; align-items: center; gap: 8px;

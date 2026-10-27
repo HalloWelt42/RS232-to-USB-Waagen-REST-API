@@ -30,16 +30,24 @@ python -m waage.api                       # läuft auf :8200
 ```bash
 docker build -t waage-backend .
 docker run --rm -p 8200:8200 \
-    --device=/dev/ttyUSB0 \
+    -v /dev:/dev \
+    --device-cgroup-rule='c 188:* rmw' \
+    --device-cgroup-rule='c 166:* rmw' \
+    --cap-drop=MKNOD \
     -v ./data:/data \
     waage-backend
 ```
+
+Startet auch ohne Adapter. `/dev` eingebunden und USB-Seriell-Geräte
+(`ttyUSB*` = 188, `ttyACM*` = 166) freigegeben: ein später
+eingesteckter Adapter wird ohne Neustart gefunden. `GET /scale/health`
+meldet ihn in `adapter_present`, getrennt von `scale_alive`.
 
 ## Konfiguration (Environment)
 
 | Variable | Default | Bedeutung |
 |----------|---------|-----------|
-| `WAAGE_PORT` | `/dev/ttyUSB0` | Serieller Port |
+| `WAAGE_PORT` | `auto` | Serieller Port (`auto` = laufende Suche) |
 | `WAAGE_BAUD` | `9600` | Baudrate |
 | `WAAGE_HOST` | `0.0.0.0` | HTTP Bind-Host |
 | `WAAGE_API_PORT` | `8200` | HTTP Port |
@@ -49,6 +57,7 @@ docker run --rm -p 8200:8200 \
 | `WAAGE_CORS` | `*` | Allowed-Origins, kommagetrennt |
 | `WAAGE_LOGLEVEL` | `info` | uvicorn log level |
 | `WAAGE_SIMULATE` | aus | `1`/`true`/`yes` aktiviert den Software-Simulator anstelle der echten Waage |
+| `WAAGE_ADAPTER_POLL_S` | `2` | Prüftakt in Sekunden, solange kein Adapter steckt |
 
 ## Simulationsmodus
 
