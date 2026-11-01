@@ -7,6 +7,20 @@ Datumsformat: ISO 8601 (JJJJ-MM-TT). Quelle der Wahrheit für die aktuelle
 Version ist die Datei `VERSION` im Repo-Wurzel — `pyproject.toml` und
 `package.json` werden daraus synchronisiert.
 
+## [0.7.2] - 2026-11-01
+
+### Behoben
+- **Symbol auf dem Startbildschirm des iPhones**: das iPhone holt verlinkte
+  Symbole nicht immer ab und zeigt dann nur den Anfangsbuchstaben. Der Bau
+  bettet das `apple-touch-icon` in die Seite und die Symbole des Manifests
+  (außer `maskable`) als `data:`-Adresse ein (`frontend/symbol-einbetten.mjs`,
+  Abschrift des Werkzeugs aus dem Appkern).
+- **Deckende Symbole**: `icon-192.png` und `icon-512.png` hatten durchsichtige
+  Ecken; iOS zeigt dann kein Symbol. Der Symbolsatz entsteht jetzt mit dem
+  Werkzeug der Vorlage des Appkerns (`scripts/symbole.py`) aus
+  `frontend/public/symbol.svg` mit vollflächigem Grund, auf der
+  Hintergrundfarbe der App.
+
 ## [0.7.1] - 2026-10-27
 
 ### Behoben
